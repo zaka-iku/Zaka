@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║                 ZAKA HUB UNIVERSAL - ONE UI                    ║
-    ║             Universal Support • Mobile + PC Compact            ║
+    ║             ZAKA HUB UNIVERSAL - MOBILE & PC                   ║
+    ║        Fly + Custom Speed + Mobile Aimbot + One UI             ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -10,7 +10,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
-local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -20,7 +19,7 @@ local Settings = {
     -- Combat
     Aimbot = false,
     AimbotFOV = 120,
-    AimbotSmooth = 0.15,
+    AimbotSmooth = 0.2,
     HitboxExpander = false,
     HitboxSize = 5,
 
@@ -32,9 +31,11 @@ local Settings = {
     ESPDistance = true,
     ESPMaxDist = 3000,
 
-    -- Player
+    -- Player & Movement
     Speed = false,
     SpeedValue = 28,
+    Fly = false,
+    FlySpeed = 50,
     Noclip = false,
     ClickTP = false,
 
@@ -44,10 +45,11 @@ local Settings = {
 }
 
 --==================== BIẾN HỆ THỐNG ====================--
-local NoclipConn, SpeedConn
+local NoclipConn, SpeedConn, FlyConn
+local BodyGyro, BodyVelocity
 local ESPObjects = {}
 
--- Chống AFK
+-- Anti AFK
 LocalPlayer.Idled:Connect(function()
     if Settings.AntiAFK then
         VirtualUser:CaptureController()
@@ -55,7 +57,7 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
---==================== TÍNH NĂNG COMBAT & AIMBOT ====================--
+--==================== MOBILE AIMBOT SYSTEM (LOCK HEAD) ====================--
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -64,9 +66,10 @@ FOVCircle.Filled = false
 FOVCircle.Visible = false
 FOVCircle.Color = Color3.fromRGB(0, 162, 255)
 
-local function GetClosestPlayer()
-    local closest, shortest = nil, Settings.AimbotFOV
-    local mousePos = UserInputService:GetMouseLocation()
+local function GetClosestPlayerHead()
+    local closestHead = nil
+    local shortestDist = Settings.AimbotFOV
+    local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
@@ -74,27 +77,27 @@ local function GetClosestPlayer()
             if head then
                 local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
                 if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if dist < shortest then
-                        shortest = dist
-                        closest = head
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - centerScreen).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closestHead = head
                     end
                 end
             end
         end
     end
-    return closest
+    return closestHead
 end
 
 RunService.RenderStepped:Connect(function()
-    FOVCircle.Position = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     FOVCircle.Radius = Settings.AimbotFOV
     FOVCircle.Visible = Settings.Aimbot
 
-    if Settings.Aimbot and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        local target = GetClosestPlayer()
-        if target then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth)
+    if Settings.Aimbot then
+        local targetHead = GetClosestPlayerHead()
+        if targetHead then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetHead.Position), Settings.AimbotSmooth)
         end
     end
 
@@ -109,6 +112,88 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
+--==================== HỆ THỐNG FLY (BAY) & SPEED ====================--
+local function StartFly()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+
+    BodyGyro = Instance.new("BodyGyro")
+    BodyGyro.P = 9e4
+    BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    BodyGyro.cframe = root.CFrame
+    BodyGyro.Parent = root
+
+    BodyVelocity = Instance.new("BodyVelocity")
+    BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+    BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    BodyVelocity.Parent = root
+
+    FlyConn = RunService.RenderStepped:Connect(function()
+        if not Settings.Fly or not char or not char:FindFirstChild("Humanoid") then
+            if BodyGyro then BodyGyro:Destroy() end
+            if BodyVelocity then BodyVelocity:Destroy() end
+            if FlyConn then FlyConn:Disconnect() end
+            return
+        end
+
+        local hum = char.Humanoid
+        BodyGyro.cframe = Camera.CFrame
+
+        local moveDir = hum.MoveDirection
+        if moveDir.Magnitude > 0 then
+            BodyVelocity.velocity = (Camera.CFrame.LookVector * (moveDir.Z * -1) + Camera.CFrame.RightVector * moveDir.X) * Settings.FlySpeed
+        else
+            BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+        end
+    end)
+end
+
+local function SetFly(state)
+    Settings.Fly = state
+    if state then
+        StartFly()
+    else
+        if BodyGyro then BodyGyro:Destroy() end
+        if BodyVelocity then BodyVelocity:Destroy() end
+        if FlyConn then FlyConn:Disconnect() end
+    end
+end
+
+local function SetSpeed(state)
+    if SpeedConn then SpeedConn:Disconnect() SpeedConn = nil end
+    if state then
+        SpeedConn = RunService.Heartbeat:Connect(function()
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if hum then hum.WalkSpeed = Settings.SpeedValue end
+        end)
+    else
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = 16 end
+    end
+end
+
+local function SetNoclip(state)
+    if NoclipConn then NoclipConn:Disconnect() NoclipConn = nil end
+    if state then
+        NoclipConn = RunService.Stepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+        end)
+    end
+end
+
+local function TeleportTo(position)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(position + Vector3.new(0, 3, 0))
+    end
+end
 
 --==================== HỆ THỐNG ESP ====================--
 local function CreateESP(plr)
@@ -194,58 +279,14 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---==================== MOVEMENT & TELEPORT ====================--
-local function SetSpeed(state)
-    if SpeedConn then SpeedConn:Disconnect() SpeedConn = nil end
-    if state then
-        SpeedConn = RunService.Heartbeat:Connect(function()
-            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-            if hum then hum.WalkSpeed = Settings.SpeedValue end
-        end)
-    else
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = 16 end
-    end
-end
-
-local function SetNoclip(state)
-    if NoclipConn then NoclipConn:Disconnect() NoclipConn = nil end
-    if state then
-        NoclipConn = RunService.Stepped:Connect(function()
-            local char = LocalPlayer.Character
-            if char then
-                for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
-            end
-        end)
-    end
-end
-
-local function TeleportTo(position)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(position + Vector3.new(0, 3, 0))
-    end
-end
-
-UserInputService.TouchTap:Connect(function(touchPositions, gameProcessed)
-    if Settings.ClickTP and not gameProcessed and touchPositions[1] then
-        local unitRay = Camera:ViewportPointToRay(touchPositions[1].X, touchPositions[1].Y)
-        local ray = Ray.new(unitRay.Origin, unitRay.Direction * 2000)
-        local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
-        if hit then TeleportTo(position) end
-    end
-end)
-
---==================== GIAO DIỆN ZAKA HUB (ONE UI GỌN) ====================--
+--==================== GIAO DIỆN ONE UI ====================--
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZakaHub_Universal"
+ScreenGui.Name = "ZakaHub_UI"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút Tròn Mở/Tắt Nhanh (One UI Toggle Icon)
+-- Nút Tròn Mở/Tắt Nhanh (One UI Icon)
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
 ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
@@ -265,7 +306,7 @@ IconStroke.Color = Color3.fromRGB(255, 255, 255)
 IconStroke.Thickness = 2
 IconStroke.Transparency = 0.5
 
--- Khung Chính (Main Menu gọn 310x320)
+-- Main Frame (310x320)
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 310, 0, 320)
 Main.Position = UDim2.new(0.5, -155, 0.5, -160)
@@ -280,7 +321,7 @@ ToggleIcon.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
--- Thanh Header
+-- Top Bar
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 38)
 TopBar.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
@@ -299,7 +340,7 @@ Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
--- Hệ Thống Tabs
+-- Tab System
 local TabFrame = Instance.new("Frame")
 TabFrame.Size = UDim2.new(1, -12, 0, 28)
 TabFrame.Position = UDim2.new(0, 6, 0, 42)
@@ -389,6 +430,47 @@ local function CreateToggle(parent, text, default, callback)
     end)
 end
 
+local function CreateInput(parent, text, default, maxVal, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -4, 0, 32)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    frame.Parent = parent
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -65, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(220, 220, 230)
+    label.TextSize = 11
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0, 50, 0, 20)
+    textBox.Position = UDim2.new(1, -55, 0.5, -10)
+    textBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    textBox.Text = tostring(default)
+    textBox.TextColor3 = Color3.fromRGB(0, 162, 255)
+    textBox.Font = Enum.Font.GothamBold
+    textBox.TextSize = 11
+    textBox.Parent = frame
+    Instance.new("UICorner", textBox).CornerRadius = UDim.new(0, 4)
+
+    textBox.FocusLost:Connect(function()
+        local num = tonumber(textBox.Text)
+        if num then
+            num = math.clamp(math.floor(num), 1, maxVal)
+            textBox.Text = tostring(num)
+            callback(num)
+        else
+            textBox.Text = tostring(default)
+        end
+    end)
+end
+
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -4, 0, 32)
@@ -403,10 +485,11 @@ local function CreateButton(parent, text, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
---==================== NẠP CHỨC NĂNG VÀO TABS ====================--
+--==================== GÁN CHỨC NĂNG VÀO TABS ====================--
 
 -- Tab Combat
-CreateToggle(Pages["Combat"], "Aimbot Lock (Giữ Chuột Phải)", false, function(v) Settings.Aimbot = v end)
+CreateToggle(Pages["Combat"], "Aimbot Lock Head (Tự Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
+CreateInput(Pages["Combat"], "Chỉnh Kích Thước FOV Aim", 120, 800, function(v) Settings.AimbotFOV = v end)
 CreateToggle(Pages["Combat"], "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
 
 -- Tab ESP
@@ -417,11 +500,15 @@ CreateToggle(Pages["ESP"], "Thanh Máu (HP)", true, function(v) Settings.ESPHeal
 CreateToggle(Pages["ESP"], "Khoảng Cách (Distance)", true, function(v) Settings.ESPDistance = v end)
 
 -- Tab Player
-CreateToggle(Pages["Player"], "Tăng Tốc Chạy (Speed)", false, function(v) Settings.Speed = v SetSpeed(v) end)
-CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
-CreateToggle(Pages["Player"], "Click TP (Chạm Để Dịch Chuyển)", false, function(v) Settings.ClickTP = v end)
+CreateToggle(Pages["Player"], "Bật Tăng Tốc Chạy", false, function(v) Settings.Speed = v SetSpeed(v) end)
+CreateInput(Pages["Player"], "Nhập Tốc Độ Chạy (Max 500)", 28, 500, function(v) Settings.SpeedValue = v end)
 
--- Tab Teleport (Universal Player Teleport)
+CreateToggle(Pages["Player"], "Bật Chức Năng Bay (Fly)", false, function(v) SetFly(v) end)
+CreateInput(Pages["Player"], "Nhập Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
+
+CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
+
+-- Tab Teleport
 CreateButton(Pages["Teleport"], "Dịch Chuyển Tới Người Chơi Ngẫu Nhiên", function()
     local plrs = Players:GetPlayers()
     for _, target in ipairs(plrs) do
@@ -439,4 +526,4 @@ CreateToggle(Pages["Misc"], "Nhìn Trong Đêm (Fullbright)", false, function(v)
 end)
 CreateToggle(Pages["Misc"], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
 
-print("Zaka Hub Universal Loaded Successfully!")
+print("Zaka Hub Universal Fully Updated!")
