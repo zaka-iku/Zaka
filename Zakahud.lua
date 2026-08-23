@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUB UNIVERSAL - MOBILE & PC                   ║
-    ║        Fixed Fly Direction + Anti-Bypass Speed + UI            ║
+    ║             ZAKA HUB UNIVERSAL - V3 ADVANCED                   ║
+    ║   Hitbox 500 + Inf Jump + SpinBot + Tracers + Server Hop      ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -10,6 +10,8 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -21,7 +23,7 @@ local Settings = {
     AimbotFOV = 120,
     AimbotSmooth = 0.2,
     HitboxExpander = false,
-    HitboxSize = 5,
+    HitboxSize = 20,
 
     -- ESP
     ESP = false,
@@ -29,6 +31,7 @@ local Settings = {
     ESPName = true,
     ESPHealth = true,
     ESPDistance = true,
+    ESPTracers = false,
     ESPMaxDist = 3000,
 
     -- Player & Movement
@@ -37,6 +40,9 @@ local Settings = {
     Fly = false,
     FlySpeed = 50,
     Noclip = false,
+    InfiniteJump = false,
+    SpinBot = false,
+    SpinSpeed = 40,
     ClickTP = false,
 
     -- Misc
@@ -57,7 +63,17 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
---==================== MOBILE AIMBOT SYSTEM (LOCK HEAD) ====================--
+-- Infinite Jump
+UserInputService.JumpRequest:Connect(function()
+    if Settings.InfiniteJump then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+--==================== MOBILE AIMBOT & HITBOX ====================--
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -107,13 +123,18 @@ RunService.RenderStepped:Connect(function()
                 pcall(function()
                     plr.Character.Head.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
                     plr.Character.Head.Transparency = 0.6
+                    plr.Character.Head.CanCollide = false
                 end)
             end
         end
     end
+
+    if Settings.SpinBot and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(Settings.SpinSpeed), 0)
+    end
 end)
 
---==================== HỆ THỐNG FLY (ĐÃ SỬA HƯỚNG BAY) & SPEED ====================--
+--==================== MOVEMENT & FLY ====================--
 local function StartFly()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -141,10 +162,8 @@ local function StartFly()
         local hum = char.Humanoid
         BodyGyro.cframe = Camera.CFrame
 
-        -- Tính toán hướng di chuyển chuẩn theo Joystick/Phím điều khiển và Camera
         local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
-            -- Sử dụng Vector trực tiếp để sửa lỗi ngược hướng tiến/lùi và lên/xuống
             local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
             BodyVelocity.velocity = flyVector.Unit * Settings.FlySpeed
         else
@@ -169,9 +188,7 @@ local function SetSpeed(state)
     if state then
         SpeedConn = RunService.Heartbeat:Connect(function()
             local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-            if hum then 
-                hum.WalkSpeed = Settings.SpeedValue 
-            end
+            if hum then hum.WalkSpeed = Settings.SpeedValue end
         end)
     else
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -208,6 +225,7 @@ local function CreateESP(plr)
         Name = Drawing.new("Text"),
         Health = Drawing.new("Text"),
         Distance = Drawing.new("Text"),
+        Tracer = Drawing.new("Line"),
     }
     t.Box.Thickness = 1
     t.Box.Filled = false
@@ -221,6 +239,8 @@ local function CreateESP(plr)
     t.Distance.Center = true
     t.Distance.Outline = true
     t.Distance.Color = Color3.fromRGB(200, 200, 200)
+    t.Tracer.Thickness = 1
+    t.Tracer.Color = Color3.fromRGB(0, 162, 255)
     ESPObjects[plr] = t
 end
 
@@ -281,6 +301,14 @@ RunService.RenderStepped:Connect(function()
         drawings.Distance.Text = math.floor(dist) .. "m"
         drawings.Distance.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 14)
         drawings.Distance.Visible = Settings.ESPDistance
+
+        if Settings.ESPTracers then
+            drawings.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+            drawings.Tracer.To = Vector2.new(pos.X, pos.Y)
+            drawings.Tracer.Visible = true
+        else
+            drawings.Tracer.Visible = false
+        end
     end
 end)
 
@@ -291,7 +319,7 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút Tròn Toggle Icon
+-- Nút Tròn Icon
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
 ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
@@ -337,7 +365,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Universal</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Universal v3</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
@@ -400,7 +428,7 @@ for i, name in ipairs(Tabs) do
     end)
 end
 
--- UI Component Helpers
+-- UI Helpers
 local function CreateToggle(parent, text, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -4, 0, 32)
@@ -490,12 +518,13 @@ local function CreateButton(parent, text, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
---==================== GÁN CHỨC NĂNG VÀO TABS ====================--
+--==================== GÁN TÍNH NĂNG VÀO TABS ====================--
 
 -- Tab Combat
-CreateToggle(Pages["Combat"], "Aimbot Lock Head (Tự Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
-CreateInput(Pages["Combat"], "Chỉnh Kích Thước FOV Aim", 120, 800, function(v) Settings.AimbotFOV = v end)
+CreateToggle(Pages["Combat"], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
+CreateInput(Pages["Combat"], "Kích Thước FOV Aim", 120, 800, function(v) Settings.AimbotFOV = v end)
 CreateToggle(Pages["Combat"], "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
+CreateInput(Pages["Combat"], "Kích Thước Hitbox (Max 500)", 20, 500, function(v) Settings.HitboxSize = v end)
 
 -- Tab ESP
 CreateToggle(Pages["ESP"], "Bật ESP Tổng", false, function(v) Settings.ESP = v end)
@@ -503,18 +532,21 @@ CreateToggle(Pages["ESP"], "Khung ESP (Box)", true, function(v) Settings.ESPBox 
 CreateToggle(Pages["ESP"], "Tên Người Chơi", true, function(v) Settings.ESPName = v end)
 CreateToggle(Pages["ESP"], "Thanh Máu (HP)", true, function(v) Settings.ESPHealth = v end)
 CreateToggle(Pages["ESP"], "Khoảng Cách (Distance)", true, function(v) Settings.ESPDistance = v end)
+CreateToggle(Pages["ESP"], "Đường Kẻ (Tracers)", false, function(v) Settings.ESPTracers = v end)
 
 -- Tab Player
 CreateToggle(Pages["Player"], "Bật Tăng Tốc Chạy", false, function(v) Settings.Speed = v SetSpeed(v) end)
-CreateInput(Pages["Player"], "Tốc Độ Chạy (Khuyên dùng <100)", 28, 500, function(v) Settings.SpeedValue = v end)
+CreateInput(Pages["Player"], "Tốc Độ Chạy (Max 500)", 28, 500, function(v) Settings.SpeedValue = v end)
 
-CreateToggle(Pages["Player"], "Bật Chức Năng Bay (Fly chuẩn)", false, function(v) SetFly(v) end)
-CreateInput(Pages["Player"], "Nhập Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
+CreateToggle(Pages["Player"], "Bật Fly (Bay chuẩn)", false, function(v) SetFly(v) end)
+CreateInput(Pages["Player"], "Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
 
+CreateToggle(Pages["Player"], "Nhảy Không Giới Hạn (Inf Jump)", false, function(v) Settings.InfiniteJump = v end)
+CreateToggle(Pages["Player"], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
 CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
 
 -- Tab Teleport
-CreateButton(Pages["Teleport"], "Dịch Chuyển Tới Người Chơi Ngẫu Nhiên", function()
+CreateButton(Pages["Teleport"], "Dịch Chuyển Tới Người Ngẫu Nhiên", function()
     local plrs = Players:GetPlayers()
     for _, target in ipairs(plrs) do
         if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
@@ -531,4 +563,20 @@ CreateToggle(Pages["Misc"], "Nhìn Trong Đêm (Fullbright)", false, function(v)
 end)
 CreateToggle(Pages["Misc"], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
 
-print("Zaka Hub Fixed Fly Loaded!")
+CreateButton(Pages["Misc"], "Vào Lại Server (Rejoin)", function()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end)
+
+CreateButton(Pages["Misc"], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
+    pcall(function()
+        local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data
+        for _, s in ipairs(servers) do
+            if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+                break
+            end
+        end
+    end)
+end)
+
+print("Zaka Hub Universal v3 Loaded Successfully!")
