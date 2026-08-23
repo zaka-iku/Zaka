@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUB UNIVERSAL - V3 ADVANCED                   ║
-    ║   Hitbox 500 + Inf Jump + SpinBot + Tracers + Server Hop      ║
+    ║             ZAKA HUB UNIVERSAL - V4 TROLL ULTIMATE             ║
+    ║   Merged Delta X Troll Menu + Hitbox 500 + Fly Fixed + ESP     ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -43,15 +43,16 @@ local Settings = {
     InfiniteJump = false,
     SpinBot = false,
     SpinSpeed = 40,
-    ClickTP = false,
+    JumpPowerVal = 100,
 
-    -- Misc
+    -- Misc & Troll
     Fullbright = false,
     AntiAFK = true,
+    GodMode = false,
 }
 
 --==================== BIẾN HỆ THỐNG ====================--
-local NoclipConn, SpeedConn, FlyConn
+local NoclipConn, SpeedConn, FlyConn, GodConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 
@@ -217,6 +218,55 @@ local function TeleportTo(position)
     end
 end
 
+--==================== TROLL MENU FUNCTIONS ====================--
+local function KillAll()
+    pcall(function()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
+            end
+        end
+    end)
+end
+
+local function BringAll()
+    pcall(function()
+        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myRoot then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+                    if rootPart then
+                        rootPart.CFrame = myRoot.CFrame + Vector3.new(3, 0, 3)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function SetGodMode(state)
+    Settings.GodMode = state
+    if GodConn then GodConn:Disconnect() GodConn = nil end
+    if state then
+        pcall(function()
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.MaxHealth = math.huge
+                hum.Health = math.huge
+                GodConn = hum.HealthChanged:Connect(function()
+                    if Settings.GodMode and hum.Health < hum.MaxHealth then
+                        hum.Health = hum.MaxHealth
+                    end
+                end)
+            end
+        end)
+    end
+end
+
 --==================== HỆ THỐNG ESP ====================--
 local function CreateESP(plr)
     if ESPObjects[plr] then return end
@@ -319,7 +369,7 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút Tròn Icon
+-- Nút Tròn Icon Toggle
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
 ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
@@ -341,8 +391,8 @@ IconStroke.Transparency = 0.5
 
 -- Main Frame
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 310, 0, 320)
-Main.Position = UDim2.new(0.5, -155, 0.5, -160)
+Main.Size = UDim2.new(0, 320, 0, 330)
+Main.Position = UDim2.new(0.5, -160, 0.5, -165)
 Main.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 Main.Active = true
 Main.Draggable = true
@@ -365,7 +415,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Universal v3</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v4</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
@@ -380,7 +430,7 @@ TabFrame.Position = UDim2.new(0, 6, 0, 42)
 TabFrame.BackgroundTransparency = 1
 TabFrame.Parent = Main
 
-local Tabs = {"Combat", "ESP", "Player", "Teleport", "Misc"}
+local Tabs = {"Combat", "ESP", "Player", "Troll", "Misc"}
 local CurrentTab = "Combat"
 local TabButtons, Pages = {}, {}
 
@@ -541,12 +591,34 @@ CreateInput(Pages["Player"], "Tốc Độ Chạy (Max 500)", 28, 500, function(v
 CreateToggle(Pages["Player"], "Bật Fly (Bay chuẩn)", false, function(v) SetFly(v) end)
 CreateInput(Pages["Player"], "Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
 
+CreateButton(Pages["Player"], "Chỉnh Jump Power: 100", function()
+    pcall(function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.UseJumpPower = true
+            hum.JumpPower = 100
+        end
+    end)
+end)
+
 CreateToggle(Pages["Player"], "Nhảy Không Giới Hạn (Inf Jump)", false, function(v) Settings.InfiniteJump = v end)
 CreateToggle(Pages["Player"], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
 CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
 
--- Tab Teleport
-CreateButton(Pages["Teleport"], "Dịch Chuyển Tới Người Ngẫu Nhiên", function()
+-- Tab Troll (Thêm các tính năng từ Troll Menu)
+CreateButton(Pages["Troll"], "Kill All (Tiêu diệt tất cả)", function()
+    KillAll()
+end)
+
+CreateButton(Pages["Troll"], "Bring All (Kéo tất cả lại gần)", function()
+    BringAll()
+end)
+
+CreateToggle(Pages["Troll"], "Bật God Mode (Client)", false, function(v)
+    SetGodMode(v)
+end)
+
+CreateButton(Pages["Troll"], "Dịch Chuyển Tới Người Ngẫu Nhiên", function()
     local plrs = Players:GetPlayers()
     for _, target in ipairs(plrs) do
         if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
@@ -579,4 +651,4 @@ CreateButton(Pages["Misc"], "Đổi Server Ngẫu Nhiên (Server Hop)", function
     end)
 end)
 
-print("Zaka Hub Universal v3 Loaded Successfully!")
+print("Zaka Hub Ultimate v4 Loaded Successfully!")
