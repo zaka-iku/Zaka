@@ -1,6 +1,6 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║                  ZAKA HUD ULTIMATE - V1.0                      ║
+    ║             ZAKA HUD ULTIMATE - V1.0 (FIX MOUNT)               ║
     ║    Custom Item + Fire Dragon Mount + Full Utility & Magic      ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
@@ -109,7 +109,7 @@ local function SetTouchTP(state)
     end
 end
 
---==================== ITEM & KĨ NĂNG MỚI (BÔNG HOA & RỒNG LỬA) ====================--
+--==================== ITEM & KĨ NĂNG MỚI (BÔNG HOA & RỒNG LỬA FIX) ====================--
 
 -- 1. Bông Hoa Lịch Sự Trân Trọng Game (Gentleman Flower)
 local function SetGentlemanFlower(state)
@@ -124,7 +124,6 @@ local function SetGentlemanFlower(state)
         local flowerModel = Instance.new("Model")
         flowerModel.Name = "GentlemanFlowerModel"
 
-        -- Thân hoa
         local stem = Instance.new("Part")
         stem.Name = "Stem"
         stem.Size = Vector3.new(0.15, 1.8, 0.15)
@@ -133,7 +132,6 @@ local function SetGentlemanFlower(state)
         stem.CanCollide = false
         stem.Parent = flowerModel
 
-        -- Bông hoa hồng
         local rose = Instance.new("Part")
         rose.Name = "RoseHead"
         rose.Shape = Enum.PartType.Ball
@@ -143,14 +141,12 @@ local function SetGentlemanFlower(state)
         rose.CanCollide = false
         rose.Parent = flowerModel
 
-        -- Hàn phần thân và bông
         local stemWeld = Instance.new("Weld")
         stemWeld.Part0 = stem
         stemWeld.Part1 = rose
         stemWeld.C0 = CFrame.new(0, 0.9, 0)
         stemWeld.Parent = rose
 
-        -- Hiệu ứng cánh hoa rơi (Particles)
         local petals = Instance.new("ParticleEmitter")
         petals.Texture = "rbxassetid://241837157"
         petals.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180), Color3.fromRGB(255, 192, 203))
@@ -160,7 +156,6 @@ local function SetGentlemanFlower(state)
         petals.Lifetime = NumberRange.new(1.5, 3)
         petals.Parent = rose
 
-        -- Hàn hoa vào tay
         local handWeld = Instance.new("Weld")
         handWeld.Part0 = hand
         handWeld.Part1 = stem
@@ -175,7 +170,7 @@ local function SetGentlemanFlower(state)
     end
 end
 
--- 2. Kỹ Năng Cưỡi Rồng Lửa (Fire Dragon Mount)
+-- 2. Kỹ Năng Cưỡi Rồng Lửa (Fire Dragon Mount - Fixed Anti-Map Delete)
 local function SetFireDragonMount(state)
     Settings.FireDragonMount = state
     local char = LocalPlayer.Character
@@ -183,78 +178,95 @@ local function SetFireDragonMount(state)
     local root = char.HumanoidRootPart
 
     if state then
-        local dragon = Instance.new("Model")
+        -- Dọn dẹp rồng cũ nếu có
+        if char:FindFirstChild("FEFireDragonMount") then
+            char.FEFireDragonMount:Destroy()
+        end
+
+        local dragon = Instance.new("Accessory")
         dragon.Name = "FEFireDragonMount"
 
-        -- Thân rồng
-        local body = Instance.new("Part")
-        body.Name = "DragonBody"
-        body.Size = Vector3.new(4, 3, 10)
-        body.Color = Color3.fromRGB(180, 0, 0)
-        body.Material = Enum.Material.SmoothPlastic
-        body.CanCollide = false
-        body.Parent = dragon
+        local handle = Instance.new("Part")
+        handle.Name = "Handle"
+        handle.Size = Vector3.new(4, 2, 8)
+        handle.Color = Color3.fromRGB(200, 0, 0)
+        handle.Material = Enum.Material.Neon
+        handle.CanCollide = false
+        handle.CanTouch = false
+        handle.Massless = true
+        handle.Parent = dragon
 
-        -- Đầu rồng
+        -- Đầu Rồng
         local head = Instance.new("Part")
         head.Name = "DragonHead"
         head.Size = Vector3.new(3, 2.5, 4)
-        head.Color = Color3.fromRGB(220, 20, 0)
+        head.Color = Color3.fromRGB(255, 50, 0)
         head.Material = Enum.Material.Neon
         head.CanCollide = false
+        head.CanTouch = false
+        head.Massless = true
         head.Parent = dragon
 
         local headWeld = Instance.new("Weld")
-        headWeld.Part0 = body
+        headWeld.Part0 = handle
         headWeld.Part1 = head
-        headWeld.C0 = CFrame.new(0, 1, -6)
+        headWeld.C0 = CFrame.new(0, 1, -5)
         headWeld.Parent = head
 
-        -- Hiệu ứng lửa phun ra từ miệng rồng
+        -- Phun lửa
         local dragonFire = Instance.new("Fire")
-        dragonFire.Size = 12
-        dragonFire.Heat = 20
-        dragonFire.Color = Color3.fromRGB(255, 100, 0)
+        dragonFire.Size = 10
+        dragonFire.Heat = 15
+        dragonFire.Color = Color3.fromRGB(255, 120, 0)
         dragonFire.SecondaryColor = Color3.fromRGB(255, 230, 0)
         dragonFire.Parent = head
 
         -- Cánh Rồng Trái / Phải
         local leftWing = Instance.new("Part")
-        leftWing.Size = Vector3.new(12, 0.2, 5)
-        leftWing.Color = Color3.fromRGB(255, 60, 0)
+        leftWing.Size = Vector3.new(10, 0.2, 4)
+        leftWing.Color = Color3.fromRGB(255, 30, 0)
         leftWing.Material = Enum.Material.Neon
         leftWing.CanCollide = false
+        leftWing.CanTouch = false
+        leftWing.Massless = true
         leftWing.Parent = dragon
 
         local lWeld = Instance.new("Weld")
-        lWeld.Part0 = body
+        lWeld.Part0 = handle
         lWeld.Part1 = leftWing
-        lWeld.C0 = CFrame.new(-7, 1.5, 0) * CFrame.Angles(0, 0, math.rad(15))
+        lWeld.C0 = CFrame.new(-6, 1, 0) * CFrame.Angles(0, 0, math.rad(15))
         lWeld.Parent = leftWing
 
         local rightWing = Instance.new("Part")
-        rightWing.Size = Vector3.new(12, 0.2, 5)
-        rightWing.Color = Color3.fromRGB(255, 60, 0)
+        rightWing.Size = Vector3.new(10, 0.2, 4)
+        rightWing.Color = Color3.fromRGB(255, 30, 0)
         rightWing.Material = Enum.Material.Neon
         rightWing.CanCollide = false
+        rightWing.CanTouch = false
+        rightWing.Massless = true
         rightWing.Parent = dragon
 
         local rWeld = Instance.new("Weld")
-        rWeld.Part0 = body
+        rWeld.Part0 = handle
         rWeld.Part1 = rightWing
-        rWeld.C0 = CFrame.new(7, 1.5, 0) * CFrame.Angles(0, 0, math.rad(-15))
+        rWeld.C0 = CFrame.new(6, 1, 0) * CFrame.Angles(0, 0, math.rad(-15))
         rWeld.Parent = rightWing
 
-        -- Gắn rồng vào dưới chân người chơi
-        local mountWeld = Instance.new("Weld")
-        mountWeld.Part0 = root
-        mountWeld.Part1 = body
-        mountWeld.C0 = CFrame.new(0, -3.5, 0)
-        mountWeld.Parent = body
+        -- Weld Rồng vào Thân
+        local attachment = Instance.new("Attachment")
+        attachment.Name = "BodyBackAttachment"
+        attachment.Parent = handle
 
         dragon.Parent = char
 
-        -- Cơ chế bay cùng rồng
+        local mountWeld = Instance.new("Weld")
+        mountWeld.Name = "DragonMountWeld"
+        mountWeld.Part0 = root
+        mountWeld.Part1 = handle
+        mountWeld.C0 = CFrame.new(0, -3.2, 0)
+        mountWeld.Parent = handle
+
+        -- Bay bằng Rồng
         BodyGyro = Instance.new("BodyGyro")
         BodyGyro.P = 9e4
         BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -1063,7 +1075,7 @@ CreateToggle(Pages[5], "Bật Dropkick (Đá Văng FE)", false, function(v) SetD
 CreateInput(Pages[5], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
 
 -- Tab 6: Magic (Kỹ Năng Magic & Cưỡi Rồng)
-CreateToggle(Pages[6], "Cưỡi Rồng Lửa Bay Lượn FE", false, function(v) SetFireDragonMount(v) end)
+CreateToggle(Pages[6], "Cưỡi Rồng Lửa Bay Lượn FE (Fix)", false, function(v) SetFireDragonMount(v) end)
 CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game", false, function(v) SetGentlemanFlower(v) end)
 CreateToggle(Pages[6], "Khiên Cầu Vồng + Cánh Thiên Thần", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Triệu Hồi Lửa Rồng Quanh Thân", false, function(v) SetFireAura(v) end)
@@ -1096,4 +1108,4 @@ CreateButton(Pages[8], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     end)
 end)
 
-print("Zaka Hud ZakahudV1.0 Loaded Successfully!")
+print("Zaka Hud ZakahudV1.0 Fixed Mount Successfully!")
