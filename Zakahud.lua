@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUB UNIVERSAL - V5 MAGIC & DROPKICK           ║
-    ║   Dropkick FE (10000) + Magic Aura & Stomp + Universal Hub     ║
+    ║             ZAKA HUB UNIVERSAL - V6 SMOOTH & MAGIC             ║
+    ║   Tab Sliding Animations + Fire / Cage / Shield / Shockwave    ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -52,6 +52,8 @@ local Settings = {
 
     -- Magic
     MagicAura = false,
+    FireAura = false,
+    Shield = false,
 
     -- Misc
     Fullbright = false,
@@ -62,7 +64,6 @@ local Settings = {
 local NoclipConn, SpeedConn, FlyConn, GodConn, DropkickConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
-local AuraParts = {}
 
 -- Anti AFK
 LocalPlayer.Idled:Connect(function()
@@ -76,9 +77,7 @@ end)
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
@@ -183,9 +182,7 @@ end
 
 local function SetFly(state)
     Settings.Fly = state
-    if state then
-        StartFly()
-    else
+    if state then StartFly() else
         if BodyGyro then BodyGyro:Destroy() end
         if BodyVelocity then BodyVelocity:Destroy() end
         if FlyConn then FlyConn:Disconnect() end
@@ -219,14 +216,7 @@ local function SetNoclip(state)
     end
 end
 
-local function TeleportTo(position)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(position + Vector3.new(0, 3, 0))
-    end
-end
-
---==================== DROPKICK SYSTEM ====================--
+--==================== DROPKICK & TROLL ====================--
 local function SetDropkick(state)
     Settings.Dropkick = state
     if DropkickConn then DropkickConn:Disconnect() DropkickConn = nil end
@@ -244,7 +234,6 @@ local function SetDropkick(state)
                     if dist <= 12 then
                         local flingVel = (targetRoot.Position - root.Position).Unit * Settings.DropkickPower
                         flingVel = Vector3.new(flingVel.X, Settings.DropkickPower / 2, flingVel.Z)
-                        
                         root.AssemblyLinearVelocity = flingVel
                         root.AssemblyAngularVelocity = Vector3.new(Settings.DropkickPower, Settings.DropkickPower, Settings.DropkickPower)
                     end
@@ -259,22 +248,24 @@ local function SetDropkick(state)
     end
 end
 
---==================== MAGIC SYSTEM (HÀO QUANG & GIẬM CHÂN) ====================--
+--==================== HỆ THỐNG PHÉP THUẬT (MAGIC POWERS) ====================--
+
+-- 1. Hào Quang Phép Thuật (Magic Aura)
 local function SetMagicAura(state)
     Settings.MagicAura = state
     local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
+    if not char then return end
 
     if state then
-        -- Tạo Vòng Tròn Phép Thuật
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
         local ring = Instance.new("Part")
         ring.Name = "MagicAuraRing"
         ring.Size = Vector3.new(8, 0.2, 8)
         ring.Material = Enum.Material.Neon
         ring.Color = Color3.fromRGB(0, 162, 255)
         ring.CanCollide = false
-        ring.Anchored = false
         ring.Parent = char
 
         local weld = Instance.new("Weld")
@@ -283,17 +274,14 @@ local function SetMagicAura(state)
         weld.C0 = CFrame.new(0, -2.5, 0)
         weld.Parent = ring
 
-        -- Hiệu Ứng Hạt Aura (Particle)
         local particles = Instance.new("ParticleEmitter")
         particles.Texture = "rbxassetid://243660364"
         particles.Color = ColorSequence.new(Color3.fromRGB(0, 200, 255), Color3.fromRGB(150, 0, 255))
-        particles.Size = NumberSequence.new(1, 0)
+        particles.Size = NumberSequence.new(1.2, 0)
         particles.Lifetime = NumberRange.new(0.5, 1.2)
-        particles.Rate = 30
+        particles.Rate = 35
         particles.Speed = NumberRange.new(2, 5)
         particles.Parent = ring
-
-        table.insert(AuraParts, ring)
     else
         for _, p in ipairs(char:GetChildren()) do
             if p.Name == "MagicAuraRing" then p:Destroy() end
@@ -301,12 +289,119 @@ local function SetMagicAura(state)
     end
 end
 
+-- 2. Hỏa Thuật (Tạo Lửa Bao Quanh)
+local function SetFireAura(state)
+    Settings.FireAura = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        for _, part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                local fire = Instance.new("Fire")
+                fire.Name = "MagicFireEffect"
+                fire.Size = 6
+                fire.Heat = 12
+                fire.Color = Color3.fromRGB(255, 100, 0)
+                fire.SecondaryColor = Color3.fromRGB(255, 230, 0)
+                fire.Parent = part
+            end
+        end
+    else
+        for _, part in ipairs(char:GetDescendants()) do
+            if part.Name == "MagicFireEffect" then part:Destroy() end
+        end
+    end
+end
+
+-- 3. Khiên Phép Bảo Vệ (Magic Shield)
+local function SetMagicShield(state)
+    Settings.Shield = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local shield = Instance.new("Part")
+        shield.Name = "MagicShieldSphere"
+        shield.Shape = Enum.PartType.Ball
+        shield.Size = Vector3.new(10, 10, 10)
+        shield.Material = Enum.Material.ForceField
+        shield.Color = Color3.fromRGB(0, 255, 200)
+        shield.Transparency = 0.3
+        shield.CanCollide = false
+        shield.Parent = char
+
+        local weld = Instance.new("Weld")
+        weld.Part0 = root
+        weld.Part1 = shield
+        weld.C0 = CFrame.new(0, 0, 0)
+        weld.Parent = shield
+    else
+        for _, p in ipairs(char:GetChildren()) do
+            if p.Name == "MagicShieldSphere" then p:Destroy() end
+        end
+    end
+end
+
+-- 4. Lồng Nhốt Người Chơi Gần Nhất (Magic Cage)
+local function CreateMagicCage()
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+
+    local targetPlayer = nil
+    local closestDist = 40
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                targetPlayer = plr
+            end
+        end
+    end
+
+    if targetPlayer and targetPlayer.Character then
+        local targetRoot = targetPlayer.Character.HumanoidRootPart
+        local cageModel = Instance.new("Model")
+        cageModel.Name = "MagicCageContainer"
+
+        local cagePos = targetRoot.Position
+        local size = 8
+
+        local function makeWall(cf, s)
+            local wall = Instance.new("Part")
+            wall.Size = s
+            wall.CFrame = cf
+            wall.Material = Enum.Material.Neon
+            wall.Color = Color3.fromRGB(180, 0, 255)
+            wall.Transparency = 0.4
+            wall.Anchored = true
+            wall.CanCollide = true
+            wall.Parent = cageModel
+        end
+
+        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size)) -- Sàn
+        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))  -- Trần
+        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))  -- Tường 1
+        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size)) -- Tường 2
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))  -- Tường 3
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5)) -- Tường 4
+
+        cageModel.Parent = workspace
+        task.delay(10, function() cageModel:Destroy() end)
+    end
+end
+
+-- 5. Giậm Chân Sóng Xung Kích
 local function GroundStompShockwave()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
 
-    -- Tạo Vòng Sóng Xung Kích
     local wave = Instance.new("Part")
     wave.Shape = Enum.PartType.Cylinder
     wave.Size = Vector3.new(0.5, 2, 2)
@@ -317,76 +412,26 @@ local function GroundStompShockwave()
     wave.Anchored = true
     wave.Parent = workspace
 
-    -- Hiệu ứng Phóng To và Biến Mất
-    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(wave, tweenInfo, {
-        Size = Vector3.new(0.5, 45, 45),
+    local tween = TweenService:Create(wave, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(0.5, 50, 50),
         Transparency = 1
     })
     tween:Play()
     tween.Completed:Connect(function() wave:Destroy() end)
 
-    -- Hất Văng Mục Tiêu Xung Quanh
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local targetRoot = plr.Character.HumanoidRootPart
             local dist = (targetRoot.Position - root.Position).Magnitude
-            if dist <= 25 then
+            if dist <= 30 then
                 local pushDir = (targetRoot.Position - root.Position).Unit
-                targetRoot.AssemblyLinearVelocity = (pushDir * 150) + Vector3.new(0, 100, 0)
+                targetRoot.AssemblyLinearVelocity = (pushDir * 180) + Vector3.new(0, 120, 0)
             end
         end
     end
 end
 
---==================== TROLL MENU FUNCTIONS ====================--
-local function KillAll()
-    pcall(function()
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then humanoid.Health = 0 end
-            end
-        end
-    end)
-end
-
-local function BringAll()
-    pcall(function()
-        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if myRoot then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character then
-                    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-                    if rootPart then
-                        rootPart.CFrame = myRoot.CFrame + Vector3.new(3, 0, 3)
-                    end
-                end
-            end
-        end
-    end)
-end
-
-local function SetGodMode(state)
-    Settings.GodMode = state
-    if GodConn then GodConn:Disconnect() GodConn = nil end
-    if state then
-        pcall(function()
-            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.MaxHealth = math.huge
-                hum.Health = math.huge
-                GodConn = hum.HealthChanged:Connect(function()
-                    if Settings.GodMode and hum.Health < hum.MaxHealth then
-                        hum.Health = hum.MaxHealth
-                    end
-                end)
-            end
-        end)
-    end
-end
-
---==================== HỆ THỐNG ESP ====================--
+--==================== ESP SYSTEM ====================--
 local function CreateESP(plr)
     if ESPObjects[plr] then return end
     local t = {
@@ -481,7 +526,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---==================== GIAO DIỆN ONE UI ====================--
+--==================== GIAO DIỆN ONE UI ANIMATED ====================--
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZakaHub_UI"
 ScreenGui.ResetOnSpawn = false
@@ -491,33 +536,38 @@ if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("Player
 -- Nút Icon Toggle
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
-ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
+ToggleIcon.Size = UDim2.new(0, 44, 0, 44)
 ToggleIcon.Position = UDim2.new(0, 15, 0.4, 0)
 ToggleIcon.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
 ToggleIcon.Text = "Z"
 ToggleIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleIcon.Font = Enum.Font.GothamBold
-ToggleIcon.TextSize = 20
+ToggleIcon.TextSize = 22
 ToggleIcon.Active = true
 ToggleIcon.Draggable = true
 ToggleIcon.Parent = ScreenGui
-
 Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
+
 local IconStroke = Instance.new("UIStroke", ToggleIcon)
 IconStroke.Color = Color3.fromRGB(255, 255, 255)
 IconStroke.Thickness = 2
-IconStroke.Transparency = 0.5
+IconStroke.Transparency = 0.4
 
 -- Main Frame
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 330, 0, 340)
-Main.Position = UDim2.new(0.5, -165, 0.5, -170)
-Main.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+Main.Size = UDim2.new(0, 335, 0, 345)
+Main.Position = UDim2.new(0.5, -167, 0.5, -172)
+Main.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
 Main.Active = true
 Main.Draggable = true
 Main.ClipsDescendants = true
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Color3.fromRGB(0, 162, 255)
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.6
 
 ToggleIcon.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
@@ -526,21 +576,29 @@ end)
 -- Top Bar
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 38)
-TopBar.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+TopBar.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
 TopBar.Parent = Main
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v5</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v6</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
 Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
+
+-- Container Cho Slide Animation
+local PageContainer = Instance.new("Frame")
+PageContainer.Size = UDim2.new(1, -12, 1, -82)
+PageContainer.Position = UDim2.new(0, 6, 0, 76)
+PageContainer.BackgroundTransparency = 1
+PageContainer.ClipsDescendants = true
+PageContainer.Parent = Main
 
 -- Tab System
 local TabFrame = Instance.new("Frame")
@@ -550,58 +608,63 @@ TabFrame.BackgroundTransparency = 1
 TabFrame.Parent = Main
 
 local Tabs = {"Combat", "ESP", "Player", "Troll", "Magic", "Misc"}
-local CurrentTab = "Combat"
+local CurrentTabIndex = 1
 local TabButtons, Pages = {}, {}
 
-local function CreatePage(name)
+local function CreatePage(name, index)
     local page = Instance.new("ScrollingFrame")
-    page.Size = UDim2.new(1, -12, 1, -78)
-    page.Position = UDim2.new(0, 6, 0, 74)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Position = UDim2.new((index - 1), 0, 0, 0)
     page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 3
+    page.ScrollBarThickness = 2
     page.ScrollBarImageColor3 = Color3.fromRGB(0, 162, 255)
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
-    page.Visible = (name == CurrentTab)
-    page.Parent = Main
+    page.Parent = PageContainer
 
     local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 5)
+    layout.Padding = UDim.new(0, 6)
     layout.Parent = page
 
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 8)
     end)
 
-    Pages[name] = page
+    Pages[index] = page
     return page
 end
+
+local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
 for i, name in ipairs(Tabs) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1 / #Tabs, -3, 1, 0)
     btn.Position = UDim2.new((i - 1) / #Tabs, 2, 0, 0)
-    btn.BackgroundColor3 = name == CurrentTab and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(28, 28, 36)
+    btn.BackgroundColor3 = i == CurrentTabIndex and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(25, 25, 34)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.Parent = TabFrame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-    TabButtons[name] = btn
-    CreatePage(name)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    TabButtons[i] = btn
+    CreatePage(name, i)
 
     btn.MouseButton1Click:Connect(function()
-        CurrentTab = name
-        for n, b in pairs(TabButtons) do b.BackgroundColor3 = n == name and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(28, 28, 36) end
-        for n, p in pairs(Pages) do p.Visible = (n == name) end
+        CurrentTabIndex = i
+        for idx, b in ipairs(TabButtons) do
+            TweenService:Create(b, tweenInfo, {BackgroundColor3 = idx == i and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(25, 25, 34)}):Play()
+        end
+        for idx, p in ipairs(Pages) do
+            TweenService:Create(p, tweenInfo, {Position = UDim2.new(idx - CurrentTabIndex, 0, 0, 0)}):Play()
+        end
     end)
 end
 
--- UI Helpers
+-- UI Component Helpers
 local function CreateToggle(parent, text, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -4, 0, 32)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    frame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
     frame.Parent = parent
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
@@ -627,7 +690,7 @@ local function CreateToggle(parent, text, default, callback)
     local enabled = default
     toggleBtn.MouseButton1Click:Connect(function()
         enabled = not enabled
-        toggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(45, 45, 55)
+        TweenService:Create(toggleBtn, tweenInfo, {BackgroundColor3 = enabled and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(45, 45, 55)}):Play()
         callback(enabled)
     end)
 end
@@ -635,7 +698,7 @@ end
 local function CreateInput(parent, text, default, maxVal, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -4, 0, 32)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    frame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
     frame.Parent = parent
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
@@ -687,73 +750,62 @@ local function CreateButton(parent, text, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
---==================== GÁN TÍNH NĂNG VÀO TABS ====================--
+--==================== THIẾT LẬP MENU CÁC TABS ====================--
 
--- Tab Combat
-CreateToggle(Pages["Combat"], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
-CreateInput(Pages["Combat"], "Kích Thước FOV Aim", 120, 800, function(v) Settings.AimbotFOV = v end)
-CreateToggle(Pages["Combat"], "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
-CreateInput(Pages["Combat"], "Kích Thước Hitbox (Max 500)", 20, 500, function(v) Settings.HitboxSize = v end)
+-- Tab 1: Combat
+CreateToggle(Pages[1], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
+CreateInput(Pages[1], "Kích Thước FOV Aim", 120, 800, function(v) Settings.AimbotFOV = v end)
+CreateToggle(Pages[1], "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
+CreateInput(Pages[1], "Kích Thước Hitbox (Max 500)", 20, 500, function(v) Settings.HitboxSize = v end)
 
--- Tab ESP
-CreateToggle(Pages["ESP"], "Bật ESP Tổng", false, function(v) Settings.ESP = v end)
-CreateToggle(Pages["ESP"], "Khung ESP (Box)", true, function(v) Settings.ESPBox = v end)
-CreateToggle(Pages["ESP"], "Tên Người Chơi", true, function(v) Settings.ESPName = v end)
-CreateToggle(Pages["ESP"], "Thanh Máu (HP)", true, function(v) Settings.ESPHealth = v end)
-CreateToggle(Pages["ESP"], "Khoảng Cách (Distance)", true, function(v) Settings.ESPDistance = v end)
-CreateToggle(Pages["ESP"], "Đường Kẻ (Tracers)", false, function(v) Settings.ESPTracers = v end)
+-- Tab 2: ESP
+CreateToggle(Pages[2], "Bật ESP Tổng", false, function(v) Settings.ESP = v end)
+CreateToggle(Pages[2], "Khung ESP (Box)", true, function(v) Settings.ESPBox = v end)
+CreateToggle(Pages[2], "Tên Người Chơi", true, function(v) Settings.ESPName = v end)
+CreateToggle(Pages[2], "Thanh Máu (HP)", true, function(v) Settings.ESPHealth = v end)
+CreateToggle(Pages[2], "Khoảng Cách (Distance)", true, function(v) Settings.ESPDistance = v end)
+CreateToggle(Pages[2], "Đường Kẻ (Tracers)", false, function(v) Settings.ESPTracers = v end)
 
--- Tab Player
-CreateToggle(Pages["Player"], "Bật Tăng Tốc Chạy", false, function(v) Settings.Speed = v SetSpeed(v) end)
-CreateInput(Pages["Player"], "Tốc Độ Chạy (Max 500)", 28, 500, function(v) Settings.SpeedValue = v end)
+-- Tab 3: Player
+CreateToggle(Pages[3], "Bật Tăng Tốc Chạy", false, function(v) Settings.Speed = v SetSpeed(v) end)
+CreateInput(Pages[3], "Tốc Độ Chạy (Max 500)", 28, 500, function(v) Settings.SpeedValue = v end)
+CreateToggle(Pages[3], "Bật Fly (Bay chuẩn)", false, function(v) SetFly(v) end)
+CreateInput(Pages[3], "Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
+CreateToggle(Pages[3], "Nhảy Không Giới Hạn (Inf Jump)", false, function(v) Settings.InfiniteJump = v end)
+CreateToggle(Pages[3], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
+CreateToggle(Pages[3], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
 
-CreateToggle(Pages["Player"], "Bật Fly (Bay chuẩn)", false, function(v) SetFly(v) end)
-CreateInput(Pages["Player"], "Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
-
-CreateButton(Pages["Player"], "Chỉnh Jump Power: 100", function()
+-- Tab 4: Troll
+CreateToggle(Pages[4], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
+CreateInput(Pages[4], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
+CreateButton(Pages[4], "Tải Dropkick RawScript Phủ Khắp", function()
+    pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))() end)
+end)
+CreateButton(Pages[4], "Kill All (Tiêu diệt tất cả)", function()
     pcall(function()
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.UseJumpPower = true
-            hum.JumpPower = 100
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+                player.Character:FindFirstChildOfClass("Humanoid").Health = 0
+            end
         end
     end)
 end)
 
-CreateToggle(Pages["Player"], "Nhảy Không Giới Hạn (Inf Jump)", false, function(v) Settings.InfiniteJump = v end)
-CreateToggle(Pages["Player"], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
-CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
+-- Tab 5: Magic
+CreateToggle(Pages[5], "Hào Quang Ma Thuật (Magic Aura)", false, function(v) SetMagicAura(v) end)
+CreateToggle(Pages[5], "Triệu Hồi Lửa Quanh Thân (Fire)", false, function(v) SetFireAura(v) end)
+CreateToggle(Pages[5], "Khiên Phép Bảo Vệ (Shield)", false, function(v) SetMagicShield(v) end)
+CreateButton(Pages[5], "Tạo Lồng Nhốt Người Gần Nhất", function() CreateMagicCage() end)
+CreateButton(Pages[5], "Sóng Xung Kích Giậm Chân", function() GroundStompShockwave() end)
 
--- Tab Troll
-CreateToggle(Pages["Troll"], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
-CreateInput(Pages["Troll"], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
-
-CreateButton(Pages["Troll"], "Tải Dropkick RawScript Phủ Khắp", function()
-    pcall(function()
-        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
-    end)
-end)
-
-CreateButton(Pages["Troll"], "Kill All (Tiêu diệt tất cả)", function() KillAll() end)
-CreateButton(Pages["Troll"], "Bring All (Kéo tất cả lại gần)", function() BringAll() end)
-CreateToggle(Pages["Troll"], "Bật God Mode (Client)", false, function(v) SetGodMode(v) end)
-
--- Tab Magic (Sức Mạnh Phép Thuật)
-CreateToggle(Pages["Magic"], "Hào Quang Ma Thuật (Magic Aura)", false, function(v) SetMagicAura(v) end)
-CreateButton(Pages["Magic"], "Sóng Xung Kích Giậm Chân (Shockwave)", function() GroundStompShockwave() end)
-
--- Tab Misc
-CreateToggle(Pages["Misc"], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
+-- Tab 6: Misc
+CreateToggle(Pages[6], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
     Lighting.Brightness = v and 2 or 1 
     Lighting.ClockTime = v and 14 or 12
 end)
-CreateToggle(Pages["Misc"], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
-
-CreateButton(Pages["Misc"], "Vào Lại Server (Rejoin)", function()
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-end)
-
-CreateButton(Pages["Misc"], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
+CreateToggle(Pages[6], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
+CreateButton(Pages[6], "Vào Lại Server (Rejoin)", function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+CreateButton(Pages[6], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     pcall(function()
         local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data
         for _, s in ipairs(servers) do
@@ -765,4 +817,4 @@ CreateButton(Pages["Misc"], "Đổi Server Ngẫu Nhiên (Server Hop)", function
     end)
 end)
 
-print("Zaka Hub Ultimate v5 Loaded Successfully!")
+print("Zaka Hub Ultimate v6 Smooth & Magic Loaded!")
