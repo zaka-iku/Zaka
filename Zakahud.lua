@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUB UNIVERSAL - V4 TROLL ULTIMATE             ║
-    ║   Merged Delta X Troll Menu + Hitbox 500 + Fly Fixed + ESP     ║
+    ║             ZAKA HUB UNIVERSAL - V5 MAGIC & DROPKICK           ║
+    ║   Dropkick FE (10000) + Magic Aura & Stomp + Universal Hub     ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -12,6 +12,7 @@ local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -43,18 +44,25 @@ local Settings = {
     InfiniteJump = false,
     SpinBot = false,
     SpinSpeed = 40,
-    JumpPowerVal = 100,
 
-    -- Misc & Troll
+    -- Troll & Dropkick
+    Dropkick = false,
+    DropkickPower = 3000,
+    GodMode = false,
+
+    -- Magic
+    MagicAura = false,
+
+    -- Misc
     Fullbright = false,
     AntiAFK = true,
-    GodMode = false,
 }
 
 --==================== BIẾN HỆ THỐNG ====================--
-local NoclipConn, SpeedConn, FlyConn, GodConn
+local NoclipConn, SpeedConn, FlyConn, GodConn, DropkickConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
+local AuraParts = {}
 
 -- Anti AFK
 LocalPlayer.Idled:Connect(function()
@@ -218,15 +226,126 @@ local function TeleportTo(position)
     end
 end
 
+--==================== DROPKICK SYSTEM ====================--
+local function SetDropkick(state)
+    Settings.Dropkick = state
+    if DropkickConn then DropkickConn:Disconnect() DropkickConn = nil end
+
+    if state then
+        DropkickConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local root = char.HumanoidRootPart
+
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetRoot = plr.Character.HumanoidRootPart
+                    local dist = (targetRoot.Position - root.Position).Magnitude
+                    if dist <= 12 then
+                        local flingVel = (targetRoot.Position - root.Position).Unit * Settings.DropkickPower
+                        flingVel = Vector3.new(flingVel.X, Settings.DropkickPower / 2, flingVel.Z)
+                        
+                        root.AssemblyLinearVelocity = flingVel
+                        root.AssemblyAngularVelocity = Vector3.new(Settings.DropkickPower, Settings.DropkickPower, Settings.DropkickPower)
+                    end
+                end
+            end
+        end)
+    else
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0,0,0)
+        end
+    end
+end
+
+--==================== MAGIC SYSTEM (HÀO QUANG & GIẬM CHÂN) ====================--
+local function SetMagicAura(state)
+    Settings.MagicAura = state
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+
+    if state then
+        -- Tạo Vòng Tròn Phép Thuật
+        local ring = Instance.new("Part")
+        ring.Name = "MagicAuraRing"
+        ring.Size = Vector3.new(8, 0.2, 8)
+        ring.Material = Enum.Material.Neon
+        ring.Color = Color3.fromRGB(0, 162, 255)
+        ring.CanCollide = false
+        ring.Anchored = false
+        ring.Parent = char
+
+        local weld = Instance.new("Weld")
+        weld.Part0 = root
+        weld.Part1 = ring
+        weld.C0 = CFrame.new(0, -2.5, 0)
+        weld.Parent = ring
+
+        -- Hiệu Ứng Hạt Aura (Particle)
+        local particles = Instance.new("ParticleEmitter")
+        particles.Texture = "rbxassetid://243660364"
+        particles.Color = ColorSequence.new(Color3.fromRGB(0, 200, 255), Color3.fromRGB(150, 0, 255))
+        particles.Size = NumberSequence.new(1, 0)
+        particles.Lifetime = NumberRange.new(0.5, 1.2)
+        particles.Rate = 30
+        particles.Speed = NumberRange.new(2, 5)
+        particles.Parent = ring
+
+        table.insert(AuraParts, ring)
+    else
+        for _, p in ipairs(char:GetChildren()) do
+            if p.Name == "MagicAuraRing" then p:Destroy() end
+        end
+    end
+end
+
+local function GroundStompShockwave()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+
+    -- Tạo Vòng Sóng Xung Kích
+    local wave = Instance.new("Part")
+    wave.Shape = Enum.PartType.Cylinder
+    wave.Size = Vector3.new(0.5, 2, 2)
+    wave.CFrame = root.CFrame * CFrame.Angles(0, 0, math.rad(90))
+    wave.Material = Enum.Material.Neon
+    wave.Color = Color3.fromRGB(0, 220, 255)
+    wave.CanCollide = false
+    wave.Anchored = true
+    wave.Parent = workspace
+
+    -- Hiệu ứng Phóng To và Biến Mất
+    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(wave, tweenInfo, {
+        Size = Vector3.new(0.5, 45, 45),
+        Transparency = 1
+    })
+    tween:Play()
+    tween.Completed:Connect(function() wave:Destroy() end)
+
+    -- Hất Văng Mục Tiêu Xung Quanh
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local targetRoot = plr.Character.HumanoidRootPart
+            local dist = (targetRoot.Position - root.Position).Magnitude
+            if dist <= 25 then
+                local pushDir = (targetRoot.Position - root.Position).Unit
+                targetRoot.AssemblyLinearVelocity = (pushDir * 150) + Vector3.new(0, 100, 0)
+            end
+        end
+    end
+end
+
 --==================== TROLL MENU FUNCTIONS ====================--
 local function KillAll()
     pcall(function()
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character then
                 local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.Health = 0
-                end
+                if humanoid then humanoid.Health = 0 end
             end
         end
     end)
@@ -369,7 +488,7 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút Tròn Icon Toggle
+-- Nút Icon Toggle
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
 ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
@@ -391,8 +510,8 @@ IconStroke.Transparency = 0.5
 
 -- Main Frame
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 320, 0, 330)
-Main.Position = UDim2.new(0.5, -160, 0.5, -165)
+Main.Size = UDim2.new(0, 330, 0, 340)
+Main.Position = UDim2.new(0.5, -165, 0.5, -170)
 Main.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 Main.Active = true
 Main.Draggable = true
@@ -415,7 +534,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v4</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v5</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
@@ -430,7 +549,7 @@ TabFrame.Position = UDim2.new(0, 6, 0, 42)
 TabFrame.BackgroundTransparency = 1
 TabFrame.Parent = Main
 
-local Tabs = {"Combat", "ESP", "Player", "Troll", "Misc"}
+local Tabs = {"Combat", "ESP", "Player", "Troll", "Magic", "Misc"}
 local CurrentTab = "Combat"
 local TabButtons, Pages = {}, {}
 
@@ -464,7 +583,7 @@ for i, name in ipairs(Tabs) do
     btn.BackgroundColor3 = name == CurrentTab and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(28, 28, 36)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 10
+    btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.Parent = TabFrame
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
@@ -605,28 +724,23 @@ CreateToggle(Pages["Player"], "Nhảy Không Giới Hạn (Inf Jump)", false, fu
 CreateToggle(Pages["Player"], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
 CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
 
--- Tab Troll (Thêm các tính năng từ Troll Menu)
-CreateButton(Pages["Troll"], "Kill All (Tiêu diệt tất cả)", function()
-    KillAll()
+-- Tab Troll
+CreateToggle(Pages["Troll"], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
+CreateInput(Pages["Troll"], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
+
+CreateButton(Pages["Troll"], "Tải Dropkick RawScript Phủ Khắp", function()
+    pcall(function()
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
+    end)
 end)
 
-CreateButton(Pages["Troll"], "Bring All (Kéo tất cả lại gần)", function()
-    BringAll()
-end)
+CreateButton(Pages["Troll"], "Kill All (Tiêu diệt tất cả)", function() KillAll() end)
+CreateButton(Pages["Troll"], "Bring All (Kéo tất cả lại gần)", function() BringAll() end)
+CreateToggle(Pages["Troll"], "Bật God Mode (Client)", false, function(v) SetGodMode(v) end)
 
-CreateToggle(Pages["Troll"], "Bật God Mode (Client)", false, function(v)
-    SetGodMode(v)
-end)
-
-CreateButton(Pages["Troll"], "Dịch Chuyển Tới Người Ngẫu Nhiên", function()
-    local plrs = Players:GetPlayers()
-    for _, target in ipairs(plrs) do
-        if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            TeleportTo(target.Character.HumanoidRootPart.Position)
-            break
-        end
-    end
-end)
+-- Tab Magic (Sức Mạnh Phép Thuật)
+CreateToggle(Pages["Magic"], "Hào Quang Ma Thuật (Magic Aura)", false, function(v) SetMagicAura(v) end)
+CreateButton(Pages["Magic"], "Sóng Xung Kích Giậm Chân (Shockwave)", function() GroundStompShockwave() end)
 
 -- Tab Misc
 CreateToggle(Pages["Misc"], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
@@ -651,4 +765,4 @@ CreateButton(Pages["Misc"], "Đổi Server Ngẫu Nhiên (Server Hop)", function
     end)
 end)
 
-print("Zaka Hub Ultimate v4 Loaded Successfully!")
+print("Zaka Hub Ultimate v5 Loaded Successfully!")
