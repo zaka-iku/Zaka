@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUB UNIVERSAL - V6 SMOOTH & MAGIC             ║
-    ║   Tab Sliding Animations + Fire / Cage / Shield / Shockwave    ║
+    ║             ZAKA HUB UNIVERSAL - V7 ULTIMATE FE                ║
+    ║   Touch Teleport + Rainbow Angel Wings + 100% FE Magic Powers  ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -16,10 +16,11 @@ local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
 --==================== CẤU HÌNH (SETTINGS) ====================--
 local Settings = {
-    -- Combat
+    -- Combat & Hitbox
     Aimbot = false,
     AimbotFOV = 120,
     AimbotSmooth = 0.2,
@@ -35,7 +36,7 @@ local Settings = {
     ESPTracers = false,
     ESPMaxDist = 3000,
 
-    -- Player & Movement
+    -- Movement
     Speed = false,
     SpeedValue = 28,
     Fly = false,
@@ -44,16 +45,16 @@ local Settings = {
     InfiniteJump = false,
     SpinBot = false,
     SpinSpeed = 40,
+    TouchTP = false,
 
-    -- Troll & Dropkick
+    -- Troll
     Dropkick = false,
     DropkickPower = 3000,
     GodMode = false,
 
-    -- Magic
-    MagicAura = false,
+    -- Magic FE
+    RainbowAngel = false,
     FireAura = false,
-    Shield = false,
 
     -- Misc
     Fullbright = false,
@@ -61,7 +62,7 @@ local Settings = {
 }
 
 --==================== BIẾN HỆ THỐNG ====================--
-local NoclipConn, SpeedConn, FlyConn, GodConn, DropkickConn
+local NoclipConn, SpeedConn, FlyConn, GodConn, DropkickConn, TouchTPConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 
@@ -81,7 +82,26 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
---==================== MOBILE AIMBOT & HITBOX ====================--
+-- Touch Teleport (Chạm Đâu Tele Đó)
+local function SetTouchTP(state)
+    Settings.TouchTP = state
+    if TouchTPConn then TouchTPConn:Disconnect() TouchTPConn = nil end
+
+    if state then
+        TouchTPConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if not gameProcessed and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                if Settings.TouchTP and Mouse.Hit then
+                    local char = LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+                    end
+                end
+            end
+        end)
+    end
+end
+
+--==================== AIMBOT & HITBOX ====================--
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -216,7 +236,7 @@ local function SetNoclip(state)
     end
 end
 
---==================== DROPKICK & TROLL ====================--
+--==================== DROPKICK & TELEPORT FUNCTIONS ====================--
 local function SetDropkick(state)
     Settings.Dropkick = state
     if DropkickConn then DropkickConn:Disconnect() DropkickConn = nil end
@@ -248,48 +268,108 @@ local function SetDropkick(state)
     end
 end
 
---==================== HỆ THỐNG PHÉP THUẬT (MAGIC POWERS) ====================--
+local function BringAllPlayers()
+    pcall(function()
+        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myRoot then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+                    if rootPart then
+                        rootPart.CFrame = myRoot.CFrame + Vector3.new(2, 0, 2)
+                    end
+                end
+            end
+        end
+    end)
+end
 
--- 1. Hào Quang Phép Thuật (Magic Aura)
-local function SetMagicAura(state)
-    Settings.MagicAura = state
-    local char = LocalPlayer.Character
-    if not char then return end
+local function TeleportToPlayer()
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
 
-    if state then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-
-        local ring = Instance.new("Part")
-        ring.Name = "MagicAuraRing"
-        ring.Size = Vector3.new(8, 0.2, 8)
-        ring.Material = Enum.Material.Neon
-        ring.Color = Color3.fromRGB(0, 162, 255)
-        ring.CanCollide = false
-        ring.Parent = char
-
-        local weld = Instance.new("Weld")
-        weld.Part0 = root
-        weld.Part1 = ring
-        weld.C0 = CFrame.new(0, -2.5, 0)
-        weld.Parent = ring
-
-        local particles = Instance.new("ParticleEmitter")
-        particles.Texture = "rbxassetid://243660364"
-        particles.Color = ColorSequence.new(Color3.fromRGB(0, 200, 255), Color3.fromRGB(150, 0, 255))
-        particles.Size = NumberSequence.new(1.2, 0)
-        particles.Lifetime = NumberRange.new(0.5, 1.2)
-        particles.Rate = 35
-        particles.Speed = NumberRange.new(2, 5)
-        particles.Parent = ring
-    else
-        for _, p in ipairs(char:GetChildren()) do
-            if p.Name == "MagicAuraRing" then p:Destroy() end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            myRoot.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            break
         end
     end
 end
 
--- 2. Hỏa Thuật (Tạo Lửa Bao Quanh)
+--==================== FE MAGIC POWERS (100% VISIBLE) ====================--
+
+-- 1. Khiên Cầu Vồng & Cánh Thiên Thần (Rainbow Shield + Angel Wings FE)
+local function SetRainbowAngel(state)
+    Settings.RainbowAngel = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if not torso then return end
+
+        -- Cầu Vồng Bảo Vệ
+        local sphere = Instance.new("Part")
+        sphere.Name = "RainbowShieldSphere"
+        sphere.Shape = Enum.PartType.Ball
+        sphere.Size = Vector3.new(9, 9, 9)
+        sphere.Material = Enum.Material.ForceField
+        sphere.Transparency = 0.2
+        sphere.CanCollide = false
+        sphere.Parent = char
+
+        local weld = Instance.new("Weld")
+        weld.Part0 = torso
+        weld.Part1 = sphere
+        weld.Parent = sphere
+
+        -- Cánh Thiên Thần Phát Sáng (Angel Wings)
+        local createWing = function(isLeft)
+            local wing = Instance.new("Part")
+            wing.Name = isLeft and "LeftAngelWing" or "RightAngelWing"
+            wing.Size = Vector3.new(0.2, 5, 3)
+            wing.Material = Enum.Material.Neon
+            wing.Color = Color3.fromRGB(255, 255, 255)
+            wing.CanCollide = false
+            wing.Parent = char
+
+            local wWeld = Instance.new("Weld")
+            wWeld.Part0 = torso
+            wWeld.Part1 = wing
+            wWeld.C0 = CFrame.new(isLeft and -2 or 2, 1.5, 1.2) * CFrame.Angles(0, math.rad(isLeft and -30 or 30), math.rad(isLeft and 20 or -20))
+            wWeld.Parent = wing
+
+            local pe = Instance.new("ParticleEmitter")
+            pe.Texture = "rbxassetid://243660364"
+            pe.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(0, 200, 255))
+            pe.Size = NumberSequence.new(0.8, 0)
+            pe.Rate = 20
+            pe.Speed = NumberRange.new(1, 3)
+            pe.Parent = wing
+        end
+
+        createWing(true)
+        createWing(false)
+
+        -- Luồng xoay màu Rainbow
+        task.spawn(function()
+            local hue = 0
+            while Settings.RainbowAngel and char and char:FindFirstChild("RainbowShieldSphere") do
+                hue = (hue + 0.01) % 1
+                sphere.Color = Color3.fromHSV(hue, 0.9, 1)
+                task.wait(0.03)
+            end
+        end)
+    else
+        for _, p in ipairs(char:GetChildren()) do
+            if p.Name == "RainbowShieldSphere" or p.Name == "LeftAngelWing" or p.Name == "RightAngelWing" then
+                p:Destroy()
+            end
+        end
+    end
+end
+
+-- 2. Hỏa Thuật Rồng (Dragon Fire FE)
 local function SetFireAura(state)
     Settings.FireAura = state
     local char = LocalPlayer.Character
@@ -300,10 +380,10 @@ local function SetFireAura(state)
             if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                 local fire = Instance.new("Fire")
                 fire.Name = "MagicFireEffect"
-                fire.Size = 6
-                fire.Heat = 12
-                fire.Color = Color3.fromRGB(255, 100, 0)
-                fire.SecondaryColor = Color3.fromRGB(255, 230, 0)
+                fire.Size = 7
+                fire.Heat = 15
+                fire.Color = Color3.fromRGB(255, 80, 0)
+                fire.SecondaryColor = Color3.fromRGB(255, 220, 0)
                 fire.Parent = part
             end
         end
@@ -314,40 +394,8 @@ local function SetFireAura(state)
     end
 end
 
--- 3. Khiên Phép Bảo Vệ (Magic Shield)
-local function SetMagicShield(state)
-    Settings.Shield = state
-    local char = LocalPlayer.Character
-    if not char then return end
-
-    if state then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-
-        local shield = Instance.new("Part")
-        shield.Name = "MagicShieldSphere"
-        shield.Shape = Enum.PartType.Ball
-        shield.Size = Vector3.new(10, 10, 10)
-        shield.Material = Enum.Material.ForceField
-        shield.Color = Color3.fromRGB(0, 255, 200)
-        shield.Transparency = 0.3
-        shield.CanCollide = false
-        shield.Parent = char
-
-        local weld = Instance.new("Weld")
-        weld.Part0 = root
-        weld.Part1 = shield
-        weld.C0 = CFrame.new(0, 0, 0)
-        weld.Parent = shield
-    else
-        for _, p in ipairs(char:GetChildren()) do
-            if p.Name == "MagicShieldSphere" then p:Destroy() end
-        end
-    end
-end
-
--- 4. Lồng Nhốt Người Chơi Gần Nhất (Magic Cage)
-local function CreateMagicCage()
+-- 3. Tạo Lồng Băng Nhốt (Ice Cage FE)
+local function CreateIceCage()
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not myRoot then return end
 
@@ -367,7 +415,7 @@ local function CreateMagicCage()
     if targetPlayer and targetPlayer.Character then
         local targetRoot = targetPlayer.Character.HumanoidRootPart
         local cageModel = Instance.new("Model")
-        cageModel.Name = "MagicCageContainer"
+        cageModel.Name = "IceCageContainer"
 
         local cagePos = targetRoot.Position
         local size = 8
@@ -376,27 +424,27 @@ local function CreateMagicCage()
             local wall = Instance.new("Part")
             wall.Size = s
             wall.CFrame = cf
-            wall.Material = Enum.Material.Neon
-            wall.Color = Color3.fromRGB(180, 0, 255)
-            wall.Transparency = 0.4
+            wall.Material = Enum.Material.Ice
+            wall.Color = Color3.fromRGB(0, 230, 255)
+            wall.Transparency = 0.3
             wall.Anchored = true
             wall.CanCollide = true
             wall.Parent = cageModel
         end
 
-        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size)) -- Sàn
-        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))  -- Trần
-        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))  -- Tường 1
-        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size)) -- Tường 2
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))  -- Tường 3
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5)) -- Tường 4
+        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5))
 
         cageModel.Parent = workspace
         task.delay(10, function() cageModel:Destroy() end)
     end
 end
 
--- 5. Giậm Chân Sóng Xung Kích
+-- 4. Sóng Xung Kích Giậm Chân
 local function GroundStompShockwave()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -526,7 +574,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---==================== GIAO DIỆN ONE UI ANIMATED ====================--
+--==================== GIAO DIỆN ANIMATED ====================--
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZakaHub_UI"
 ScreenGui.ResetOnSpawn = false
@@ -548,12 +596,6 @@ ToggleIcon.Draggable = true
 ToggleIcon.Parent = ScreenGui
 Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
 
-local IconStroke = Instance.new("UIStroke", ToggleIcon)
-IconStroke.Color = Color3.fromRGB(255, 255, 255)
-IconStroke.Thickness = 2
-IconStroke.Transparency = 0.4
-
--- Main Frame
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 335, 0, 345)
 Main.Position = UDim2.new(0.5, -167, 0.5, -172)
@@ -569,9 +611,7 @@ MainStroke.Color = Color3.fromRGB(0, 162, 255)
 MainStroke.Thickness = 1.5
 MainStroke.Transparency = 0.6
 
-ToggleIcon.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-end)
+ToggleIcon.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
 -- Top Bar
 local TopBar = Instance.new("Frame")
@@ -584,7 +624,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v6</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUB</font> <font color=\"#888888\">| Ultimate v7</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
@@ -607,7 +647,7 @@ TabFrame.Position = UDim2.new(0, 6, 0, 42)
 TabFrame.BackgroundTransparency = 1
 TabFrame.Parent = Main
 
-local Tabs = {"Combat", "ESP", "Player", "Troll", "Magic", "Misc"}
+local Tabs = {"Combat", "ESP", "Player", "Teleport", "Troll", "Magic", "Misc"}
 local CurrentTabIndex = 1
 local TabButtons, Pages = {}, {}
 
@@ -637,15 +677,15 @@ local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirecti
 
 for i, name in ipairs(Tabs) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1 / #Tabs, -3, 1, 0)
-    btn.Position = UDim2.new((i - 1) / #Tabs, 2, 0, 0)
+    btn.Size = UDim2.new(1 / #Tabs, -2, 1, 0)
+    btn.Position = UDim2.new((i - 1) / #Tabs, 1, 0, 0)
     btn.BackgroundColor3 = i == CurrentTabIndex and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(25, 25, 34)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 9
+    btn.TextSize = 8
     btn.Font = Enum.Font.GothamBold
     btn.Parent = TabFrame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
     TabButtons[i] = btn
     CreatePage(name, i)
 
@@ -660,7 +700,7 @@ for i, name in ipairs(Tabs) do
     end)
 end
 
--- UI Component Helpers
+-- UI Helpers
 local function CreateToggle(parent, text, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -4, 0, 32)
@@ -775,37 +815,32 @@ CreateToggle(Pages[3], "Nhảy Không Giới Hạn (Inf Jump)", false, function(
 CreateToggle(Pages[3], "SpinBot (Xoay Nhân Vật)", false, function(v) Settings.SpinBot = v end)
 CreateToggle(Pages[3], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
 
--- Tab 4: Troll
-CreateToggle(Pages[4], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
-CreateInput(Pages[4], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
-CreateButton(Pages[4], "Tải Dropkick RawScript Phủ Khắp", function()
+-- Tab 4: Teleport (Mục Mới Khôi Phục)
+CreateToggle(Pages[4], "Chạm Đâu Tele Đó (Touch TP)", false, function(v) SetTouchTP(v) end)
+CreateButton(Pages[4], "Dịch Chuyển Tới Người Chơi Ngẫu Nhiên", function() TeleportToPlayer() end)
+CreateButton(Pages[4], "Bring All (Kéo Tất Cả Lại Gần)", function() BringAllPlayers() end)
+
+-- Tab 5: Troll
+CreateToggle(Pages[5], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
+CreateInput(Pages[5], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
+CreateButton(Pages[5], "Tải Dropkick RawScript Phủ Khắp", function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))() end)
 end)
-CreateButton(Pages[4], "Kill All (Tiêu diệt tất cả)", function()
-    pcall(function()
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-                player.Character:FindFirstChildOfClass("Humanoid").Health = 0
-            end
-        end
-    end)
-end)
 
--- Tab 5: Magic
-CreateToggle(Pages[5], "Hào Quang Ma Thuật (Magic Aura)", false, function(v) SetMagicAura(v) end)
-CreateToggle(Pages[5], "Triệu Hồi Lửa Quanh Thân (Fire)", false, function(v) SetFireAura(v) end)
-CreateToggle(Pages[5], "Khiên Phép Bảo Vệ (Shield)", false, function(v) SetMagicShield(v) end)
-CreateButton(Pages[5], "Tạo Lồng Nhốt Người Gần Nhất", function() CreateMagicCage() end)
-CreateButton(Pages[5], "Sóng Xung Kích Giậm Chân", function() GroundStompShockwave() end)
+-- Tab 6: Magic (Sức Mạnh FE Phép Thuật)
+CreateToggle(Pages[6], "Khiên Cầu Vồng + Cánh Thiên Thần", false, function(v) SetRainbowAngel(v) end)
+CreateToggle(Pages[6], "Triệu Hồi Lửa Rồng Quanh Thân", false, function(v) SetFireAura(v) end)
+CreateButton(Pages[6], "Tạo Lồng Băng Nhốt Đối Thủ", function() CreateIceCage() end)
+CreateButton(Pages[6], "Sóng Xung Kích Giậm Chân", function() GroundStompShockwave() end)
 
--- Tab 6: Misc
-CreateToggle(Pages[6], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
+-- Tab 7: Misc
+CreateToggle(Pages[7], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
     Lighting.Brightness = v and 2 or 1 
     Lighting.ClockTime = v and 14 or 12
 end)
-CreateToggle(Pages[6], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
-CreateButton(Pages[6], "Vào Lại Server (Rejoin)", function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
-CreateButton(Pages[6], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
+CreateToggle(Pages[7], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
+CreateButton(Pages[7], "Vào Lại Server (Rejoin)", function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+CreateButton(Pages[7], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     pcall(function()
         local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data
         for _, s in ipairs(servers) do
@@ -817,4 +852,4 @@ CreateButton(Pages[6], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     end)
 end)
 
-print("Zaka Hub Ultimate v6 Smooth & Magic Loaded!")
+print("Zaka Hub Ultimate v7 Loaded Successfully!")
