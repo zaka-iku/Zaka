@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
     ║             ZAKA HUB UNIVERSAL - MOBILE & PC                   ║
-    ║        Fly + Custom Speed + Mobile Aimbot + One UI             ║
+    ║        Fixed Fly Direction + Anti-Bypass Speed + UI            ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -113,7 +113,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---==================== HỆ THỐNG FLY (BAY) & SPEED ====================--
+--==================== HỆ THỐNG FLY (ĐÃ SỬA HƯỚNG BAY) & SPEED ====================--
 local function StartFly()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -126,7 +126,7 @@ local function StartFly()
     BodyGyro.Parent = root
 
     BodyVelocity = Instance.new("BodyVelocity")
-    BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+    BodyVelocity.velocity = Vector3.new(0, 0, 0)
     BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
     BodyVelocity.Parent = root
 
@@ -141,11 +141,14 @@ local function StartFly()
         local hum = char.Humanoid
         BodyGyro.cframe = Camera.CFrame
 
+        -- Tính toán hướng di chuyển chuẩn theo Joystick/Phím điều khiển và Camera
         local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
-            BodyVelocity.velocity = (Camera.CFrame.LookVector * (moveDir.Z * -1) + Camera.CFrame.RightVector * moveDir.X) * Settings.FlySpeed
+            -- Sử dụng Vector trực tiếp để sửa lỗi ngược hướng tiến/lùi và lên/xuống
+            local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
+            BodyVelocity.velocity = flyVector.Unit * Settings.FlySpeed
         else
-            BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+            BodyVelocity.velocity = Vector3.new(0, 0, 0)
         end
     end)
 end
@@ -166,7 +169,9 @@ local function SetSpeed(state)
     if state then
         SpeedConn = RunService.Heartbeat:Connect(function()
             local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-            if hum then hum.WalkSpeed = Settings.SpeedValue end
+            if hum then 
+                hum.WalkSpeed = Settings.SpeedValue 
+            end
         end)
     else
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -286,7 +291,7 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút Tròn Mở/Tắt Nhanh (One UI Icon)
+-- Nút Tròn Toggle Icon
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
 ToggleIcon.Size = UDim2.new(0, 42, 0, 42)
@@ -306,7 +311,7 @@ IconStroke.Color = Color3.fromRGB(255, 255, 255)
 IconStroke.Thickness = 2
 IconStroke.Transparency = 0.5
 
--- Main Frame (310x320)
+-- Main Frame
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 310, 0, 320)
 Main.Position = UDim2.new(0.5, -155, 0.5, -160)
@@ -501,9 +506,9 @@ CreateToggle(Pages["ESP"], "Khoảng Cách (Distance)", true, function(v) Settin
 
 -- Tab Player
 CreateToggle(Pages["Player"], "Bật Tăng Tốc Chạy", false, function(v) Settings.Speed = v SetSpeed(v) end)
-CreateInput(Pages["Player"], "Nhập Tốc Độ Chạy (Max 500)", 28, 500, function(v) Settings.SpeedValue = v end)
+CreateInput(Pages["Player"], "Tốc Độ Chạy (Khuyên dùng <100)", 28, 500, function(v) Settings.SpeedValue = v end)
 
-CreateToggle(Pages["Player"], "Bật Chức Năng Bay (Fly)", false, function(v) SetFly(v) end)
+CreateToggle(Pages["Player"], "Bật Chức Năng Bay (Fly chuẩn)", false, function(v) SetFly(v) end)
 CreateInput(Pages["Player"], "Nhập Tốc Độ Bay (Max 500)", 50, 500, function(v) Settings.FlySpeed = v end)
 
 CreateToggle(Pages["Player"], "Đi Xuyên Tường (Noclip)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
@@ -526,4 +531,4 @@ CreateToggle(Pages["Misc"], "Nhìn Trong Đêm (Fullbright)", false, function(v)
 end)
 CreateToggle(Pages["Misc"], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
 
-print("Zaka Hub Universal Fully Updated!")
+print("Zaka Hub Fixed Fly Loaded!")
