@@ -21,15 +21,6 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
--- In thông tin ủng hộ ra Console khi chạy script
-print("========================================")
-print(" Cam on moi nguoi da su dung ZakaHUD!")
-print(" Ung ho tac gia qua ngan hang:")
-print(" - Ngan hang: Vietcombank")
-print(" - Chu tai khoan: VU DUC DAI")
-print(" - So tai khoan: 1067117291")
-print("========================================")
-
 --==============================================================================--
 --                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
 --==============================================================================--
@@ -1088,14 +1079,14 @@ PageContainer.BackgroundTransparency = 1
 PageContainer.ClipsDescendants = true
 PageContainer.Parent = Main
 
--- Tab System (Thêm Tab Donate)
+-- Tab System
 local TabFrame = Instance.new("Frame")
 TabFrame.Size = UDim2.new(1, -12, 0, 28)
 TabFrame.Position = UDim2.new(0, 6, 0, 42)
 TabFrame.BackgroundTransparency = 1
 TabFrame.Parent = Main
 
-local Tabs = {"Combat", "ESP", "Player", "Teleport", "Troll", "Magic", "Utility", "Misc", "Donate"}
+local Tabs = {"Combat", "ESP", "Player", "Teleport", "Troll", "Magic", "Utility", "Misc"}
 local CurrentTabIndex = 1
 local TabButtons, Pages = {}, {}
 
@@ -1130,7 +1121,7 @@ for i, name in ipairs(Tabs) do
     btn.BackgroundColor3 = i == CurrentTabIndex and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(25, 25, 34)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 6.5
+    btn.TextSize = 7.5
     btn.Font = Enum.Font.GothamBold
     btn.Parent = TabFrame
     TabButtons[i] = btn
@@ -1237,43 +1228,6 @@ local function CreateButton(parent, text, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
-local function CreateInfoCard(parent, titleText, descText)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -4, 0, 120)
-    frame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
-    frame.Parent = parent
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-
-    local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(0, 162, 255)
-    stroke.Thickness = 1
-    stroke.Transparency = 0.6
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -16, 0, 24)
-    title.Position = UDim2.new(0, 10, 0, 6)
-    title.BackgroundTransparency = 1
-    title.Text = titleText
-    title.TextColor3 = Color3.fromRGB(0, 162, 255)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 12
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = frame
-
-    local desc = Instance.new("TextLabel")
-    desc.Size = UDim2.new(1, -20, 1, -34)
-    desc.Position = UDim2.new(0, 10, 0, 30)
-    desc.BackgroundTransparency = 1
-    desc.Text = descText
-    desc.RichText = true
-    desc.TextColor3 = Color3.fromRGB(220, 220, 230)
-    desc.Font = Enum.Font.Gotham
-    desc.TextSize = 11
-    desc.TextYAlignment = Enum.TextYAlignment.Top
-    desc.TextXAlignment = Enum.TextXAlignment.Left
-    desc.Parent = frame
-end
-
 --==============================================================================--
 --                        KHỞI TẠO MENU CÁC TABS ĐẦY ĐỦ                          --
 --==============================================================================--
@@ -1343,13 +1297,5 @@ CreateButton(Pages[8], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
         end
     end)
 end)
-
--- Tab 9: Donate
-CreateInfoCard(Pages[9], "CẢM ƠN MỌI NGUỜI ĐÃ SỬ DỤNG!", 
-    "<b>Cảm ơn bạn đã ủng hộ ZakaHUD!</b>\n\n" ..
-    "<b>• Ngân hàng:</b> Vietcombank\n" ..
-    "<b>• Chủ tài khoản:</b> VU DUC DAI\n" ..
-    "<b>• Số tài khoản:</b> <font color=\"#00A2FF\">1067117291</font>"
-)
 
 print("Zaka Hud ZakahudV1.0 High-Detail Overhaul Fully Loaded!")
