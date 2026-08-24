@@ -1,8 +1,11 @@
 --[[
-    ╔════════════════════════════════════════════════════════════════╗
-    ║        ZAKA HUD ULTIMATE - V1.0 (ANIMATED DRAGON & FIX)        ║
-    ║   Dynamic Dragon Waves + Realistic Wings + Fixed Angel Magic   ║
-    ╚════════════════════════════════════════════════════════════════╝
+    ╔════════════════════════════════════════════════════════════════════════════════╗
+    ║                 ZAKA HUD ULTIMATE - V1.0 (HIGH-DETAIL OVERHAUL)                ║
+    ║   - Fixed Flight Controls (Inverted Flight Direction Fix)                      ║
+    ║   - Highly Detailed Mythical Fire Dragon (Horns, Eyes, Spines, Claws, Wings)   ║
+    ║   - Majestic Feathered Angel Wings & Rainbow Glow Aura                         ║
+    ║   - Explosive Long-Duration Ice Cage (15s Lock + Shockwave Blast Out)          ║
+    ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
 local Players = game:GetService("Players")
@@ -18,7 +21,9 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
---==================== CẤU HÌNH (SETTINGS) ====================--
+--==============================================================================--
+--                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
+--==============================================================================--
 local Settings = {
     -- Combat & Hitbox
     Aimbot = false,
@@ -27,7 +32,7 @@ local Settings = {
     HitboxExpander = false,
     HitboxSize = 20,
 
-    -- ESP
+    -- ESP Visuals
     ESP = false,
     ESPBox = true,
     ESPName = true,
@@ -36,7 +41,7 @@ local Settings = {
     ESPTracers = false,
     ESPMaxDist = 3000,
 
-    -- Movement
+    -- Movement & Physics
     Speed = false,
     SpeedValue = 28,
     Fly = false,
@@ -47,35 +52,37 @@ local Settings = {
     SpinSpeed = 40,
     TouchTP = false,
 
-    -- Troll
+    -- Troll Systems
     Dropkick = false,
-    DropkickPower = 3000,
+    DropkickPower = 3500,
 
-    -- Magic FE
+    -- FE Magic Skills & Visual Constructs
     RainbowAngel = false,
     FireAura = false,
     FireDragonMount = false,
     HoldGentlemanFlower = false,
 
-    -- Utility & Visuals
+    -- World Environment & Lighting
     NoFog = false,
     NeonNight = false,
     GlowTrail = false,
     CustomFOV = 70,
 
-    -- Misc
+    -- Utilities & Misc
     Fullbright = false,
     AntiAFK = true,
 }
 
---==================== BIẾN HỆ THỐNG ====================--
+--==============================================================================--
+--                            BIẾN TOÀN CỤC & KẾT NỐI                            --
+--==============================================================================--
 local NoclipConn, SpeedConn, FlyConn, DropkickConn, TouchTPConn
 local DragonRenderConn, AngelRenderConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 local OriginalFogEnd = Lighting.FogEnd
 
--- Anti AFK
+-- Chống AFK Tự Động
 LocalPlayer.Idled:Connect(function()
     if Settings.AntiAFK then
         VirtualUser:CaptureController()
@@ -83,7 +90,7 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- Infinite Jump
+-- Nhảy Vô Hạn (Infinite Jump)
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -91,7 +98,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Touch Teleport
+-- Dịch Chuyển Khi Chạm (Touch Teleport)
 local function SetTouchTP(state)
     Settings.TouchTP = state
     if TouchTPConn then TouchTPConn:Disconnect() TouchTPConn = nil end
@@ -102,7 +109,7 @@ local function SetTouchTP(state)
                 if Settings.TouchTP and Mouse.Hit then
                     local char = LocalPlayer.Character
                     if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+                        char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3.5, 0))
                     end
                 end
             end
@@ -110,15 +117,17 @@ local function SetTouchTP(state)
     end
 end
 
---==================== ITEM & KĨ NĂNG CẢI TIẾN ANIMATION ====================--
-
--- 1. Bông Hoa Lịch Sự
+--==============================================================================--
+--                     KĨ NĂNG 1: BÔNG HOA TRÂN TRỌNG GAME                       --
+--==============================================================================--
 local function SetGentlemanFlower(state)
     Settings.HoldGentlemanFlower = state
     local char = LocalPlayer.Character
     if not char then return end
 
     if state then
+        if char:FindFirstChild("GentlemanFlowerModel") then char.GentlemanFlowerModel:Destroy() end
+
         local hand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
         if not hand then return end
 
@@ -127,39 +136,55 @@ local function SetGentlemanFlower(state)
 
         local stem = Instance.new("Part")
         stem.Name = "Stem"
-        stem.Size = Vector3.new(0.15, 1.8, 0.15)
+        stem.Size = Vector3.new(0.12, 2.0, 0.12)
         stem.Color = Color3.fromRGB(34, 139, 34)
         stem.Material = Enum.Material.SmoothPlastic
         stem.CanCollide = false
+        stem.Massless = true
         stem.Parent = flowerModel
 
         local rose = Instance.new("Part")
         rose.Name = "RoseHead"
         rose.Shape = Enum.PartType.Ball
-        rose.Size = Vector3.new(0.7, 0.7, 0.7)
+        rose.Size = Vector3.new(0.8, 0.8, 0.8)
         rose.Color = Color3.fromRGB(255, 20, 147)
         rose.Material = Enum.Material.Neon
         rose.CanCollide = false
+        rose.Massless = true
         rose.Parent = flowerModel
 
         local stemWeld = Instance.new("Weld")
         stemWeld.Part0 = stem
         stemWeld.Part1 = rose
-        stemWeld.C0 = CFrame.new(0, 0.9, 0)
+        stemWeld.C0 = CFrame.new(0, 1.0, 0)
         stemWeld.Parent = rose
+
+        -- Thêm lá hoa
+        local leaf1 = Instance.new("Part")
+        leaf1.Size = Vector3.new(0.4, 0.05, 0.8)
+        leaf1.Color = Color3.fromRGB(0, 180, 0)
+        leaf1.CanCollide = false
+        leaf1.Massless = true
+        leaf1.Parent = flowerModel
+
+        local leafWeld = Instance.new("Weld")
+        leafWeld.Part0 = stem
+        leafWeld.Part1 = leaf1
+        leafWeld.C0 = CFrame.new(0.2, 0.2, 0) * CFrame.Angles(0, 0, math.rad(45))
+        leafWeld.Parent = leaf1
 
         local petals = Instance.new("ParticleEmitter")
         petals.Texture = "rbxassetid://241837157"
         petals.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180), Color3.fromRGB(255, 192, 203))
-        petals.Size = NumberSequence.new(0.3, 0.1)
-        petals.Rate = 6
+        petals.Size = NumberSequence.new(0.35, 0.05)
+        petals.Rate = 8
         petals.Lifetime = NumberRange.new(1.5, 3)
         petals.Parent = rose
 
         local handWeld = Instance.new("Weld")
         handWeld.Part0 = hand
         handWeld.Part1 = stem
-        handWeld.C0 = CFrame.new(0, -0.8, -0.5) * CFrame.Angles(math.rad(-90), 0, 0)
+        handWeld.C0 = CFrame.new(0, -0.9, -0.5) * CFrame.Angles(math.rad(-90), 0, 0)
         handWeld.Parent = stem
 
         flowerModel.Parent = char
@@ -170,7 +195,9 @@ local function SetGentlemanFlower(state)
     end
 end
 
--- 2. Kỹ Năng Cưỡi Rồng Lửa Uốn Lượn (ANIMATED FIRE DRAGON MOUNT)
+--==============================================================================--
+--            KĨ NĂNG 2: CƯỠI RỒNG LỬA HỒI SINH (HIGH-DETAIL ANIMATED DRAGON)    --
+--==============================================================================--
 local function SetFireDragonMount(state)
     Settings.FireDragonMount = state
     local char = LocalPlayer.Character
@@ -184,97 +211,106 @@ local function SetFireDragonMount(state)
         dragonFolder.Name = "FEFireDragonFolder"
         dragonFolder.Parent = char
 
-        -- Thân Rồng
-        local bodyPart = Instance.new("Part")
-        bodyPart.Name = "DragonBody"
-        bodyPart.Size = Vector3.new(3.5, 3, 7)
-        bodyPart.Color = Color3.fromRGB(180, 0, 0)
-        bodyPart.Material = Enum.Material.Neon
-        bodyPart.CanCollide = false
-        bodyPart.Massless = true
-        bodyPart.Parent = dragonFolder
+        local function createPart(name, size, color, mat, trans)
+            local p = Instance.new("Part")
+            p.Name = name
+            p.Size = size
+            p.Color = color or Color3.fromRGB(180, 0, 0)
+            p.Material = mat or Enum.Material.Neon
+            p.Transparency = trans or 0
+            p.CanCollide = false
+            p.Massless = true
+            p.Parent = dragonFolder
+            return p
+        end
 
-        local bodyWeld = Instance.new("Weld")
-        bodyWeld.Name = "BodyWeld"
-        bodyWeld.Part0 = root
-        bodyWeld.Part1 = bodyPart
-        bodyWeld.C0 = CFrame.new(0, -3.2, 0)
-        bodyWeld.Parent = bodyPart
+        local function attachWeld(p0, p1, c0)
+            local w = Instance.new("Weld")
+            w.Name = p1.Name .. "Weld"
+            w.Part0 = p0
+            w.Part1 = p1
+            w.C0 = c0 or CFrame.new()
+            w.Parent = p1
+            return w
+        end
 
-        -- Đầu Rồng
-        local headPart = Instance.new("Part")
-        headPart.Name = "DragonHead"
-        headPart.Size = Vector3.new(2.8, 2.5, 4)
-        headPart.Color = Color3.fromRGB(255, 60, 0)
-        headPart.Material = Enum.Material.Neon
-        headPart.CanCollide = false
-        headPart.Massless = true
-        headPart.Parent = dragonFolder
+        -- Thân Rồng Chi Tiết
+        local bodyPart = createPart("DragonBody", Vector3.new(4, 3.5, 8), Color3.fromRGB(160, 0, 0), Enum.Material.Granite)
+        local bodyWeld = attachWeld(root, bodyPart, CFrame.new(0, -3.8, 0))
 
-        local headWeld = Instance.new("Weld")
-        headWeld.Name = "HeadWeld"
-        headWeld.Part0 = bodyPart
-        headWeld.Part1 = headPart
-        headWeld.C0 = CFrame.new(0, 1, -5)
-        headWeld.Parent = headPart
+        -- Gai Lưng Thân Rồng
+        for i = -3, 3 do
+            local spine = createPart("BodySpine", Vector3.new(0.5, 1.5, 0.8), Color3.fromRGB(255, 100, 0))
+            attachWeld(bodyPart, spine, CFrame.new(0, 2.2, i * 1.1) * CFrame.Angles(math.rad(-20), 0, 0))
+        end
 
+        -- Đầu Rồng Siêu Chi Tiết
+        local headPart = createPart("DragonHead", Vector3.new(3.2, 2.8, 4.5), Color3.fromRGB(220, 20, 0), Enum.Material.Granite)
+        local headWeld = attachWeld(bodyPart, headPart, CFrame.new(0, 1.2, -5.5))
+
+        local snout = createPart("DragonSnout", Vector3.new(2.6, 1.8, 3), Color3.fromRGB(180, 0, 0), Enum.Material.Granite)
+        attachWeld(headPart, snout, CFrame.new(0, -0.3, -2.5))
+
+        -- Mắt Lửa Rồng (Rực Sáng)
+        local leftEye = createPart("LeftEye", Vector3.new(0.4, 0.4, 0.8), Color3.fromRGB(255, 255, 0))
+        attachWeld(headPart, leftEye, CFrame.new(-1.3, 0.7, -1.2))
+
+        local rightEye = createPart("RightEye", Vector3.new(0.4, 0.4, 0.8), Color3.fromRGB(255, 255, 0))
+        attachWeld(headPart, rightEye, CFrame.new(1.3, 0.7, -1.2))
+
+        -- Sừng Rồng Uốn Lượn
+        local leftHorn = createPart("LeftHorn", Vector3.new(0.6, 2.8, 0.6), Color3.fromRGB(255, 140, 0))
+        attachWeld(headPart, leftHorn, CFrame.new(-1.2, 1.8, 1.2) * CFrame.Angles(math.rad(-35), math.rad(-20), 0))
+
+        local rightHorn = createPart("RightHorn", Vector3.new(0.6, 2.8, 0.6), Color3.fromRGB(255, 140, 0))
+        attachWeld(headPart, rightHorn, CFrame.new(1.2, 1.8, 1.2) * CFrame.Angles(math.rad(-35), math.rad(20), 0))
+
+        -- Lửa Phun Tử Miệng Rồng
         local dragonFire = Instance.new("Fire")
-        dragonFire.Size = 8
-        dragonFire.Heat = 12
-        dragonFire.Color = Color3.fromRGB(255, 140, 0)
-        dragonFire.Parent = headPart
+        dragonFire.Size = 10
+        dragonFire.Heat = 15
+        dragonFire.Color = Color3.fromRGB(255, 120, 0)
+        dragonFire.SecondaryColor = Color3.fromRGB(255, 255, 0)
+        dragonFire.Parent = snout
 
-        -- Đuôi Rồng
-        local tailPart = Instance.new("Part")
-        tailPart.Name = "DragonTail"
-        tailPart.Size = Vector3.new(2, 2, 6)
-        tailPart.Color = Color3.fromRGB(150, 0, 0)
-        tailPart.Material = Enum.Material.Neon
-        tailPart.CanCollide = false
-        tailPart.Massless = true
-        tailPart.Parent = dragonFolder
+        -- Khớp Đuôi Rồng Đoạn 1 & 2
+        local tail1 = createPart("DragonTail1", Vector3.new(2.8, 2.5, 6), Color3.fromRGB(140, 0, 0), Enum.Material.Granite)
+        local tail1Weld = attachWeld(bodyPart, tail1, CFrame.new(0, -0.4, 6))
 
-        local tailWeld = Instance.new("Weld")
-        tailWeld.Name = "TailWeld"
-        tailWeld.Part0 = bodyPart
-        tailWeld.Part1 = tailPart
-        tailWeld.C0 = CFrame.new(0, -0.5, 5.5)
-        tailWeld.Parent = tailPart
+        local tail2 = createPart("DragonTail2", Vector3.new(2.0, 1.8, 6), Color3.fromRGB(180, 30, 0), Enum.Material.Granite)
+        local tail2Weld = attachWeld(tail1, tail2, CFrame.new(0, 0, 5.5))
 
-        -- Cánh Rồng Trái & Phải
-        local leftWing = Instance.new("Part")
-        leftWing.Name = "LeftWing"
-        leftWing.Size = Vector3.new(9, 0.3, 4.5)
-        leftWing.Color = Color3.fromRGB(255, 30, 0)
-        leftWing.Material = Enum.Material.Neon
-        leftWing.CanCollide = false
-        leftWing.Massless = true
-        leftWing.Parent = dragonFolder
+        -- Gai Chôi Đuôi
+        local tailTip = createPart("TailTip", Vector3.new(0.8, 2.5, 2.5), Color3.fromRGB(255, 60, 0))
+        attachWeld(tail2, tailTip, CFrame.new(0, 0, 3.2) * CFrame.Angles(math.rad(45), 0, 0))
 
-        local leftWingWeld = Instance.new("Weld")
-        leftWingWeld.Name = "LeftWingWeld"
-        leftWingWeld.Part0 = bodyPart
-        leftWingWeld.Part1 = leftWing
-        leftWingWeld.C0 = CFrame.new(-5.5, 1, 0)
-        leftWingWeld.Parent = leftWing
+        -- 4 Chân Rồng Có Móng Cáo
+        local function makeLeg(legName, pos)
+            local leg = createPart(legName, Vector3.new(1.2, 3.2, 1.2), Color3.fromRGB(130, 0, 0), Enum.Material.Granite)
+            attachWeld(bodyPart, leg, pos)
 
-        local rightWing = Instance.new("Part")
-        rightWing.Name = "RightWing"
-        rightWing.Size = Vector3.new(9, 0.3, 4.5)
-        rightWing.Color = Color3.fromRGB(255, 30, 0)
-        rightWing.Material = Enum.Material.Neon
-        rightWing.CanCollide = false
-        rightWing.Massless = true
-        rightWing.Parent = dragonFolder
+            local claw = createPart(legName .. "Claw", Vector3.new(1.4, 0.5, 1.5), Color3.fromRGB(255, 200, 0))
+            attachWeld(leg, claw, CFrame.new(0, -1.5, -0.3))
+        end
+        makeLeg("FrontLeftLeg", CFrame.new(-2.2, -1.8, -2.5))
+        makeLeg("FrontRightLeg", CFrame.new(2.2, -1.8, -2.5))
+        makeLeg("BackLeftLeg", CFrame.new(-2.2, -1.8, 2.5))
+        makeLeg("BackRightLeg", CFrame.new(2.2, -1.8, 2.5))
 
-        local rightWingWeld = Instance.new("Weld")
-        rightWingWeld.Name = "RightWingWeld"
-        rightWingWeld.Part0 = bodyPart
-        rightWingWeld.Part1 = rightWing
-        rightWingWeld.C0 = CFrame.new(5.5, 1, 0)
-        rightWingWeld.Parent = rightWing
+        -- Cánh Rồng Đa Tầng (Multi-Joint High Detail Wings)
+        local leftWingBase = createPart("LeftWingBase", Vector3.new(1.2, 1.2, 5), Color3.fromRGB(200, 0, 0))
+        local leftWingWeld = attachWeld(bodyPart, leftWingBase, CFrame.new(-2.2, 1.5, -1))
 
-        -- Mở cơ chế Bay
+        local leftWingBlade = createPart("LeftWingBlade", Vector3.new(10, 0.2, 6), Color3.fromRGB(255, 50, 0))
+        attachWeld(leftWingBase, leftWingBlade, CFrame.new(-5, 0, 1) * CFrame.Angles(0, math.rad(-15), 0))
+
+        local rightWingBase = createPart("RightWingBase", Vector3.new(1.2, 1.2, 5), Color3.fromRGB(200, 0, 0))
+        local rightWingWeld = attachWeld(bodyPart, rightWingBase, CFrame.new(2.2, 1.5, -1))
+
+        local rightWingBlade = createPart("RightWingBlade", Vector3.new(10, 0.2, 6), Color3.fromRGB(255, 50, 0))
+        attachWeld(rightWingBase, rightWingBlade, CFrame.new(5, 0, 1) * CFrame.Angles(0, math.rad(15), 0))
+
+        -- Cơ Chế Vật Lý Bay Chuẩn (Khắc Phục Đảo Nguồn Lên Down)
         BodyGyro = Instance.new("BodyGyro")
         BodyGyro.P = 9e4
         BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -286,32 +322,40 @@ local function SetFireDragonMount(state)
         BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
         BodyVelocity.Parent = root
 
-        -- Vòng lặp Render Animation Rồng Uốn Lượn
+        -- Render Loop: Animation Uốn Lượn Sống Động
         DragonRenderConn = RunService.RenderStepped:Connect(function()
             if not Settings.FireDragonMount or not char or not char:FindFirstChild("Humanoid") then
                 SetFireDragonMount(false)
                 return
             end
 
-            local t = tick() * 4
-            local moveDir = char.Humanoid.MoveDirection
+            local t = tick() * 4.5
+            local hum = char.Humanoid
+            local moveDir = hum.MoveDirection
             local isMoving = moveDir.Magnitude > 0
             local speedMult = isMoving and 1.8 or 1.0
 
-            -- Animation uốn sóng thân rồng & đầu & đuôi
-            headWeld.C0 = CFrame.new(math.sin(t * speedMult) * 0.8, 1 + math.cos(t * speedMult) * 0.3, -5) * CFrame.Angles(0, math.sin(t * speedMult) * 0.15, 0)
-            tailWeld.C0 = CFrame.new(math.sin(-t * speedMult) * 1.2, -0.5 + math.sin(t * speedMult) * 0.3, 5.5) * CFrame.Angles(0, math.sin(-t * speedMult) * 0.25, 0)
+            -- Animation Sóng Thân & Đuôi
+            headWeld.C0 = CFrame.new(math.sin(t * speedMult) * 0.9, 1.2 + math.cos(t * speedMult) * 0.4, -5.5) * CFrame.Angles(0, math.sin(t * speedMult) * 0.2, 0)
+            tail1Weld.C0 = CFrame.new(math.sin(-t * speedMult) * 1.0, -0.4 + math.sin(t * speedMult) * 0.3, 6) * CFrame.Angles(0, math.sin(-t * speedMult) * 0.25, 0)
+            tail2Weld.C0 = CFrame.new(math.sin(-t * speedMult + 1) * 1.4, math.cos(t * speedMult) * 0.3, 5.5) * CFrame.Angles(0, math.sin(-t * speedMult + 1) * 0.35, 0)
 
-            -- Animation vỗ cánh rồng
-            local wingFlap = math.sin(t * 1.5 * speedMult) * 25
-            leftWingWeld.C0 = CFrame.new(-5.5, 1, 0) * CFrame.Angles(0, 0, math.rad(wingFlap))
-            rightWingWeld.C0 = CFrame.new(5.5, 1, 0) * CFrame.Angles(0, 0, math.rad(-wingFlap))
+            -- Animation Đập Cánh Rồng
+            local wingAngle = math.sin(t * 1.4 * speedMult) * 28
+            leftWingWeld.C0 = CFrame.new(-2.2, 1.5, -1) * CFrame.Angles(0, 0, math.rad(wingAngle))
+            rightWingWeld.C0 = CFrame.new(2.2, 1.5, -1) * CFrame.Angles(0, 0, math.rad(-wingAngle))
 
-            -- Cập nhật hướng bay
+            -- Cập Nhật Hướng Điều Khiển Lên/Xuống Chuẩn Theo Camera LookVector (ĐÃ FIX KHÔNG BỊ ĐẢO)
             BodyGyro.cframe = Camera.CFrame
             if isMoving then
-                local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
-                BodyVelocity.velocity = flyVector.Unit * 65
+                -- Tính toán vector di chuyển theo chuẩn góc nhìn Camera
+                local camCF = Camera.CFrame
+                local forwardVector = camCF.LookVector
+                local rightVector = camCF.RightVector
+
+                -- Bấm W đi tới theo hướng Camera ngước lên/cúi xuống chuẩn 100%
+                local flyDir = (forwardVector * (-moveDir.Z)) + (rightVector * moveDir.X)
+                BodyVelocity.velocity = flyDir.Unit * Settings.FlySpeed
             else
                 BodyVelocity.velocity = Vector3.new(0, 0, 0)
             end
@@ -324,7 +368,9 @@ local function SetFireDragonMount(state)
     end
 end
 
--- 3. Kỹ Năng Cánh Thiên Thần & Khiên Cầu Vồng (FIXED & ANIMATED)
+--==============================================================================--
+--           KĨ NĂNG 3: CÁNH THIÊN THẦN KHỔNG LỒ & KHIÊN CẦU VỒNG (HIGH-DETAIL)   --
+--==============================================================================--
 local function SetRainbowAngel(state)
     Settings.RainbowAngel = state
     local char = LocalPlayer.Character
@@ -340,11 +386,11 @@ local function SetRainbowAngel(state)
         local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
         if not torso then return end
 
-        -- Vòng Khiên Cầu Vồng Dạ Quang
+        -- Khiên Cầu Vồng Dạ Quang Đa Lớp
         local shield = Instance.new("Part")
         shield.Name = "RainbowShield"
         shield.Shape = Enum.PartType.Ball
-        shield.Size = Vector3.new(8.5, 8.5, 8.5)
+        shield.Size = Vector3.new(10, 10, 10)
         shield.Material = Enum.Material.ForceField
         shield.Color = Color3.fromRGB(0, 255, 255)
         shield.CanCollide = false
@@ -356,48 +402,84 @@ local function SetRainbowAngel(state)
         shieldWeld.Part1 = shield
         shieldWeld.Parent = shield
 
-        -- Highlight ép hiện lên Client (Chống bị Map xóa)
         local hl = Instance.new("Highlight")
         hl.Name = "ShieldHighlight"
         hl.Adornee = shield
-        hl.FillTransparency = 0.5
-        hl.OutlineTransparency = 0.1
+        hl.FillTransparency = 0.65
+        hl.OutlineTransparency = 0.05
         hl.Parent = shield
 
-        -- Cánh Thiên Thần Trái & Phải
-        local leftWing = Instance.new("Part")
-        leftWing.Name = "LeftAngelWing"
-        leftWing.Size = Vector3.new(0.2, 5.5, 3)
-        leftWing.Material = Enum.Material.Neon
-        leftWing.Color = Color3.fromRGB(255, 255, 255)
-        leftWing.CanCollide = false
-        leftWing.Massless = true
-        leftWing.Parent = angelFolder
+        -- Vòng Hào Quang Tròn Trên Đầu (Angel Halo)
+        local halo = Instance.new("Part")
+        halo.Name = "AngelHalo"
+        halo.Size = Vector3.new(2.5, 0.2, 2.5)
+        halo.Material = Enum.Material.Neon
+        halo.Color = Color3.fromRGB(255, 230, 100)
+        halo.CanCollide = false
+        halo.Massless = true
+        halo.Parent = angelFolder
 
-        local lWeld = Instance.new("Weld")
-        lWeld.Name = "LeftWingWeld"
-        lWeld.Part0 = torso
-        lWeld.Part1 = leftWing
-        lWeld.C0 = CFrame.new(-2, 1.5, 1.2)
-        lWeld.Parent = leftWing
+        local haloMesh = Instance.new("SpecialMesh")
+        haloMesh.MeshType = Enum.MeshType.FileMesh
+        haloMesh.MeshId = "rbxassetid://3270017" -- Ring Mesh
+        haloMesh.Scale = Vector3.new(3, 3, 3)
+        haloMesh.Parent = halo
 
-        local rightWing = Instance.new("Part")
-        rightWing.Name = "RightAngelWing"
-        rightWing.Size = Vector3.new(0.2, 5.5, 3)
-        rightWing.Material = Enum.Material.Neon
-        rightWing.Color = Color3.fromRGB(255, 255, 255)
-        rightWing.CanCollide = false
-        rightWing.Massless = true
-        rightWing.Parent = angelFolder
+        local haloWeld = Instance.new("Weld")
+        haloWeld.Part0 = torso
+        haloWeld.Part1 = halo
+        haloWeld.C0 = CFrame.new(0, 3.8, 0)
+        haloWeld.Parent = halo
 
-        local rWeld = Instance.new("Weld")
-        rWeld.Name = "RightWingWeld"
-        rWeld.Part0 = torso
-        rWeld.Part1 = rightWing
-        rWeld.C0 = CFrame.new(2, 1.5, 1.2)
-        rWeld.Parent = rightWing
+        -- Cánh Thiên Thần Khổng Lồ Ghép Từ Nhiều Lớp Lông Vũ (Feather Wings)
+        local function createWing(sideName)
+            local wingModel = Instance.new("Model")
+            wingModel.Name = sideName
+            wingModel.Parent = angelFolder
 
-        -- Render Animation vỗ cánh thiên thần & Đổi màu cầu vồng
+            local isLeft = sideName:find("Left") ~= nil
+            local dirMult = isLeft and -1 or 1
+
+            local wingMain = Instance.new("Part")
+            wingMain.Name = "WingMain"
+            wingMain.Size = Vector3.new(0.3, 7.5, 3.5)
+            wingMain.Material = Enum.Material.Neon
+            wingMain.Color = Color3.fromRGB(255, 255, 255)
+            wingMain.CanCollide = false
+            wingMain.Massless = true
+            wingMain.Parent = wingModel
+
+            local wWeld = Instance.new("Weld")
+            wWeld.Name = "WingWeld"
+            wWeld.Part0 = torso
+            wWeld.Part1 = wingMain
+            wWeld.C0 = CFrame.new(3 * dirMult, 2, 1.2) * CFrame.Angles(0, math.rad(25 * dirMult), 0)
+            wWeld.Parent = wingMain
+
+            -- Ghép 5 Lớp Lông Vũ Tầng
+            for i = 1, 5 do
+                local feather = Instance.new("Part")
+                feather.Size = Vector3.new(0.2, 4.5 - (i * 0.5), 1.8)
+                feather.Material = Enum.Material.Neon
+                feather.Color = Color3.fromRGB(255, 255, 255)
+                feather.CanCollide = false
+                feather.Massless = true
+                feather.Parent = wingModel
+
+                local fWeld = Instance.new("Weld")
+                fWeld.Part0 = wingMain
+                fWeld.Part1 = feather
+                fWeld.C0 = CFrame.new(dirMult * (i * 0.6), -i * 0.4, (i * 0.3)) * CFrame.Angles(0, 0, math.rad(dirMult * (i * 12)))
+                fWeld.Parent = feather
+            end
+
+            return wWeld
+        end
+
+        local leftWingWeld = createWing("LeftAngelWingModel")
+        local rightWingWeld = createWing("RightAngelWingModel")
+
+        -- Render Animation Cánh Vỗ Mượt Mà & Đổi Màu Cầu Vồng
         local hue = 0
         AngelRenderConn = RunService.RenderStepped:Connect(function()
             if not Settings.RainbowAngel or not char or not char:FindFirstChild("FEAngelFolder") then
@@ -405,18 +487,19 @@ local function SetRainbowAngel(state)
                 return
             end
 
-            local t = tick() * 3
-            -- Đổi màu Cầu Vồng
-            hue = (hue + 0.005) % 1
-            local rainbowColor = Color3.fromHSV(hue, 0.85, 1)
+            local t = tick() * 3.5
+            hue = (hue + 0.006) % 1
+            local rainbowColor = Color3.fromHSV(hue, 0.9, 1)
+
             shield.Color = rainbowColor
             hl.OutlineColor = rainbowColor
             hl.FillColor = rainbowColor
+            halo.Color = rainbowColor
 
-            -- Animation vỗ cánh phập phồng nhẹ nhàng
-            local wingAngle = math.sin(t) * 18
-            lWeld.C0 = CFrame.new(-2, 1.5, 1.2) * CFrame.Angles(0, math.rad(-30 + wingAngle), math.rad(15 + wingAngle/2))
-            rWeld.C0 = CFrame.new(2, 1.5, 1.2) * CFrame.Angles(0, math.rad(30 - wingAngle), math.rad(-15 - wingAngle/2))
+            -- Animation vỗ cánh phập phồng to mở rộng
+            local wingFlap = math.sin(t) * 22
+            leftWingWeld.C0 = CFrame.new(-3, 2, 1.2) * CFrame.Angles(0, math.rad(-35 + wingFlap), math.rad(18 + wingFlap/2))
+            rightWingWeld.C0 = CFrame.new(3, 2, 1.2) * CFrame.Angles(0, math.rad(35 - wingFlap), math.rad(-18 - wingFlap/2))
         end)
     else
         if char:FindFirstChild("FEAngelFolder") then char.FEAngelFolder:Destroy() end
@@ -424,36 +507,15 @@ local function SetRainbowAngel(state)
     end
 end
 
-local function SetFireAura(state)
-    Settings.FireAura = state
-    local char = LocalPlayer.Character
-    if not char then return end
-
-    if state then
-        for _, part in ipairs(char:GetChildren()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                local fire = Instance.new("Fire")
-                fire.Name = "MagicFireEffect"
-                fire.Size = 7
-                fire.Heat = 15
-                fire.Color = Color3.fromRGB(255, 80, 0)
-                fire.SecondaryColor = Color3.fromRGB(255, 220, 0)
-                fire.Parent = part
-            end
-        end
-    else
-        for _, part in ipairs(char:GetDescendants()) do
-            if part.Name == "MagicFireEffect" then part:Destroy() end
-        end
-    end
-end
-
-local function CreateIceCage()
+--==============================================================================--
+--        KĨ NĂNG 4: LỒNG BĂNG GIỮ LÂU (15s) + PHÁT NỔ HẤT VĂNG CỰC MẠNH         --
+--==============================================================================--
+local function CreateIceCageSuper()
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not myRoot then return end
 
     local targetPlayer = nil
-    local closestDist = 40
+    local closestDist = 55
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
@@ -468,32 +530,97 @@ local function CreateIceCage()
     if targetPlayer and targetPlayer.Character then
         local targetRoot = targetPlayer.Character.HumanoidRootPart
         local cageModel = Instance.new("Model")
-        cageModel.Name = "IceCageContainer"
+        cageModel.Name = "SuperIceCageContainer"
 
         local cagePos = targetRoot.Position
-        local size = 8
+        local size = 10
 
         local function makeWall(cf, s)
             local wall = Instance.new("Part")
             wall.Size = s
             wall.CFrame = cf
             wall.Material = Enum.Material.Ice
-            wall.Color = Color3.fromRGB(0, 230, 255)
-            wall.Transparency = 0.3
+            wall.Color = Color3.fromRGB(120, 240, 255)
+            wall.Transparency = 0.25
             wall.Anchored = true
             wall.CanCollide = true
             wall.Parent = cageModel
         end
 
-        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5))
+        -- Dựng Lồng Băng Khép Kín 6 Mặt
+        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.6, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.6, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.6, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.6, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.6))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.6))
+
+        -- Thêm Hiệu Ứng Băng Tuyết Phủ
+        local smoke = Instance.new("Smoke")
+        smoke.Color = Color3.fromRGB(180, 240, 255)
+        smoke.Size = 8
+        smoke.Opacity = 0.6
+        smoke.Parent = cageModel:FindFirstChildOfClass("Part")
 
         cageModel.Parent = workspace
-        task.delay(10, function() cageModel:Destroy() end)
+
+        -- Đếm Giờ Lồng Băng Nhốt 15 Giây Sau Đó Nổ Hất Văng
+        task.delay(15, function()
+            if cageModel and cageModel.Parent then
+                -- Hiệu Ứng Nổ Sóng Âm Băng
+                local blast = Instance.new("Part")
+                blast.Shape = Enum.PartType.Ball
+                blast.Size = Vector3.new(2, 2, 2)
+                blast.CFrame = CFrame.new(cagePos)
+                blast.Material = Enum.Material.Neon
+                blast.Color = Color3.fromRGB(0, 230, 255)
+                blast.Anchored = true
+                blast.CanCollide = false
+                blast.Parent = workspace
+
+                local tween = TweenService:Create(blast, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = Vector3.new(35, 35, 35),
+                    Transparency = 1
+                })
+                tween:Play()
+                tween.Completed:Connect(function() blast:Destroy() end)
+
+                -- Hất Văng Người Chơi Bên Trong Out Xa Cực Mạnh
+                if targetRoot and targetRoot.Parent then
+                    local randomUp = Vector3.new(math.random(-100, 100), 250, math.random(-100, 100))
+                    targetRoot.AssemblyLinearVelocity = randomUp * 15
+                end
+
+                cageModel:Destroy()
+            end
+        end)
+    end
+end
+
+--==============================================================================--
+--                    KĨ NĂNG 5 & UTILITIES PHỤ TRỢ (EFFECTS)                    --
+--==============================================================================--
+local function SetFireAura(state)
+    Settings.FireAura = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        for _, part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                local fire = Instance.new("Fire")
+                fire.Name = "MagicFireEffect"
+                fire.Size = 8
+                fire.Heat = 16
+                fire.Color = Color3.fromRGB(255, 60, 0)
+                fire.SecondaryColor = Color3.fromRGB(255, 220, 0)
+                fire.Parent = part
+            end
+        end
+    else
+        for _, part in ipairs(char:GetDescendants()) do
+            if part.Name == "MagicFireEffect" then part:Destroy() end
+        end
     end
 end
 
@@ -512,8 +639,8 @@ local function GroundStompShockwave()
     wave.Anchored = true
     wave.Parent = workspace
 
-    local tween = TweenService:Create(wave, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(0.5, 50, 50),
+    local tween = TweenService:Create(wave, TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(0.5, 60, 60),
         Transparency = 1
     })
     tween:Play()
@@ -523,15 +650,15 @@ local function GroundStompShockwave()
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local targetRoot = plr.Character.HumanoidRootPart
             local dist = (targetRoot.Position - root.Position).Magnitude
-            if dist <= 30 then
+            if dist <= 35 then
                 local pushDir = (targetRoot.Position - root.Position).Unit
-                targetRoot.AssemblyLinearVelocity = (pushDir * 180) + Vector3.new(0, 120, 0)
+                targetRoot.AssemblyLinearVelocity = (pushDir * 220) + Vector3.new(0, 150, 0)
             end
         end
     end
 end
 
---==================== UTILITY & VISUALS ====================--
+-- Ambient Lighting Utilities
 local function SetNoFog(state)
     Settings.NoFog = state
     Lighting.FogEnd = state and 1e6 or OriginalFogEnd
@@ -541,8 +668,8 @@ local function SetNeonNight(state)
     Settings.NeonNight = state
     if state then
         Lighting.ClockTime = 0
-        Lighting.Brightness = 3
-        Lighting.OutdoorAmbient = Color3.fromRGB(0, 150, 255)
+        Lighting.Brightness = 3.5
+        Lighting.OutdoorAmbient = Color3.fromRGB(0, 160, 255)
     else
         Lighting.ClockTime = 12
         Lighting.Brightness = 1
@@ -561,19 +688,19 @@ local function SetGlowTrail(state)
 
         local a0 = Instance.new("Attachment", root)
         a0.Name = "TrailA0"
-        a0.Position = Vector3.new(0, -2, 0)
+        a0.Position = Vector3.new(0, -2.2, 0)
 
         local a1 = Instance.new("Attachment", root)
         a1.Name = "TrailA1"
-        a1.Position = Vector3.new(0, -1.8, 0)
+        a1.Position = Vector3.new(0, -2.0, 0)
 
         local trail = Instance.new("Trail")
         trail.Name = "PlayerGlowTrail"
         trail.Attachment0 = a0
         trail.Attachment1 = a1
-        trail.Lifetime = 0.8
-        trail.Color = ColorSequence.new(Color3.fromRGB(0, 200, 255), Color3.fromRGB(180, 0, 255))
-        trail.Transparency = NumberSequence.new(0.2, 1)
+        trail.Lifetime = 0.9
+        trail.Color = ColorSequence.new(Color3.fromRGB(0, 200, 255), Color3.fromRGB(220, 0, 255))
+        trail.Transparency = NumberSequence.new(0.15, 1)
         trail.Parent = char
     else
         if char:FindFirstChild("PlayerGlowTrail") then char.PlayerGlowTrail:Destroy() end
@@ -584,7 +711,9 @@ local function SetGlowTrail(state)
     end
 end
 
---==================== AIMBOT & HITBOX ====================--
+--==============================================================================--
+--                            AIMBOT & HITBOX SYSTEM                             --
+--==============================================================================--
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -647,7 +776,9 @@ RunService.RenderStepped:Connect(function()
     Camera.FieldOfView = Settings.CustomFOV
 end)
 
---==================== MOVEMENT & FLY ====================--
+--==============================================================================--
+--                          MOVEMENT & FLY CONTROL                              --
+--==============================================================================--
 local function StartFly()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -721,7 +852,9 @@ local function SetNoclip(state)
     end
 end
 
---==================== DROPKICK & TELEPORT FUNCTIONS ====================--
+--==============================================================================--
+--                       DROPKICK & TELEPORT FUNCTIONS                          --
+--==============================================================================--
 local function SetDropkick(state)
     Settings.Dropkick = state
     if DropkickConn then DropkickConn:Disconnect() DropkickConn = nil end
@@ -775,13 +908,15 @@ local function TeleportToPlayer()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            myRoot.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            myRoot.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3.5)
             break
         end
     end
 end
 
---==================== ESP SYSTEM ====================--
+--==============================================================================--
+--                            ESP ENGINE DRAWINGS                               --
+--==============================================================================--
 local function CreateESP(plr)
     if ESPObjects[plr] then return end
     local t = {
@@ -876,7 +1011,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---==================== GIAO DIỆN ONE UI ANIMATED ====================--
+--==============================================================================--
+--                        GIAO DIỆN ONE UI ANIMATED ENGINE                       --
+--==============================================================================--
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZakaHub_UI"
 ScreenGui.ResetOnSpawn = false
@@ -886,7 +1023,7 @@ if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("Player
 -- Nút Icon Toggle
 local ToggleIcon = Instance.new("TextButton")
 ToggleIcon.Name = "ZakaToggleIcon"
-ToggleIcon.Size = UDim2.new(0, 44, 0, 44)
+ToggleIcon.Size = UDim2.new(0, 46, 0, 46)
 ToggleIcon.Position = UDim2.new(0, 15, 0.4, 0)
 ToggleIcon.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
 ToggleIcon.Text = "Z"
@@ -899,8 +1036,8 @@ ToggleIcon.Parent = ScreenGui
 Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 340, 0, 350)
-Main.Position = UDim2.new(0.5, -170, 0.5, -175)
+Main.Size = UDim2.new(0, 350, 0, 360)
+Main.Position = UDim2.new(0.5, -175, 0.5, -180)
 Main.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
 Main.Active = true
 Main.Draggable = true
@@ -911,7 +1048,7 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = Color3.fromRGB(0, 162, 255)
 MainStroke.Thickness = 1.5
-MainStroke.Transparency = 0.6
+MainStroke.Transparency = 0.5
 
 ToggleIcon.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
@@ -926,10 +1063,10 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUD</font> <font color=\"#888888\">| ZakahudV1.0 PRO</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUD</font> <font color=\"#888888\">| ZakahudV1.0 OVERHAUL</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 14
+Title.TextSize = 13.5
 Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
@@ -1091,7 +1228,9 @@ local function CreateButton(parent, text, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
---==================== THIẾT LẬP MENU CÁC TABS ====================--
+--==============================================================================--
+--                        KHỞI TẠO MENU CÁC TABS ĐẦY ĐỦ                          --
+--==============================================================================--
 
 -- Tab 1: Combat
 CreateToggle(Pages[1], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
@@ -1123,15 +1262,15 @@ CreateButton(Pages[4], "Bring All (Kéo Tất Cả Lại Gần)", function() Bri
 
 -- Tab 5: Troll
 CreateToggle(Pages[5], "Bật Dropkick (Đá Văng FE)", false, function(v) SetDropkick(v) end)
-CreateInput(Pages[5], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
+CreateInput(Pages[5], "Lực Dropkick (Max 10000)", 3500, 10000, function(v) Settings.DropkickPower = v end)
 
--- Tab 6: Magic (Kỹ Năng Magic & Cưỡi Rồng)
-CreateToggle(Pages[6], "Cưỡi Rồng Lửa Uốn Lượn (Animated)", false, function(v) SetFireDragonMount(v) end)
-CreateToggle(Pages[6], "Khiên Cầu Vồng + Cánh Thiên Thần (Fix)", false, function(v) SetRainbowAngel(v) end)
+-- Tab 6: Magic (Chi Tiết Cao Cấp)
+CreateToggle(Pages[6], "Rồng Lửa Cưỡi (Fixed Control + Detailed)", false, function(v) SetFireDragonMount(v) end)
+CreateToggle(Pages[6], "Cánh Thiên Thần + Khiên Cầu Vồng (Feather)", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game", false, function(v) SetGentlemanFlower(v) end)
 CreateToggle(Pages[6], "Triệu Hồi Lửa Rồng Quanh Thân", false, function(v) SetFireAura(v) end)
-CreateButton(Pages[6], "Tạo Lồng Băng Nhốt Đối Thủ", function() CreateIceCage() end)
-CreateButton(Pages[6], "Sóng Xung Kích Giậm Chân", function() GroundStompShockwave() end)
+CreateButton(Pages[6], "Lồng Băng Nhốt 15s + Phát Nổ Hất Văng", function() CreateIceCageSuper() end)
+CreateButton(Pages[6], "Sóng Xung Kích Giậm Chân Rồng", function() GroundStompShockwave() end)
 
 -- Tab 7: Utility
 CreateToggle(Pages[7], "Chống Mờ Sương Mù (No Fog)", false, function(v) SetNoFog(v) end)
@@ -1142,7 +1281,7 @@ CreateButton(Pages[7], "Mở Rộng Zoom Camera Vô Tận", function() LocalPlay
 
 -- Tab 8: Misc
 CreateToggle(Pages[8], "Nhìn Trong Đêm (Fullbright)", false, function(v) 
-    Lighting.Brightness = v and 2 or 1 
+    Lighting.Brightness = v and 2.5 or 1 
     Lighting.ClockTime = v and 14 or 12
 end)
 CreateToggle(Pages[8], "Tự Động Anti-AFK", true, function(v) Settings.AntiAFK = v end)
@@ -1159,4 +1298,4 @@ CreateButton(Pages[8], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     end)
 end)
 
-print("Zaka Hud ZakahudV1.0 PRO Loaded Successfully!")
+print("Zaka Hud ZakahudV1.0 High-Detail Overhaul Fully Loaded!")
