@@ -1595,14 +1595,336 @@ CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game 3D Model", false, fun
 CreateToggle(Pages[6], "Triệu Hồi Lửa Rồng Quanh Thân (Fire Aura)", false, function(v) SetFireAura(v) end)
 CreateButton(Pages[6], "Lồng Băng Nhốt 15s + Phát Nổ Hất Văng", function() CreateIceCageSuper() end)
 CreateButton(Pages[6], "Sóng Xung Kích Giậm Chân Rồng Shockwave", function() GroundStompShockwave() end)
-CreateToggle(Pages[6], "Vòng Tròn Lửa Chân (Fire Ring)", false, function() end)
-CreateToggle(Pages[6], "Hiệu Ứng Sét Đánh Quanh Thân", false, function() end)
-CreateButton(Pages[6], "Triệu Hồi Cột Băng Đẩy Bay", function() end)
-CreateButton(Pages[6], "Bắn Cầu Lửa Ma Thuật FE", function() end)
-CreateButton(Pages[6], "Tạo Hố Đen Vũ Trụ Nhỏ (Blackhole Visual)", function() end)
-CreateToggle(Pages[6], "Bánh Xe Sáng Rainbow Xoay Chân", false, function() end)
-CreateToggle(Pages[6], "Đuôi Rồng Lửa Tách Biệt", false, function() end)
-CreateButton(Pages[6], "Kích Hoạt Khiên Bảo Vệ Băng", function() end)
+local Services = {
+    Players = game:GetService("Players"),
+    TweenService = game:GetService("TweenService"),
+    RunService = game:GetService("RunService"),
+    Debris = game:GetService("Debris")
+}
+
+local LocalPlayer = Services.Players.LocalPlayer
+
+-- Bảng quản lý kết nối & Model để dọn dẹp triệt để
+local ActiveEffects = {
+    Connections = {},
+    Models = {}
+}
+
+-- Hàm tiện ích tạo Folder chứa hiệu ứng trên nhân vật
+local function GetEffectFolder(char)
+    local folder = char:FindFirstChild("MagicFXFolder")
+    if not folder then
+        folder = Instance.new("Folder")
+        folder.Name = "MagicFXFolder"
+        folder.Parent = char
+    end
+    return folder
+end
+
+-- 1. Vòng Tròn Lửa Chân
+local fireRingConn
+CreateToggle(Pages[6], "Vòng Tròn Lửa Chân (Fire Ring)", false, function(Value)
+    if fireRingConn then fireRingConn:Disconnect() fireRingConn = nil end
+    local char = LocalPlayer.Character
+    if Value and char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local fxFolder = GetEffectFolder(char)
+        
+        local ring = Instance.new("Part")
+        ring.Name = "FireRingFX"
+        ring.Size = Vector3.new(6, 0.2, 6)
+        ring.CanCollide = false
+        ring.Anchored = true
+        ring.Material = Enum.Material.Neon
+        ring.Color = Color3.fromRGB(255, 100, 0)
+        ring.Transparency = 0.4
+        ring.Parent = fxFolder
+
+        local fire = Instance.new("Fire")
+        fire.Size = 8
+        fire.Heat = 5
+        fire.Parent = ring
+
+        fireRingConn = Services.RunService.RenderStepped:Connect(function()
+            if char and hrp and ring.Parent then
+                ring.CFrame = hrp.CFrame * CFrame.new(0, -2.8, 0) * CFrame.Angles(0, math.rad(tick() * 100 % 360), 0)
+            else
+                if fireRingConn then fireRingConn:Disconnect() end
+            end
+        end)
+        ActiveEffects.Connections["FireRing"] = fireRingConn
+    else
+        local folder = char and char:FindFirstChild("MagicFXFolder")
+        if folder and folder:FindFirstChild("FireRingFX") then folder.FireRingFX:Destroy() end
+    end
+end)
+
+-- 2. Hiệu Ứng Sét Đánh Quanh Thân
+local lightningConn
+CreateToggle(Pages[6], "Hiệu Ứng Sét Đánh Quanh Thân", false, function(Value)
+    if lightningConn then lightningConn:Disconnect() lightningConn = nil end
+    if Value then
+        local lastTime = 0
+        lightningConn = Services.RunService.Heartbeat:Connect(function()
+            if tick() - lastTime > 0.15 then
+                lastTime = tick()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    local p = Instance.new("Part")
+                    p.Size = Vector3.new(0.2, math.random(3, 7), 0.2)
+                    p.Material = Enum.Material.Neon
+                    p.Color = Color3.fromRGB(0, 230, 255)
+                    p.Anchored = true
+                    p.CanCollide = false
+                    p.CFrame = hrp.CFrame * CFrame.new(math.random(-4, 4), math.random(-1, 4), math.random(-4, 4)) * CFrame.Angles(math.rad(math.random(0, 360)), 0, math.rad(math.random(0, 360)))
+                    p.Parent = Workspace
+                    Services.Debris:AddItem(p, 0.1)
+                end
+            end
+        end)
+        ActiveEffects.Connections["Lightning"] = lightningConn
+    end
+end)
+
+-- 3. Triệu Hồi Cột Băng Đẩy Bay
+CreateButton(Pages[6], "Triệu Hồi Cột Băng Đẩy Bay", function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local iceSpike = Instance.new("Part")
+        iceSpike.Size = Vector3.new(4, 1, 4)
+        iceSpike.Position = hrp.Position - Vector3.new(0, 3, 0)
+        iceSpike.Material = Enum.Material.Ice
+        iceSpike.Color = Color3.fromRGB(150, 230, 255)
+        iceSpike.Transparency = 0.2
+        iceSpike.Anchored = true
+        iceSpike.CanCollide = true
+        iceSpike.Parent = Workspace
+
+        local tween = Services.TweenService:Create(iceSpike, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = Vector3.new(5, 12, 5),
+            Position = hrp.Position + Vector3.new(0, 3, 0)
+        })
+        tween:Play()
+
+        -- Đẩy nhân vật lên không
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, 120, hrp.Velocity.Z)
+        Services.Debris:AddItem(iceSpike, 4)
+    end
+end)
+
+-- 4. Bắn Cầu Lửa Ma Thuật FE
+CreateButton(Pages[6], "Bắn Cầu Lửa Ma Thuật FE", function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local fireball = Instance.new("Part")
+        fireball.Size = Vector3.new(2, 2, 2)
+        fireball.Shape = Enum.PartType.Ball
+        fireball.Color = Color3.fromRGB(255, 60, 0)
+        fireball.Material = Enum.Material.Neon
+        fireball.CFrame = hrp.CFrame * CFrame.new(0, 1, -3)
+        fireball.CanCollide = false
+        fireball.Parent = Workspace
+
+        local pe = Instance.new("ParticleEmitter")
+        pe.Texture = "rbxassetid://243664672"
+        pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 0)})
+        pe.Lifetime = NumberRange.new(0.3, 0.5)
+        pe.Rate = 100
+        pe.Parent = fireball
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = hrp.CFrame.LookVector * 100
+        bv.Parent = fireball
+
+        fireball.Touched:Connect(function(hit)
+            if not hit:IsDescendantOf(char) then
+                local exp = Instance.new("Explosion")
+                exp.Position = fireball.Position
+                exp.BlastRadius = 0 -- Thiết lập bằng 0 để tránh tự sát nếu game bật PvP
+                exp.Parent = Workspace
+                fireball:Destroy()
+            end
+        end)
+        Services.Debris:AddItem(fireball, 5)
+    end
+end)
+
+-- 5. Tạo Hố Đen Vũ Trụ Nhỏ (Blackhole Visual)
+CreateButton(Pages[6], "Tạo Hố Đen Vũ Trụ Nhỏ (Blackhole Visual)", function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local hole = Instance.new("Part")
+        hole.Size = Vector3.new(1, 1, 1)
+        hole.Shape = Enum.PartType.Ball
+        hole.Color = Color3.fromRGB(10, 10, 15)
+        hole.Material = Enum.Material.Neon
+        hole.CFrame = hrp.CFrame * CFrame.new(0, 2, -10)
+        hole.Anchored = true
+        hole.CanCollide = false
+        hole.Parent = Workspace
+
+        local highlight = Instance.new("Highlight")
+        highlight.FillColor = Color3.fromRGB(130, 0, 255)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.Parent = hole
+
+        Services.TweenService:Create(hole, TweenInfo.new(1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = Vector3.new(8, 8, 8)
+        }):Play()
+
+        task.delay(4, function()
+            if hole and hole.Parent then
+                Services.TweenService:Create(hole, TweenInfo.new(0.5), {Size = Vector3.new(0,0,0)}):Play()
+                task.wait(0.5)
+                hole:Destroy()
+            end
+        end)
+    end
+end)
+
+-- 6. Bánh Xe Sáng Rainbow Xoay Chân
+local rainbowConn
+CreateToggle(Pages[6], "Bánh Xe Sáng Rainbow Xoay Chân", false, function(Value)
+    if rainbowConn then rainbowConn:Disconnect() rainbowConn = nil end
+    local char = LocalPlayer.Character
+    if Value and char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local fxFolder = GetEffectFolder(char)
+
+        local rainbowPart = Instance.new("Part")
+        rainbowPart.Name = "RainbowRingFX"
+        rainbowPart.Size = Vector3.new(7, 0.1, 7)
+        rainbowPart.CanCollide = false
+        rainbowPart.Anchored = true
+        rainbowPart.Material = Enum.Material.Neon
+        rainbowPart.Parent = fxFolder
+
+        local hue = 0
+        rainbowConn = Services.RunService.RenderStepped:Connect(function()
+            if char and hrp and rainbowPart.Parent then
+                hue = (hue + 0.005) % 1
+                rainbowPart.Color = Color3.fromHSV(hue, 1, 1)
+                rainbowPart.CFrame = hrp.CFrame * CFrame.new(0, -2.9, 0) * CFrame.Angles(0, math.rad(tick() * 180 % 360), 0)
+            else
+                if rainbowConn then rainbowConn:Disconnect() end
+            end
+        end)
+        ActiveEffects.Connections["Rainbow"] = rainbowConn
+    else
+        local folder = char and char:FindFirstChild("MagicFXFolder")
+        if folder and folder:FindFirstChild("RainbowRingFX") then folder.RainbowRingFX:Destroy() end
+    end
+end)
+
+-- 7. Đuôi Rồng Lửa Tách Biệt
+local tailConn
+CreateToggle(Pages[6], "Đuôi Rồng Lửa Tách Biệt", false, function(Value)
+    if tailConn then tailConn:Disconnect() tailConn = nil end
+    local char = LocalPlayer.Character
+    if Value and char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local fxFolder = GetEffectFolder(char)
+
+        local tailNode = Instance.new("Part")
+        tailNode.Name = "DragonTailFX"
+        tailNode.Size = Vector3.new(1, 1, 1)
+        tailNode.Transparency = 1
+        tailNode.CanCollide = false
+        tailNode.Anchored = true
+        tailNode.Parent = fxFolder
+
+        local pe = Instance.new("ParticleEmitter")
+        pe.Texture = "rbxassetid://243664672"
+        pe.Color = ColorSequence.new(Color3.fromRGB(255, 80, 0), Color3.fromRGB(255, 200, 0))
+        pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 1.5), NumberSequenceKeypoint.new(1, 0)})
+        pe.Lifetime = NumberRange.new(0.4, 0.8)
+        pe.Rate = 60
+        pe.Speed = NumberRange.new(2, 5)
+        pe.Parent = tailNode
+
+        tailConn = Services.RunService.RenderStepped:Connect(function()
+            if char and hrp and tailNode.Parent then
+                -- Đuôi đi theo sau lưng nhân vật
+                tailNode.CFrame = hrp.CFrame * CFrame.new(0, -0.5, 2.5)
+            else
+                if tailConn then tailConn:Disconnect() end
+            end
+        end)
+        ActiveEffects.Connections["DragonTail"] = tailConn
+    else
+        local folder = char and char:FindFirstChild("MagicFXFolder")
+        if folder and folder:FindFirstChild("DragonTailFX") then folder.DragonTailFX:Destroy() end
+    end
+end)
+
+-- 8. Kích Hoạt Khiên Bảo Vệ Băng
+CreateButton(Pages[6], "Kích Hoạt Khiên Bảo Vệ Băng", function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        local fxFolder = GetEffectFolder(char)
+
+        local oldShield = fxFolder:FindFirstChild("IceShieldFX")
+        if oldShield then oldShield:Destroy() end
+
+        local shield = Instance.new("Part")
+        shield.Name = "IceShieldFX"
+        shield.Size = Vector3.new(8, 8, 8)
+        shield.Shape = Enum.PartType.Ball
+        shield.Material = Enum.Material.Glass
+        shield.Color = Color3.fromRGB(180, 240, 255)
+        shield.Transparency = 0.5
+        shield.CanCollide = false
+        shield.Parent = fxFolder
+
+        local weld = Instance.new("Weld")
+        weld.Part0 = hrp
+        weld.Part1 = shield
+        weld.C0 = CFrame.new(0, 0, 0)
+        weld.Parent = shield
+
+        Services.Debris:AddItem(shield, 10) -- Tự biến mất sau 10 giây
+    end
+end)
+
+-- 9. Xóa Toàn Bộ Model Phép Thuật Dư Thừa (Tối Ưu Hoàn Chỉnh)
+CreateButton(Pages[6], "Xóa Toàn Bộ Model Phép Thuật Dư Thừa", function()
+    -- Ngắt tất cả các vòng lặp RenderStepped/Heartbeat đang chạy
+    for name, conn in pairs(ActiveEffects.Connections) do
+        if conn then
+            conn:Disconnect()
+            ActiveEffects.Connections[name] = nil
+        end
+    end
+
+    local char = LocalPlayer.Character
+    if char then
+        -- Xóa Folder quản lý hiệu ứng chung
+        local fxFolder = char:FindFirstChild("MagicFXFolder")
+        if fxFolder then fxFolder:Destroy() end
+
+        -- Xóa các Folder/Model lẻ nếu có
+        local targetNames = {
+            "FEFireDragonFolder", 
+            "FEAngelFolder", 
+            "GentlemanFlowerModel",
+            "FireRingFX",
+            "RainbowRingFX",
+            "DragonTailFX",
+            "IceShieldFX"
+        }
+        for _, name in ipairs(targetNames) do
+            local item = char:FindFirstChild(name)
+            if item then item:Destroy() end
+        end
+    end
+end)
+
 CreateButton(Pages[6], "Xóa Toàn Bộ Model Phép Thuật Dư Thừa", function()
     local char = LocalPlayer.Character
     if char then
