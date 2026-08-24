@@ -1,7 +1,7 @@
 --[[
     ╔════════════════════════════════════════════════════════════════╗
-    ║             ZAKA HUD ULTIMATE - V1.0 (FIX MOUNT)               ║
-    ║    Custom Item + Fire Dragon Mount + Full Utility & Magic      ║
+    ║        ZAKA HUD ULTIMATE - V1.0 (ANIMATED DRAGON & FIX)        ║
+    ║   Dynamic Dragon Waves + Realistic Wings + Fixed Angel Magic   ║
     ╚════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -69,7 +69,8 @@ local Settings = {
 }
 
 --==================== BIẾN HỆ THỐNG ====================--
-local NoclipConn, SpeedConn, FlyConn, DropkickConn, TouchTPConn, DragonFlyConn
+local NoclipConn, SpeedConn, FlyConn, DropkickConn, TouchTPConn
+local DragonRenderConn, AngelRenderConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 local OriginalFogEnd = Lighting.FogEnd
@@ -109,9 +110,9 @@ local function SetTouchTP(state)
     end
 end
 
---==================== ITEM & KĨ NĂNG MỚI (BÔNG HOA & RỒNG LỬA FIX) ====================--
+--==================== ITEM & KĨ NĂNG CẢI TIẾN ANIMATION ====================--
 
--- 1. Bông Hoa Lịch Sự Trân Trọng Game (Gentleman Flower)
+-- 1. Bông Hoa Lịch Sự
 local function SetGentlemanFlower(state)
     Settings.HoldGentlemanFlower = state
     local char = LocalPlayer.Character
@@ -152,7 +153,6 @@ local function SetGentlemanFlower(state)
         petals.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180), Color3.fromRGB(255, 192, 203))
         petals.Size = NumberSequence.new(0.3, 0.1)
         petals.Rate = 6
-        petals.Speed = NumberRange.new(1, 2)
         petals.Lifetime = NumberRange.new(1.5, 3)
         petals.Parent = rose
 
@@ -170,7 +170,7 @@ local function SetGentlemanFlower(state)
     end
 end
 
--- 2. Kỹ Năng Cưỡi Rồng Lửa (Fire Dragon Mount - Fixed Anti-Map Delete)
+-- 2. Kỹ Năng Cưỡi Rồng Lửa Uốn Lượn (ANIMATED FIRE DRAGON MOUNT)
 local function SetFireDragonMount(state)
     Settings.FireDragonMount = state
     local char = LocalPlayer.Character
@@ -178,95 +178,103 @@ local function SetFireDragonMount(state)
     local root = char.HumanoidRootPart
 
     if state then
-        -- Dọn dẹp rồng cũ nếu có
-        if char:FindFirstChild("FEFireDragonMount") then
-            char.FEFireDragonMount:Destroy()
-        end
+        if char:FindFirstChild("FEFireDragonFolder") then char.FEFireDragonFolder:Destroy() end
 
-        local dragon = Instance.new("Accessory")
-        dragon.Name = "FEFireDragonMount"
+        local dragonFolder = Instance.new("Folder")
+        dragonFolder.Name = "FEFireDragonFolder"
+        dragonFolder.Parent = char
 
-        local handle = Instance.new("Part")
-        handle.Name = "Handle"
-        handle.Size = Vector3.new(4, 2, 8)
-        handle.Color = Color3.fromRGB(200, 0, 0)
-        handle.Material = Enum.Material.Neon
-        handle.CanCollide = false
-        handle.CanTouch = false
-        handle.Massless = true
-        handle.Parent = dragon
+        -- Thân Rồng
+        local bodyPart = Instance.new("Part")
+        bodyPart.Name = "DragonBody"
+        bodyPart.Size = Vector3.new(3.5, 3, 7)
+        bodyPart.Color = Color3.fromRGB(180, 0, 0)
+        bodyPart.Material = Enum.Material.Neon
+        bodyPart.CanCollide = false
+        bodyPart.Massless = true
+        bodyPart.Parent = dragonFolder
+
+        local bodyWeld = Instance.new("Weld")
+        bodyWeld.Name = "BodyWeld"
+        bodyWeld.Part0 = root
+        bodyWeld.Part1 = bodyPart
+        bodyWeld.C0 = CFrame.new(0, -3.2, 0)
+        bodyWeld.Parent = bodyPart
 
         -- Đầu Rồng
-        local head = Instance.new("Part")
-        head.Name = "DragonHead"
-        head.Size = Vector3.new(3, 2.5, 4)
-        head.Color = Color3.fromRGB(255, 50, 0)
-        head.Material = Enum.Material.Neon
-        head.CanCollide = false
-        head.CanTouch = false
-        head.Massless = true
-        head.Parent = dragon
+        local headPart = Instance.new("Part")
+        headPart.Name = "DragonHead"
+        headPart.Size = Vector3.new(2.8, 2.5, 4)
+        headPart.Color = Color3.fromRGB(255, 60, 0)
+        headPart.Material = Enum.Material.Neon
+        headPart.CanCollide = false
+        headPart.Massless = true
+        headPart.Parent = dragonFolder
 
         local headWeld = Instance.new("Weld")
-        headWeld.Part0 = handle
-        headWeld.Part1 = head
+        headWeld.Name = "HeadWeld"
+        headWeld.Part0 = bodyPart
+        headWeld.Part1 = headPart
         headWeld.C0 = CFrame.new(0, 1, -5)
-        headWeld.Parent = head
+        headWeld.Parent = headPart
 
-        -- Phun lửa
         local dragonFire = Instance.new("Fire")
-        dragonFire.Size = 10
-        dragonFire.Heat = 15
-        dragonFire.Color = Color3.fromRGB(255, 120, 0)
-        dragonFire.SecondaryColor = Color3.fromRGB(255, 230, 0)
-        dragonFire.Parent = head
+        dragonFire.Size = 8
+        dragonFire.Heat = 12
+        dragonFire.Color = Color3.fromRGB(255, 140, 0)
+        dragonFire.Parent = headPart
 
-        -- Cánh Rồng Trái / Phải
+        -- Đuôi Rồng
+        local tailPart = Instance.new("Part")
+        tailPart.Name = "DragonTail"
+        tailPart.Size = Vector3.new(2, 2, 6)
+        tailPart.Color = Color3.fromRGB(150, 0, 0)
+        tailPart.Material = Enum.Material.Neon
+        tailPart.CanCollide = false
+        tailPart.Massless = true
+        tailPart.Parent = dragonFolder
+
+        local tailWeld = Instance.new("Weld")
+        tailWeld.Name = "TailWeld"
+        tailWeld.Part0 = bodyPart
+        tailWeld.Part1 = tailPart
+        tailWeld.C0 = CFrame.new(0, -0.5, 5.5)
+        tailWeld.Parent = tailPart
+
+        -- Cánh Rồng Trái & Phải
         local leftWing = Instance.new("Part")
-        leftWing.Size = Vector3.new(10, 0.2, 4)
+        leftWing.Name = "LeftWing"
+        leftWing.Size = Vector3.new(9, 0.3, 4.5)
         leftWing.Color = Color3.fromRGB(255, 30, 0)
         leftWing.Material = Enum.Material.Neon
         leftWing.CanCollide = false
-        leftWing.CanTouch = false
         leftWing.Massless = true
-        leftWing.Parent = dragon
+        leftWing.Parent = dragonFolder
 
-        local lWeld = Instance.new("Weld")
-        lWeld.Part0 = handle
-        lWeld.Part1 = leftWing
-        lWeld.C0 = CFrame.new(-6, 1, 0) * CFrame.Angles(0, 0, math.rad(15))
-        lWeld.Parent = leftWing
+        local leftWingWeld = Instance.new("Weld")
+        leftWingWeld.Name = "LeftWingWeld"
+        leftWingWeld.Part0 = bodyPart
+        leftWingWeld.Part1 = leftWing
+        leftWingWeld.C0 = CFrame.new(-5.5, 1, 0)
+        leftWingWeld.Parent = leftWing
 
         local rightWing = Instance.new("Part")
-        rightWing.Size = Vector3.new(10, 0.2, 4)
+        rightWing.Name = "RightWing"
+        rightWing.Size = Vector3.new(9, 0.3, 4.5)
         rightWing.Color = Color3.fromRGB(255, 30, 0)
         rightWing.Material = Enum.Material.Neon
         rightWing.CanCollide = false
-        rightWing.CanTouch = false
         rightWing.Massless = true
-        rightWing.Parent = dragon
+        rightWing.Parent = dragonFolder
 
-        local rWeld = Instance.new("Weld")
-        rWeld.Part0 = handle
-        rWeld.Part1 = rightWing
-        rWeld.C0 = CFrame.new(6, 1, 0) * CFrame.Angles(0, 0, math.rad(-15))
-        rWeld.Parent = rightWing
+        local rightWingWeld = Instance.new("Weld")
+        rightWingWeld.Name = "RightWingWeld"
+        rightWingWeld.Part0 = bodyPart
+        rightWingWeld.Part1 = rightWing
+        rightWingWeld.C0 = CFrame.new(5.5, 1, 0)
+        rightWingWeld.Parent = rightWing
 
-        -- Weld Rồng vào Thân
-        local attachment = Instance.new("Attachment")
-        attachment.Name = "BodyBackAttachment"
-        attachment.Parent = handle
-
-        dragon.Parent = char
-
-        local mountWeld = Instance.new("Weld")
-        mountWeld.Name = "DragonMountWeld"
-        mountWeld.Part0 = root
-        mountWeld.Part1 = handle
-        mountWeld.C0 = CFrame.new(0, -3.2, 0)
-        mountWeld.Parent = handle
-
-        -- Bay bằng Rồng
+        -- Mở cơ chế Bay
         BodyGyro = Instance.new("BodyGyro")
         BodyGyro.P = 9e4
         BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -278,17 +286,30 @@ local function SetFireDragonMount(state)
         BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
         BodyVelocity.Parent = root
 
-        DragonFlyConn = RunService.RenderStepped:Connect(function()
+        -- Vòng lặp Render Animation Rồng Uốn Lượn
+        DragonRenderConn = RunService.RenderStepped:Connect(function()
             if not Settings.FireDragonMount or not char or not char:FindFirstChild("Humanoid") then
                 SetFireDragonMount(false)
                 return
             end
 
-            local hum = char.Humanoid
-            BodyGyro.cframe = Camera.CFrame
+            local t = tick() * 4
+            local moveDir = char.Humanoid.MoveDirection
+            local isMoving = moveDir.Magnitude > 0
+            local speedMult = isMoving and 1.8 or 1.0
 
-            local moveDir = hum.MoveDirection
-            if moveDir.Magnitude > 0 then
+            -- Animation uốn sóng thân rồng & đầu & đuôi
+            headWeld.C0 = CFrame.new(math.sin(t * speedMult) * 0.8, 1 + math.cos(t * speedMult) * 0.3, -5) * CFrame.Angles(0, math.sin(t * speedMult) * 0.15, 0)
+            tailWeld.C0 = CFrame.new(math.sin(-t * speedMult) * 1.2, -0.5 + math.sin(t * speedMult) * 0.3, 5.5) * CFrame.Angles(0, math.sin(-t * speedMult) * 0.25, 0)
+
+            -- Animation vỗ cánh rồng
+            local wingFlap = math.sin(t * 1.5 * speedMult) * 25
+            leftWingWeld.C0 = CFrame.new(-5.5, 1, 0) * CFrame.Angles(0, 0, math.rad(wingFlap))
+            rightWingWeld.C0 = CFrame.new(5.5, 1, 0) * CFrame.Angles(0, 0, math.rad(-wingFlap))
+
+            -- Cập nhật hướng bay
+            BodyGyro.cframe = Camera.CFrame
+            if isMoving then
                 local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
                 BodyVelocity.velocity = flyVector.Unit * 65
             else
@@ -296,12 +317,217 @@ local function SetFireDragonMount(state)
             end
         end)
     else
-        if char:FindFirstChild("FEFireDragonMount") then
-            char.FEFireDragonMount:Destroy()
-        end
+        if char:FindFirstChild("FEFireDragonFolder") then char.FEFireDragonFolder:Destroy() end
         if BodyGyro then BodyGyro:Destroy() end
         if BodyVelocity then BodyVelocity:Destroy() end
-        if DragonFlyConn then DragonFlyConn:Disconnect() DragonFlyConn = nil end
+        if DragonRenderConn then DragonRenderConn:Disconnect() DragonRenderConn = nil end
+    end
+end
+
+-- 3. Kỹ Năng Cánh Thiên Thần & Khiên Cầu Vồng (FIXED & ANIMATED)
+local function SetRainbowAngel(state)
+    Settings.RainbowAngel = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        if char:FindFirstChild("FEAngelFolder") then char.FEAngelFolder:Destroy() end
+
+        local angelFolder = Instance.new("Folder")
+        angelFolder.Name = "FEAngelFolder"
+        angelFolder.Parent = char
+
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if not torso then return end
+
+        -- Vòng Khiên Cầu Vồng Dạ Quang
+        local shield = Instance.new("Part")
+        shield.Name = "RainbowShield"
+        shield.Shape = Enum.PartType.Ball
+        shield.Size = Vector3.new(8.5, 8.5, 8.5)
+        shield.Material = Enum.Material.ForceField
+        shield.Color = Color3.fromRGB(0, 255, 255)
+        shield.CanCollide = false
+        shield.Massless = true
+        shield.Parent = angelFolder
+
+        local shieldWeld = Instance.new("Weld")
+        shieldWeld.Part0 = torso
+        shieldWeld.Part1 = shield
+        shieldWeld.Parent = shield
+
+        -- Highlight ép hiện lên Client (Chống bị Map xóa)
+        local hl = Instance.new("Highlight")
+        hl.Name = "ShieldHighlight"
+        hl.Adornee = shield
+        hl.FillTransparency = 0.5
+        hl.OutlineTransparency = 0.1
+        hl.Parent = shield
+
+        -- Cánh Thiên Thần Trái & Phải
+        local leftWing = Instance.new("Part")
+        leftWing.Name = "LeftAngelWing"
+        leftWing.Size = Vector3.new(0.2, 5.5, 3)
+        leftWing.Material = Enum.Material.Neon
+        leftWing.Color = Color3.fromRGB(255, 255, 255)
+        leftWing.CanCollide = false
+        leftWing.Massless = true
+        leftWing.Parent = angelFolder
+
+        local lWeld = Instance.new("Weld")
+        lWeld.Name = "LeftWingWeld"
+        lWeld.Part0 = torso
+        lWeld.Part1 = leftWing
+        lWeld.C0 = CFrame.new(-2, 1.5, 1.2)
+        lWeld.Parent = leftWing
+
+        local rightWing = Instance.new("Part")
+        rightWing.Name = "RightAngelWing"
+        rightWing.Size = Vector3.new(0.2, 5.5, 3)
+        rightWing.Material = Enum.Material.Neon
+        rightWing.Color = Color3.fromRGB(255, 255, 255)
+        rightWing.CanCollide = false
+        rightWing.Massless = true
+        rightWing.Parent = angelFolder
+
+        local rWeld = Instance.new("Weld")
+        rWeld.Name = "RightWingWeld"
+        rWeld.Part0 = torso
+        rWeld.Part1 = rightWing
+        rWeld.C0 = CFrame.new(2, 1.5, 1.2)
+        rWeld.Parent = rightWing
+
+        -- Render Animation vỗ cánh thiên thần & Đổi màu cầu vồng
+        local hue = 0
+        AngelRenderConn = RunService.RenderStepped:Connect(function()
+            if not Settings.RainbowAngel or not char or not char:FindFirstChild("FEAngelFolder") then
+                SetRainbowAngel(false)
+                return
+            end
+
+            local t = tick() * 3
+            -- Đổi màu Cầu Vồng
+            hue = (hue + 0.005) % 1
+            local rainbowColor = Color3.fromHSV(hue, 0.85, 1)
+            shield.Color = rainbowColor
+            hl.OutlineColor = rainbowColor
+            hl.FillColor = rainbowColor
+
+            -- Animation vỗ cánh phập phồng nhẹ nhàng
+            local wingAngle = math.sin(t) * 18
+            lWeld.C0 = CFrame.new(-2, 1.5, 1.2) * CFrame.Angles(0, math.rad(-30 + wingAngle), math.rad(15 + wingAngle/2))
+            rWeld.C0 = CFrame.new(2, 1.5, 1.2) * CFrame.Angles(0, math.rad(30 - wingAngle), math.rad(-15 - wingAngle/2))
+        end)
+    else
+        if char:FindFirstChild("FEAngelFolder") then char.FEAngelFolder:Destroy() end
+        if AngelRenderConn then AngelRenderConn:Disconnect() AngelRenderConn = nil end
+    end
+end
+
+local function SetFireAura(state)
+    Settings.FireAura = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        for _, part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                local fire = Instance.new("Fire")
+                fire.Name = "MagicFireEffect"
+                fire.Size = 7
+                fire.Heat = 15
+                fire.Color = Color3.fromRGB(255, 80, 0)
+                fire.SecondaryColor = Color3.fromRGB(255, 220, 0)
+                fire.Parent = part
+            end
+        end
+    else
+        for _, part in ipairs(char:GetDescendants()) do
+            if part.Name == "MagicFireEffect" then part:Destroy() end
+        end
+    end
+end
+
+local function CreateIceCage()
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+
+    local targetPlayer = nil
+    local closestDist = 40
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                targetPlayer = plr
+            end
+        end
+    end
+
+    if targetPlayer and targetPlayer.Character then
+        local targetRoot = targetPlayer.Character.HumanoidRootPart
+        local cageModel = Instance.new("Model")
+        cageModel.Name = "IceCageContainer"
+
+        local cagePos = targetRoot.Position
+        local size = 8
+
+        local function makeWall(cf, s)
+            local wall = Instance.new("Part")
+            wall.Size = s
+            wall.CFrame = cf
+            wall.Material = Enum.Material.Ice
+            wall.Color = Color3.fromRGB(0, 230, 255)
+            wall.Transparency = 0.3
+            wall.Anchored = true
+            wall.CanCollide = true
+            wall.Parent = cageModel
+        end
+
+        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))
+        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5))
+
+        cageModel.Parent = workspace
+        task.delay(10, function() cageModel:Destroy() end)
+    end
+end
+
+local function GroundStompShockwave()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+
+    local wave = Instance.new("Part")
+    wave.Shape = Enum.PartType.Cylinder
+    wave.Size = Vector3.new(0.5, 2, 2)
+    wave.CFrame = root.CFrame * CFrame.Angles(0, 0, math.rad(90))
+    wave.Material = Enum.Material.Neon
+    wave.Color = Color3.fromRGB(0, 220, 255)
+    wave.CanCollide = false
+    wave.Anchored = true
+    wave.Parent = workspace
+
+    local tween = TweenService:Create(wave, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(0.5, 50, 50),
+        Transparency = 1
+    })
+    tween:Play()
+    tween.Completed:Connect(function() wave:Destroy() end)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local targetRoot = plr.Character.HumanoidRootPart
+            local dist = (targetRoot.Position - root.Position).Magnitude
+            if dist <= 30 then
+                local pushDir = (targetRoot.Position - root.Position).Unit
+                targetRoot.AssemblyLinearVelocity = (pushDir * 180) + Vector3.new(0, 120, 0)
+            end
+        end
     end
 end
 
@@ -555,181 +781,6 @@ local function TeleportToPlayer()
     end
 end
 
---==================== FE MAGIC POWERS ====================--
-local function SetRainbowAngel(state)
-    Settings.RainbowAngel = state
-    local char = LocalPlayer.Character
-    if not char then return end
-
-    if state then
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        if not torso then return end
-
-        local sphere = Instance.new("Part")
-        sphere.Name = "RainbowShieldSphere"
-        sphere.Shape = Enum.PartType.Ball
-        sphere.Size = Vector3.new(9, 9, 9)
-        sphere.Material = Enum.Material.ForceField
-        sphere.Transparency = 0.2
-        sphere.CanCollide = false
-        sphere.Parent = char
-
-        local weld = Instance.new("Weld")
-        weld.Part0 = torso
-        weld.Part1 = sphere
-        weld.Parent = sphere
-
-        local createWing = function(isLeft)
-            local wing = Instance.new("Part")
-            wing.Name = isLeft and "LeftAngelWing" or "RightAngelWing"
-            wing.Size = Vector3.new(0.2, 5, 3)
-            wing.Material = Enum.Material.Neon
-            wing.Color = Color3.fromRGB(255, 255, 255)
-            wing.CanCollide = false
-            wing.Parent = char
-
-            local wWeld = Instance.new("Weld")
-            wWeld.Part0 = torso
-            wWeld.Part1 = wing
-            wWeld.C0 = CFrame.new(isLeft and -2 or 2, 1.5, 1.2) * CFrame.Angles(0, math.rad(isLeft and -30 or 30), math.rad(isLeft and 20 or -20))
-            wWeld.Parent = wing
-
-            local pe = Instance.new("ParticleEmitter")
-            pe.Texture = "rbxassetid://243660364"
-            pe.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(0, 200, 255))
-            pe.Size = NumberSequence.new(0.8, 0)
-            pe.Rate = 20
-            pe.Speed = NumberRange.new(1, 3)
-            pe.Parent = wing
-        end
-
-        createWing(true)
-        createWing(false)
-
-        task.spawn(function()
-            local hue = 0
-            while Settings.RainbowAngel and char and char:FindFirstChild("RainbowShieldSphere") do
-                hue = (hue + 0.01) % 1
-                sphere.Color = Color3.fromHSV(hue, 0.9, 1)
-                task.wait(0.03)
-            end
-        end)
-    else
-        for _, p in ipairs(char:GetChildren()) do
-            if p.Name == "RainbowShieldSphere" or p.Name == "LeftAngelWing" or p.Name == "RightAngelWing" then
-                p:Destroy()
-            end
-        end
-    end
-end
-
-local function SetFireAura(state)
-    Settings.FireAura = state
-    local char = LocalPlayer.Character
-    if not char then return end
-
-    if state then
-        for _, part in ipairs(char:GetChildren()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                local fire = Instance.new("Fire")
-                fire.Name = "MagicFireEffect"
-                fire.Size = 7
-                fire.Heat = 15
-                fire.Color = Color3.fromRGB(255, 80, 0)
-                fire.SecondaryColor = Color3.fromRGB(255, 220, 0)
-                fire.Parent = part
-            end
-        end
-    else
-        for _, part in ipairs(char:GetDescendants()) do
-            if part.Name == "MagicFireEffect" then part:Destroy() end
-        end
-    end
-end
-
-local function CreateIceCage()
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
-
-    local targetPlayer = nil
-    local closestDist = 40
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-            if dist < closestDist then
-                closestDist = dist
-                targetPlayer = plr
-            end
-        end
-    end
-
-    if targetPlayer and targetPlayer.Character then
-        local targetRoot = targetPlayer.Character.HumanoidRootPart
-        local cageModel = Instance.new("Model")
-        cageModel.Name = "IceCageContainer"
-
-        local cagePos = targetRoot.Position
-        local size = 8
-
-        local function makeWall(cf, s)
-            local wall = Instance.new("Part")
-            wall.Size = s
-            wall.CFrame = cf
-            wall.Material = Enum.Material.Ice
-            wall.Color = Color3.fromRGB(0, 230, 255)
-            wall.Transparency = 0.3
-            wall.Anchored = true
-            wall.CanCollide = true
-            wall.Parent = cageModel
-        end
-
-        makeWall(CFrame.new(cagePos + Vector3.new(0, -size/2, 0)), Vector3.new(size, 0.5, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, size/2, 0)), Vector3.new(size, 0.5, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(size/2, 0, 0)), Vector3.new(0.5, size, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(-size/2, 0, 0)), Vector3.new(0.5, size, size))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, size/2)), Vector3.new(size, size, 0.5))
-        makeWall(CFrame.new(cagePos + Vector3.new(0, 0, -size/2)), Vector3.new(size, size, 0.5))
-
-        cageModel.Parent = workspace
-        task.delay(10, function() cageModel:Destroy() end)
-    end
-end
-
-local function GroundStompShockwave()
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-
-    local wave = Instance.new("Part")
-    wave.Shape = Enum.PartType.Cylinder
-    wave.Size = Vector3.new(0.5, 2, 2)
-    wave.CFrame = root.CFrame * CFrame.Angles(0, 0, math.rad(90))
-    wave.Material = Enum.Material.Neon
-    wave.Color = Color3.fromRGB(0, 220, 255)
-    wave.CanCollide = false
-    wave.Anchored = true
-    wave.Parent = workspace
-
-    local tween = TweenService:Create(wave, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(0.5, 50, 50),
-        Transparency = 1
-    })
-    tween:Play()
-    tween.Completed:Connect(function() wave:Destroy() end)
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local targetRoot = plr.Character.HumanoidRootPart
-            local dist = (targetRoot.Position - root.Position).Magnitude
-            if dist <= 30 then
-                local pushDir = (targetRoot.Position - root.Position).Unit
-                targetRoot.AssemblyLinearVelocity = (pushDir * 180) + Vector3.new(0, 120, 0)
-            end
-        end
-    end
-end
-
 --==================== ESP SYSTEM ====================--
 local function CreateESP(plr)
     if ESPObjects[plr] then return end
@@ -875,7 +926,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUD</font> <font color=\"#888888\">| ZakahudV1.0</font>"
+Title.Text = "<b>ZAKA</b> <font color=\"#00A2FF\">HUD</font> <font color=\"#888888\">| ZakahudV1.0 PRO</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 14
@@ -1075,9 +1126,9 @@ CreateToggle(Pages[5], "Bật Dropkick (Đá Văng FE)", false, function(v) SetD
 CreateInput(Pages[5], "Lực Dropkick (Max 10000)", 3000, 10000, function(v) Settings.DropkickPower = v end)
 
 -- Tab 6: Magic (Kỹ Năng Magic & Cưỡi Rồng)
-CreateToggle(Pages[6], "Cưỡi Rồng Lửa Bay Lượn FE (Fix)", false, function(v) SetFireDragonMount(v) end)
+CreateToggle(Pages[6], "Cưỡi Rồng Lửa Uốn Lượn (Animated)", false, function(v) SetFireDragonMount(v) end)
+CreateToggle(Pages[6], "Khiên Cầu Vồng + Cánh Thiên Thần (Fix)", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game", false, function(v) SetGentlemanFlower(v) end)
-CreateToggle(Pages[6], "Khiên Cầu Vồng + Cánh Thiên Thần", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Triệu Hồi Lửa Rồng Quanh Thân", false, function(v) SetFireAura(v) end)
 CreateButton(Pages[6], "Tạo Lồng Băng Nhốt Đối Thủ", function() CreateIceCage() end)
 CreateButton(Pages[6], "Sóng Xung Kích Giậm Chân", function() GroundStompShockwave() end)
@@ -1108,4 +1159,4 @@ CreateButton(Pages[8], "Đổi Server Ngẫu Nhiên (Server Hop)", function()
     end)
 end)
 
-print("Zaka Hud ZakahudV1.0 Fixed Mount Successfully!")
+print("Zaka Hud ZakahudV1.0 PRO Loaded Successfully!")
