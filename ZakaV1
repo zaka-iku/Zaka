@@ -1,16 +1,15 @@
 --================================================================================--
---                    ZAKA V1 - ULTIMATE AIMBOT & ESP HUB (PRO EDITION)           --
+--                   ZAKA V1 - GIAO DIỆN MENU MỚI & TỐI ƯU ĐỈNH CAO              --
 --================================================================================--
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Tránh bị tạo trùng lặp UI cũ
-if CoreGui:FindFirstChild("ZakaUltimateHub") then
-    CoreGui.ZakaUltimateHub:Destroy()
+-- Xóa menu cũ nếu đang chạy trùng lặp
+if CoreGui:FindFirstChild("ZakaMenuV2") then
+    CoreGui.ZakaMenuV2:Destroy()
 end
 
 local Settings = {
@@ -22,101 +21,127 @@ local Settings = {
     AimPart = "Head",
     FOVRadius = 180,
     ShowFOV = true,
-    Smoothness = 0.18,
-    HitboxSize = 2, -- Mở rộng đầu đối thủ để dễ dính tâm
+    Smoothness = 0.2
 }
 
--- Xây dựng Giao diện Menu UI gốc (Chắc chắn hiển thị 100%, không lo lỗi CoreGui)
+-- Tạo ScreenGui chính
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZakaUltimateHub"
+ScreenGui.Name = "ZakaMenuV2"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
+-- Khung Menu Chính (Có thể kéo thả trên điện thoại)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 380)
-MainFrame.Position = UDim2.new(0.1, 0, 0.15, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+MainFrame.Size = UDim2.new(0, 280, 0, 340)
+MainFrame.Position = UDim2.new(0.08, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainFrame
 
+-- Thanh Tiêu Đề
 local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 45)
-TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
 local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 10)
+TopBarCorner.CornerRadius = UDim.new(0, 12)
 TopBarCorner.Parent = TopBar
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Size = UDim2.new(1, -15, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.fromRGB(0, 255, 204)
-Title.TextSize = 16
+Title.TextColor3 = Color3.fromRGB(80, 250, 123)
+Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
-Title.Text = "ZAKA V1 - ULTIMATE AIMBOT"
+Title.Text = "⚡ ZAKA HUB - MENU V2"
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
-local ContentScrolling = Instance.new("ScrollingFrame")
-ContentScrolling.Size = UDim2.new(1, -16, 1, -55)
-ContentScrolling.Position = UDim2.new(0, 8, 0, 50)
-ContentScrolling.BackgroundTransparency = 1
-ContentScrolling.BorderSizePixel = 0
-ContentScrolling.CanvasSize = UDim2.new(0, 0, 0, 420)
-ContentScrolling.ScrollBarThickness = 4
-ContentScrolling.Parent = MainFrame
+-- Nút Thu Nhỏ / Ẩn Menu Nhanh
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+MinimizeBtn.Position = UDim2.new(1, -35, 0, 5)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 14
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Text = "-"
+MinimizeBtn.Parent = TopBar
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 10)
-UIListLayout.Parent = ContentScrolling
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 6)
+MinCorner.Parent = MinimizeBtn
 
--- Hàm tạo các nút bấm chức năng chuẩn cấu trúc
-local function CreateButton(name, defaultState, callback)
+-- Khu vực chứa danh sách chức năng cuộn
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -12, 1, -50)
+ScrollingFrame.Position = UDim2.new(0, 6, 0, 46)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 350)
+ScrollingFrame.ScrollBarThickness = 3
+ScrollingFrame.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 8)
+UIList.Parent = ScrollingFrame
+
+-- Hàm tạo các nút chức năng trong Menu chuẩn giao diện mới
+local function AddToggleButton(name, initialState, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 42)
-    btn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(45, 45, 55)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = initialState and Color3.fromRGB(40, 160, 90) or Color3.fromRGB(45, 45, 60)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 13
     btn.Font = Enum.Font.GothamSemibold
-    btn.Text = name .. ": " .. (defaultState and "BẬT" or "TẮT")
-    btn.Parent = ContentScrolling
+    btn.Text = name .. " : " .. (initialState and "[ BẬT ]" : "[ TẮT ]")
+    btn.Parent = ScrollingFrame
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = btn
 
-    local state = defaultState
+    local state = initialState
     btn.MouseButton1Click:Connect(function()
         state = not state
-        btn.BackgroundColor3 = state and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(45, 45, 55)
-        btn.Text = name .. ": " .. (state and "BẬT" or "TẮT")
+        btn.BackgroundColor3 = state and Color3.fromRGB(40, 160, 90) or Color3.fromRGB(45, 45, 60)
+        btn.Text = name .. " : " .. (state and "[ BẬT ]" : "[ TẮT ]")
         callback(state)
     end)
 end
 
--- Tạo các tùy chọn trên Menu
-CreateButton("Trạng thái Aimbot", Settings.AimbotEnabled, function(v) Settings.AimbotEnabled = v end)
-CreateButton("Kiểm tra Đồng đội (TeamCheck)", Settings.TeamCheck, function(v) Settings.TeamCheck = v end)
-CreateButton("Xuyên Tường (WallCheck)", Settings.WallCheck, function(v) Settings.WallCheck = v end)
-CreateButton("Đoán trước đường chạy (Prediction)", Settings.Prediction, function(v) Settings.Prediction = v end)
-CreateButton("Hiển thị vòng FOV", Settings.ShowFOV, function(v) Settings.ShowFOV = v end)
+-- Thêm các tùy chọn bật/tắt vào menu
+AddToggleButton("🎯 Trạng Thái Aimbot", Settings.AimbotEnabled, function(v) Settings.AimbotEnabled = v end)
+AddToggleButton("👥 Team Check (Đồng Đội)", Settings.TeamCheck, function(v) Settings.TeamCheck = v end)
+AddToggleButton("🧱 WallCheck (Xuyên Tường)", Settings.WallCheck, function(v) Settings.WallCheck = v end)
+AddToggleButton("🔮 Prediction (Đoán Đường Chạy)", Settings.Prediction, function(v) Settings.Prediction = v end)
+AddToggleButton("⭕ Vòng Tròn FOV", Settings.ShowFOV, function(v) Settings.ShowFOV = v end)
 
--- Vẽ vòng tròn FOV chuẩn trên GUI gốc để không bị lỗi tàng hình
+-- Tính năng thu nhỏ/mở rộng menu khi bấm nút "-"
+local isOpen = true
+MinimizeBtn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    ScrollingFrame.Visible = isOpen
+    MainFrame.Size = isOpen and UDim2.new(0, 280, 0, 340) or UDim2.new(0, 280, 0, 40)
+    MinimizeBtn.Text = isOpen and "-" : "+"
+end)
+
+-- Vẽ vòng tròn FOV trực quan tâm ngắm
 local FOVFrame = Instance.new("Frame")
-FOVFrame.Name = "FOVCircleVisual"
+FOVFrame.Name = "FOVCircle"
 FOVFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 FOVFrame.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
-FOVFrame.BackgroundTransparency = 0.85
+FOVFrame.BackgroundTransparency = 0.9
 FOVFrame.BorderSizePixel = 0
 FOVFrame.Size = UDim2.new(0, Settings.FOVRadius * 2, 0, Settings.FOVRadius * 2)
 FOVFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -129,10 +154,10 @@ FOVCorner.Parent = FOVFrame
 
 local FOVStroke = Instance.new("UIStroke")
 FOVStroke.Color = Color3.fromRGB(0, 255, 255)
-FOVStroke.Thickness = 2
+FOVStroke.Thickness = 1.5
 FOVStroke.Parent = FOVFrame
 
--- Kiểm tra chướng ngại vật (WallCheck xuyên tường)
+-- Kiểm tra chướng ngại vật (WallCheck)
 local function isVisible(targetPart, character)
     if not Settings.WallCheck then return true end
     local origin = Camera.CFrame.Position
@@ -146,7 +171,7 @@ local function isVisible(targetPart, character)
     return result == nil
 end
 
--- Thuật toán tìm kiếm mục tiêu tối tân trong bán kính FOV
+-- Thuật toán tìm kiếm mục tiêu trong FOV
 local function getBestTarget()
     local bestTarget = nil
     local shortestDist = Settings.FOVRadius
@@ -159,7 +184,6 @@ local function getBestTarget()
                 local part = player.Character:FindFirstChild(Settings.AimPart)
 
                 if humanoid and humanoid.Health > 0 and part then
-                    -- Kiểm tra xem địch có bị che khuất không
                     if isVisible(part, player.Character) then
                         local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
                         if onScreen then
@@ -179,7 +203,7 @@ local function getBestTarget()
     return bestTarget
 end
 
--- Vòng lặp Render xử lý bám tâm đỉnh cao
+-- Vòng lặp Render hoạt động liên tục
 RunService.RenderStepped:Connect(function()
     FOVFrame.Visible = Settings.ShowFOV
     FOVFrame.Size = UDim2.new(0, Settings.FOVRadius * 2, 0, Settings.FOVRadius * 2)
@@ -189,7 +213,6 @@ RunService.RenderStepped:Connect(function()
         if target then
             local targetPos = target.Position
 
-            -- Thuật toán Prediction (Dự đoán vận tốc di chuyển của mục tiêu)
             if Settings.Prediction and target.Parent then
                 local rootPart = target.Parent:FindFirstChild("HumanoidRootPart")
                 if rootPart then
