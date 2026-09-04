@@ -41,7 +41,214 @@ local Settings = {
     TriggerBot = false,
     WallbangMode = false,
     AutoRangeAttack = false,
+Settings.NPCAimbot = false
+Settings.NPCAimbotFOV = 140
+Settings.NPCAimbotSmooth = 0.14
+Settings.NPCESP = false
+Settings.InfiniteAmmo = false
+Settings.FastFire = false
+Settings.VehicleSpeed = false
+Settings.VehicleSpeedValue = 120   -- có thể chỉnh tối đa 500
 
+--==================== NPC AIMBOT (chỉ nhắm NPC, bỏ qua Player) ====================--
+local function GetClosestNPC()
+    local closest = nil
+    local shortest = Settings.NPCAimbotFOV
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("Head") then
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local head = obj:FindFirstChild("Head")
+            -- Bỏ qua nếu là Player
+            if Players:GetPlayerFromCharacter(obj) then continue end
+            if hum.Health <= 0 then continue end
+
+            local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = head
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if Settings.NPCAimbot and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local target = GetClosestNPC()
+        if target then
+            local goal = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(goal, Settings.NPCAimbotSmooth)
+        end
+    end
+end)
+
+--==================== NPC ESP ====================--
+local NPCESPObjects = {}
+
+local function CreateNPCESP(model)
+    if NPCESPObjects[model] then return end
+    local t = {
+        Box = Drawing.new("Square"),
+        Name = Drawing.new("Text"),
+        Health = Drawing.new("Text"),
+    }
+    t.Box.Thickness = 1.2
+    t.Box.Filled = false
+    t.Box.Color = Color3.fromRGB(255, 80, 80)
+    t.Name.Size = 13
+    t.Name.Center = true
+    t.Name.Outline = true
+    t.Name.Color = Color3.fromRGB(255, 200, 100)
+    t.Health.Size = 12
+    t.Health.Center = true
+    t.Health.Outline = true
+    NPCESPObjects[model] = t
+end
+
+RunService.RenderStepped:Connect(function()
+    if not Settings.NPCESP then
+        for _, t in pairs(NPCESPObjects) do
+            for _, d in pairs(t) do d.Visible = false end
+        end
+        return
+    end
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            if Players:GetPlayerFromCharacter(obj) then continue end -- bỏ qua người chơi
+
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local root = obj:FindFirstChild("HumanoidRootPart")
+            if hum.Health <= 0 then continue end
+
+            CreateNPCESP(obj)
+            local t = NPCESPObjects[obj]
+            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+            local dist = (root.Position - Camera.CFrame.Position).Magnitude
+
+            if onScreen and dist < 2000 then
+                local scale = math.clamp(900 / pos.Z, 0.25, 3.5)
+                local size = Vector2.new(30 * scale, 48 * scale)
+
+                t.Box.Size = size
+                t.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+                t.Box.Visible = true
+
+                t.Name.Text = obj.Name \~= "" and obj.Name or "NPC"
+                t.Name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 14)
+                t.Name.Visible = true
+
+                t.Health.Text = math.floor(hum.Health) .. " HP"
+                t.Health.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 2)
+                t.Health.Color = Color3.fromRGB(255, 100, 100)
+                t.Health.Visible = true
+            else
+                t.Box.Visible = false
+                t.Name.Visible = false
+                t.Health.Visible = false
+            end
+        end
+    end
+end)
+
+--==================== INFINITE AMMO + FAST FIRE ====================--
+local function SetInfiniteAmmo(state)
+    Settings.InfiniteAmmo = state
+    if state then
+        task.spawn(function()
+            while Settings.InfiniteAmmo do
+                local char = LocalPlayer.Character
+                if char then
+                    for _, tool in ipairs(char:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            -- Thử set Ammo / Clip
+                            pcall(function()
+                                if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
+                                if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
+                                if tool:FindFirstChild("MaxAmmo") then tool.MaxAmmo.Value = 999 end
+                                if tool:FindFirstChild("CurrentAmmo") then tool.CurrentAmmo.Value = 999 end
+                            end)
+                        end
+                    end
+                    -- Backpack cũng check
+                    local bag = LocalPlayer:FindFirstChild("Backpack")
+                    if bag then
+                        for _, tool in ipairs(bag:GetChildren()) do
+                            if tool:IsA("Tool") then
+                                pcall(function()
+                                    if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
+                                    if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
+                                end)
+                            end
+                        end
+                    end
+                end
+                task.wait(0.4)
+            end
+        end)
+    end
+end
+
+--==================== VEHICLE SPEED ====================--
+local VehicleConn = nil
+local function SetVehicleSpeed(state)
+    Settings.VehicleSpeed = state
+    if VehicleConn then VehicleConn:Disconnect() VehicleConn = nil end
+
+    if state then
+        VehicleConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum and hum.SeatPart then
+                local vehicle = hum.SeatPart.Parent
+                if vehicle then
+                    -- Thử nhiều cách tăng tốc
+                    pcall(function()
+                        if vehicle:FindFirstChild("VehicleSeat") then
+                            vehicle.VehicleSeat.MaxSpeed = Settings.VehicleSpeedValue
+                        end
+                        if vehicle:FindFirstChildWhichIsA("VehicleSeat") then
+                            vehicle:FindFirstChildWhichIsA("VehicleSeat").MaxSpeed = Settings.VehicleSpeedValue
+                        end
+                        -- Một số game dùng BodyVelocity / LinearVelocity
+                        for _, v in ipairs(vehicle:GetDescendants()) do
+                            if v:IsA("BodyVelocity") then
+                                v.Velocity = v.Velocity.Unit * Settings.VehicleSpeedValue
+                            end
+                        end
+                    end)
+                end
+            end
+        end)
+    end
+end
+
+--==================== THÊM VÀO UI ====================--
+-- Bạn thêm các dòng này vào tab tương ứng
+
+-- Tab Combat / Player
+AddToggle(Pages["Combat"], "NPC Aimbot (chỉ nhắm NPC)", false, function(v)
+    Settings.NPCAimbot = v
+end)
+
+AddToggle(Pages["ESP"], "NPC ESP", false, function(v)
+    Settings.NPCESP = v
+end)
+
+AddToggle(Pages["Player"], "Infinite Ammo (không nạp đạn)", false, function(v)
+    SetInfiniteAmmo(v)
+end)
+
+AddToggle(Pages["Player"], "Vehicle Speed Boost", false, function(v)
+    SetVehicleSpeed(v)
+end)
+    
     -- ESP Visuals & Chams
     ESP = false,
     ESPBox = true,
