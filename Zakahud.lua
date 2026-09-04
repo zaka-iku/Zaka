@@ -1316,84 +1316,6 @@ local function SetFastFire(state)
     end
 end
 --==============================================================================--
---                         ESP MOB / NPC / QUÁI
---==============================================================================--
-
-Settings.MobESP = false
-local MobESPObjects = {}
-
-local function ClearMobESP()
-    for _, t in pairs(MobESPObjects) do
-        for _, d in pairs(t) do
-            pcall(function() d:Remove() end)
-        end
-    end
-    MobESPObjects = {}
-end
-
-RunService.RenderStepped:Connect(function()
-    if not Settings.MobESP then
-        ClearMobESP()
-        return
-    end
-
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") then
-            -- Bỏ qua người chơi
-            if Players:GetPlayerFromCharacter(obj) then continue end
-
-            local hum = obj:FindFirstChildOfClass("Humanoid")
-            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj.PrimaryPart
-            if not hum or not root or hum.Health <= 0 then continue end
-
-            if not MobESPObjects[obj] then
-                MobESPObjects[obj] = {
-                    Box = Drawing.new("Square"),
-                    Name = Drawing.new("Text"),
-                    Health = Drawing.new("Text")
-                }
-                local t = MobESPObjects[obj]
-                t.Box.Thickness = 1.2
-                t.Box.Filled = false
-                t.Box.Color = Color3.fromRGB(255, 80, 80)
-                t.Name.Size = 13
-                t.Name.Center = true
-                t.Name.Outline = true
-                t.Name.Color = Color3.fromRGB(255, 200, 80)
-                t.Health.Size = 12
-                t.Health.Center = true
-                t.Health.Outline = true
-            end
-
-            local t = MobESPObjects[obj]
-            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
-            local dist = (root.Position - Camera.CFrame.Position).Magnitude
-
-            if onScreen and dist < 2500 then
-                local scale = math.clamp(900 / pos.Z, 0.25, 3.5)
-                local size = Vector2.new(28 * scale, 46 * scale)
-
-                t.Box.Size = size
-                t.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
-                t.Box.Visible = true
-
-                t.Name.Text = obj.Name \~= "" and obj.Name or "Mob"
-                t.Name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 14)
-                t.Name.Visible = true
-
-                t.Health.Text = math.floor(hum.Health) .. " HP"
-                t.Health.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 2)
-                t.Health.Color = Color3.fromRGB(255, 100, 100)
-                t.Health.Visible = true
-            else
-                t.Box.Visible = false
-                t.Name.Visible = false
-                t.Health.Visible = false
-            end
-        end
-    end
-end)
---==============================================================================--
 --                  GIAO DIỆN ONE UI v1.1 CHUYÊN NGHIỆP + SEARCH                 --
 --==============================================================================--
 local ScreenGui = Instance.new("ScreenGui")
@@ -1684,8 +1606,6 @@ CreateToggle(Pages[2], "Chams / Wallhack Fill Color", false, function(v) Setting
 CreateToggle(Pages[2], "Tâm Bắn Custom (Crosshair RGB)", false, function(v) Settings.CustomCrosshair = v end)
 CreateToggle(Pages[2], "Vệt Sáng Bước Chân (Glow Trail)", false, function(v) SetGlowTrail(v) end)
 CreateToggle(Pages[2], "Chế Độ Ban Đêm Neon", false, function(v)
-CreateToggle(Pages[2], "ESP Mob / Quái / NPC", false, function(v) Settings.MobESP = v end)
-    Settings.NeonNight = v
     if v then Lighting.ClockTime = 0 Lighting.Brightness = 3.5 else Lighting.ClockTime = 12 Lighting.Brightness = 1 end
 end)
 CreateToggle(Pages[2], "Chống Mờ Sương Mù (No Fog)", false, function(v) Settings.NoFog = v Lighting.FogEnd = v and 1e6 or OriginalFogEnd end)
