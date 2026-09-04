@@ -1476,7 +1476,7 @@ end)
 --                     NẠP CÁC TÍNH NĂNG ĐẦY ĐỦ (>15 BẢN GHI/TAB)               --
 --==============================================================================--
 
--- Tab 1: Combat (16 Tính năng)
+-- Tab 1: Combat (19 Tính năng)
 CreateToggle(Pages[1], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
 CreateToggle(Pages[1], "Silent Aim (Bắn Tự Hướng)", false, function(v) Settings.SilentAim = v end)
 CreateInput(Pages[1], "Kích Thước FOV Aimbot", 120, 800, function(v) Settings.AimbotFOV = v end)
@@ -1491,14 +1491,18 @@ CreateToggle(Pages[1], "Trigger Bot (Tự Bắn Khi Tâm Trúng)", false, functi
 CreateToggle(Pages[1], "Tự Động Bật Giáp / Shield", false, function() end)
 CreateToggle(Pages[1], "Bắn Xuyên Tường Light Wallbang", false, function(v) Settings.WallbangMode = v end)
 CreateToggle(Pages[1], "Tự Động Khóa Địch Gần Nhất", false, function() end)
-CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
+
+-- 2 chức năng mới
 CreateToggle(Pages[1], "NPC Aimbot (Chỉ Nhắm NPC)", false, function(v) Settings.NPCAimbot = v end)
 CreateToggle(Pages[1], "Infinite Ammo + Fast Fire", false, function(v) SetInfiniteAmmo(v) end)
+
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
 end)
-CreateButton(Pages[1], "Xóa Hút Tâm Bắn Địch", function() Camera.CFrame = CFrame.new(Camera.CFrame.Position) end)
+CreateButton(Pages[1], "Xóa Hút Tâm Bắn Địch", function()
+    Camera.CFrame = CFrame.new(Camera.CFrame.Position)
+end)
         
 -- Tab 2: ESP & Visuals (16 Tính năng)
 CreateToggle(Pages[2], "Bật ESP Tổng (ESP Main)", false, function(v) Settings.ESP = v end)
