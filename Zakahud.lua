@@ -1316,6 +1316,231 @@ local function SetFastFire(state)
     end
 end
 --==============================================================================--
+--          ZENITSU SWORD - VĨNH VIỄN + ĐÁNH THƯỜNG + TRẠNG THÁI NGỦ
+--==============================================================================--
+
+local ZenitsuEnabled = false
+local ZenitsuSwordModel = nil
+local ZenitsuBubble = nil
+local AttackCooldown = false
+
+-- Tạo thanh kiếm chi tiết
+local function CreatePermanentSword(char)
+    if ZenitsuSwordModel then
+        ZenitsuSwordModel:Destroy()
+    end
+
+    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+    local rightHand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+    if not torso then return end
+
+    local model = Instance.new("Model")
+    model.Name = "ZenitsuPermanentSword"
+
+    -- Chuôi kiếm
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(0.32, 1.1, 0.32)
+    handle.Color = Color3.fromRGB(35, 25, 20)
+    handle.Material = Enum.Material.SmoothPlastic
+    handle.CanCollide = false
+    handle.Massless = true
+    handle.Parent = model
+
+    -- Cận vệ
+    local guard = Instance.new("Part")
+    guard.Size = Vector3.new(0.75, 0.18, 0.75)
+    guard.Color = Color3.fromRGB(255, 210, 40)
+    guard.Material = Enum.Material.Neon
+    guard.CanCollide = false
+    guard.Massless = true
+    guard.Parent = model
+
+    -- Lưỡi kiếm
+    local blade = Instance.new("Part")
+    blade.Name = "Blade"
+    blade.Size = Vector3.new(0.22, 4.1, 0.12)
+    blade.Color = Color3.fromRGB(255, 230, 80)
+    blade.Material = Enum.Material.Neon
+    blade.CanCollide = false
+    blade.Massless = true
+    blade.Parent = model
+
+    -- Vân kiếm (chi tiết)
+    local glow = Instance.new("Part")
+    glow.Size = Vector3.new(0.08, 3.6, 0.04)
+    glow.Color = Color3.fromRGB(255, 255, 180)
+    glow.Material = Enum.Material.Neon
+    glow.Transparency = 0.4
+    glow.CanCollide = false
+    glow.Massless = true
+    glow.Parent = model
+
+    -- Weld chi tiết
+    local wGuard = Instance.new("Weld")
+    wGuard.Part0 = handle
+    wGuard.Part1 = guard
+    wGuard.C0 = CFrame.new(0, 0.55, 0)
+    wGuard.Parent = guard
+
+    local wBlade = Instance.new("Weld")
+    wBlade.Part0 = handle
+    wBlade.Part1 = blade
+    wBlade.C0 = CFrame.new(0, 2.5, 0)
+    wBlade.Parent = blade
+
+    local wGlow = Instance.new("Weld")
+    wGlow.Part0 = blade
+    wGlow.Part1 = glow
+    wGlow.C0 = CFrame.new(0, 0, 0)
+    wGlow.Parent = glow
+
+    -- Gắn bên hông
+    local weld = Instance.new("Weld")
+    weld.Part0 = torso
+    weld.Part1 = handle
+    weld.C0 = CFrame.new(1.15, 0.15, 0.55) * CFrame.Angles(math.rad(-15), math.rad(90), math.rad(-25))
+    weld.Parent = handle
+
+    model.Parent = char
+    ZenitsuSwordModel = model
+end
+
+-- Bong bóng mũi (trạng thái ngủ)
+local function CreateSleepBubble(char)
+    if ZenitsuBubble then ZenitsuBubble:Destroy() end
+
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local bubble = Instance.new("Part")
+    bubble.Name = "ZenitsuSleepBubble"
+    bubble.Shape = Enum.PartType.Ball
+    bubble.Size = Vector3.new(0.4, 0.4, 0.4)
+    bubble.Color = Color3.fromRGB(190, 235, 255)
+    bubble.Material = Enum.Material.Glass
+    bubble.Transparency = 0.25
+    bubble.CanCollide = false
+    bubble.Massless = true
+    bubble.Parent = head
+
+    local weld = Instance.new("Weld")
+    weld.Part0 = head
+    weld.Part1 = bubble
+    weld.C0 = CFrame.new(0, -0.18, -0.58)
+    weld.Parent = bubble
+
+    -- Nhẹ nhàng phồng lên
+    task.spawn(function()
+        while bubble and bubble.Parent do
+            for i = 1, 8 do
+                if not bubble.Parent then break end
+                bubble.Size = Vector3.new(0.35 + i*0.02, 0.35 + i*0.02, 0.35 + i*0.02)
+                task.wait(0.08)
+            end
+            for i = 8, 1, -1 do
+                if not bubble.Parent then break end
+                bubble.Size = Vector3.new(0.35 + i*0.02, 0.35 + i*0.02, 0.35 + i*0.02)
+                task.wait(0.08)
+            end
+        end
+    end)
+
+    ZenitsuBubble = bubble
+end
+
+-- Đánh thường khi cầm kiếm (click / chạm màn hình)
+local function NormalAttack()
+    if not ZenitsuEnabled or AttackCooldown then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+    AttackCooldown = true
+    local root = char.HumanoidRootPart
+
+    -- Hiệu ứng chém
+    local slash = Instance.new("Part")
+    slash.Size = Vector3.new(0.2, 4, 0.2)
+    slash.Color = Color3.fromRGB(255, 230, 60)
+    slash.Material = Enum.Material.Neon
+    slash.Anchored = true
+    slash.CanCollide = false
+    slash.CFrame = root.CFrame * CFrame.new(0, 0, -3) * CFrame.Angles(0, 0, math.rad(45))
+    slash.Parent = workspace
+
+    -- Sét nhỏ
+    for i = 1, 4 do
+        local bolt = Instance.new("Part")
+        bolt.Size = Vector3.new(0.12, math.random(2,5), 0.12)
+        bolt.Color = Color3.fromRGB(255, 240, 100)
+        bolt.Material = Enum.Material.Neon
+        bolt.Anchored = true
+        bolt.CanCollide = false
+        bolt.CFrame = root.CFrame * CFrame.new(math.random(-2,2), math.random(0,3), -math.random(2,5))
+        bolt.Parent = workspace
+        game:GetService("Debris"):AddItem(bolt, 0.2)
+    end
+
+    game:GetService("Debris"):AddItem(slash, 0.18)
+
+    -- Cố gắng đẩy người gần
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local target = plr.Character.HumanoidRootPart
+            local dist = (target.Position - root.Position).Magnitude
+            if dist < 12 then
+                pcall(function()
+                    target.AssemblyLinearVelocity = (target.Position - root.Position).Unit * 60 + Vector3.new(0, 40, 0)
+                end)
+            end
+        end
+    end
+
+    task.delay(0.35, function()
+        AttackCooldown = false
+    end)
+end
+
+-- Bật / Tắt kiếm vĩnh viễn
+local function ToggleZenitsuSword(state)
+    ZenitsuEnabled = state
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if state then
+        CreatePermanentSword(char)
+        CreateSleepBubble(char)
+    else
+        if ZenitsuSwordModel then
+            ZenitsuSwordModel:Destroy()
+            ZenitsuSwordModel = nil
+        end
+        if ZenitsuBubble then
+            ZenitsuBubble:Destroy()
+            ZenitsuBubble = nil
+        end
+    end
+end
+
+-- Click / Touch để đánh thường
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if not ZenitsuEnabled then return end
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        NormalAttack()
+    end
+end)
+
+-- Khi respawn vẫn giữ kiếm
+LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(1.2)
+    if ZenitsuEnabled then
+        CreatePermanentSword(char)
+        CreateSleepBubble(char)
+    end
+end)
+--==============================================================================--
 --                  GIAO DIỆN ONE UI v1.1 CHUYÊN NGHIỆP + SEARCH                 --
 --==============================================================================--
 local ScreenGui = Instance.new("ScreenGui")
@@ -1763,6 +1988,9 @@ CreateButton(Pages[5], "Gửi Tin Nhắn Ẩn Danh", function() end)
 CreateButton(Pages[5], "Dọn Dẹp Rác Client Script", function() collectgarbage() end)
 
 -- Tab 6: FE Magic Skills (15 Tính năng)
+CreateToggle(Pages[6], "Zenitsu Sword (Vĩnh Viễn + Ngủ)", false, function(v)
+    ToggleZenitsuSword(v)
+end)
 CreateToggle(Pages[6], "Rồng Lửa Cưỡi (Fixed Control 3D Animated)", false, function(v) SetFireDragonMount(v) end)
 CreateToggle(Pages[6], "Cánh Thiên Thần Khổng Lồ + Khiên Cầu Vồng", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game 3D Model", false, function(v) SetGentlemanFlower(v) end)
