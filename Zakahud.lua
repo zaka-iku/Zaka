@@ -1151,35 +1151,46 @@ end
 --==============================================================================--
 --                    2 CHỨC NĂNG MỚI - COMBAT                                  --
 --==============================================================================--
-    -- NPC Aimbot cải tiến (bắt quái, bot, zombie, sói, rắn...)
-local function GetClosestNPCHead()
+    --==============================================================================--
+--                    NPC AIMBOT (Tự hiện vòng + Ghim quái)
+--==============================================================================--
+
+-- Thêm vào Settings nếu chưa có
+Settings.NPCAimbot = false
+Settings.NPCAimbotFOV = 140
+Settings.NPCAimbotSmooth = 0.16
+
+-- Vòng tròn FOV cho NPC
+local NPCFOVCircle = Drawing.new("Circle")
+NPCFOVCircle.Thickness = 1.5
+NPCFOVCircle.NumSides = 64
+NPCFOVCircle.Filled = false
+NPCFOVCircle.Color = Color3.fromRGB(255, 80, 80) -- màu đỏ để dễ nhận
+NPCFOVCircle.Transparency = 0.7
+NPCFOVCircle.Visible = false
+
+-- Hàm tìm quái gần nhất (bỏ qua Player)
+local function GetClosestNPC()
     local closest = nil
-    local shortest = Settings.AimbotFOV or 140
+    local shortest = Settings.NPCAimbotFOV
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("Head") then
+        if obj:IsA("Model") then
             -- Bỏ qua người chơi thật
             if Players:GetPlayerFromCharacter(obj) then continue end
 
             local hum = obj:FindFirstChildOfClass("Humanoid")
-            local head = obj:FindFirstChild("Head")
-            if not hum or hum.Health <= 0 then continue end
-
-            -- Ưu tiên các model có tên giống quái
-            local name = string.lower(obj.Name)
-            local isMonster = name:find("zombie") or name:find("wolf") or name:find("snake") or name:find("bot")
-                or name:find("npc") or name:find("monster") or name:find("enemy") or name:find("mob")
-                or name:find("creeper") or name:find("skeleton") or name:find("spider") or name:find("boss")
-
-            -- Nếu không có tên đặc biệt thì vẫn bắt (tránh bỏ sót)
-            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-            if onScreen then
-                local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = head
+            local head = obj:FindFirstChild("Head") or obj:FindFirstChild("head")
+            
+            if hum and head and hum.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                    if dist < shortest then
+                        shortest = dist
+                        closest = head
+                    end
                 end
             end
         end
@@ -1187,20 +1198,32 @@ local function GetClosestNPCHead()
     return closest
 end
 
--- Vòng FOV + Aim
+-- Vòng tròn + Ghim liên tục
 RunService.RenderStepped:Connect(function()
-    if Settings.NPCAimbot then
-        FOVCircle.Visible = true
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-        FOVCircle.Radius = Settings.AimbotFOV or 140
+    -- Hiện / ẩn vòng tròn
+    NPCFOVCircle.Visible = Settings.NPCAimbot
+    NPCFOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    NPCFOVCircle.Radius = Settings.NPCAimbotFOV
 
-        local target = GetClosestNPCHead()
+    -- Ghim vào quái
+    if Settings.NPCAimbot then
+        local target = GetClosestNPC()
         if target then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth or 0.18)
+            local goal = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(goal, Settings.NPCAimbotSmooth)
         end
     end
 end)
+--==============================================================================--
+--              INFINITE AMMO + FAST FIRE (Bản mạnh)
+--==============================================================================--
+
+Settings.InfiniteAmmo = false
+Settings.FastFire = false
+
 local AmmoConn = nil
+local FastFireConn = nil
+
 local function SetInfiniteAmmo(state)
     Settings.InfiniteAmmo = state
     if AmmoConn then
@@ -1213,34 +1236,80 @@ local function SetInfiniteAmmo(state)
             local char = LocalPlayer.Character
             if not char then return end
 
-            local function trySetAmmo(tool)
+            local function ForceAmmo(tool)
                 if not tool or not tool:IsA("Tool") then return end
+
                 pcall(function()
-                    -- Các tên giá trị đạn phổ biến
-                    local names = {"Ammo", "Clip", "CurrentAmmo", "MaxAmmo", "Bullets", "AmmoCount", "Round", "Magazine", "AmmoValue", "GunAmmo"}
-                    for _, n in ipairs(names) do
-                        local val = tool:FindFirstChild(n)
-                        if val and (val:IsA("IntValue") or val:IsA("NumberValue")) then
-                            val.Value = 9999
+                    -- Các tên đạn phổ biến nhất
+                    local names = {
+                        "Ammo", "Clip", "CurrentAmmo", "MaxAmmo", "Bullets",
+                        "AmmoCount", "Round", "Magazine", "AmmoValue", "GunAmmo",
+                        "BulletCount", "Shots", "AmmoLeft", "RemainingAmmo"
+                    }
+
+                    for _, name in ipairs(names) do
+                        local val = tool:FindFirstChild(name)
+                        if val then
+                            if val:IsA("IntValue") or val:IsA("NumberValue") then
+                                val.Value = 9999
+                            elseif val:IsA("StringValue") then
+                                val.Value = "9999"
+                            end
                         end
                     end
 
-                    -- Attribute (một số game dùng)
-                    if tool:GetAttribute("Ammo") then tool:SetAttribute("Ammo", 9999) end
-                    if tool:GetAttribute("Clip") then tool:SetAttribute("Clip", 9999) end
+                    -- Attribute
+                    pcall(function()
+                        tool:SetAttribute("Ammo", 9999)
+                        tool:SetAttribute("Clip", 9999)
+                        tool:SetAttribute("CurrentAmmo", 9999)
+                    end)
                 end)
             end
 
             -- Súng đang cầm
-            for _, tool in ipairs(char:GetChildren()) do
-                trySetAmmo(tool)
+            for _, item in ipairs(char:GetChildren()) do
+                ForceAmmo(item)
             end
 
-            -- Súng trong Backpack
-            local bag = LocalPlayer:FindFirstChild("Backpack")
-            if bag then
-                for _, tool in ipairs(bag:GetChildren()) do
-                    trySetAmmo(tool)
+            -- Súng trong túi
+            local backpack = LocalPlayer:FindFirstChild("Backpack")
+            if backpack then
+                for _, item in ipairs(backpack:GetChildren()) do
+                    ForceAmmo(item)
+                end
+            end
+        end)
+    end
+end
+
+-- Bắn nhanh (giảm thời gian chờ giữa các phát)
+local function SetFastFire(state)
+    Settings.FastFire = state
+    if FastFireConn then
+        FastFireConn:Disconnect()
+        FastFireConn = nil
+    end
+
+    if state then
+        FastFireConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+
+            for _, tool in ipairs(char:GetChildren()) do
+                if tool:IsA("Tool") then
+                    pcall(function()
+                        -- Một số game dùng giá trị này để làm chậm tốc độ bắn
+                        if tool:FindFirstChild("FireRate") then
+                            tool.FireRate.Value = 0.01
+                        end
+                        if tool:FindFirstChild("Cooldown") then
+                            tool.Cooldown.Value = 0.01
+                        end
+                        if tool:FindFirstChild("ShootCooldown") then
+                            tool.ShootCooldown.Value = 0.01
+                        end
+                    end)
                 end
             end
         end)
@@ -1513,9 +1582,10 @@ CreateToggle(Pages[1], "Bắn Xuyên Tường Light Wallbang", false, function(v
 CreateToggle(Pages[1], "Tự Động Khóa Địch Gần Nhất", false, function() end)
 
 -- 2 chức năng mới
-CreateToggle(Pages[1], "NPC Aimbot (Chỉ Nhắm NPC)", false, function(v) Settings.NPCAimbot = v end)
-CreateToggle(Pages[1], "Infinite Ammo + Fast Fire", false, function(v) SetInfiniteAmmo(v) end)
-
+CreateToggle(Pages[1], "NPC Aimbot (Ghim Quái)", false, function(v) Settings.NPCAimbot = v end)
+CreateInput(Pages[1], "Độ Lớn Vòng NPC FOV", 140, 400, function(v) Settings.NPCAimbotFOV = v end)
+CreateToggle(Pages[1], "Infinite Ammo (Vô Hạn Đạn)", false, function(v) SetInfiniteAmmo(v) end)
+CreateToggle(Pages[1], "Fast Fire (Bắn Nhanh)", false, function(v) SetFastFire(v) end)
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
