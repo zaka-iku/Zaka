@@ -18,33 +18,7 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local enemy = script.Parent
-local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-local target = nil
 
-function findClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (player.Character.HumanoidRootPart.Position - enemy.PrimaryPart.Position).magnitude
-            if dist < shortestDistance then
-                shortestDistance = dist
-                closestPlayer = player
-            end
-        end
-    end
-    return closestPlayer
-end
-
-while true do
-    target = findClosestPlayer()
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local targetPos = target.Character.HumanoidRootPart.Position
-        humanoid:MoveTo(targetPos)
-    end
-    wait(1)
-end
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
@@ -67,7 +41,7 @@ local Settings = {
     TriggerBot = false,
     WallbangMode = false,
     AutoRangeAttack = false,
-    
+
     -- ESP Visuals & Chams
     ESP = false,
     ESPBox = true,
