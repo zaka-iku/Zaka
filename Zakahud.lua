@@ -1812,9 +1812,7 @@ CreateInput(Pages[1], "Độ Lớn Vòng NPC FOV", 140, 400, function(v) Setting
 CreateToggle(Pages[1], "Infinite Ammo (Vô Hạn Đạn)", false, function(v) SetInfiniteAmmo(v) end)
 CreateToggle(Pages[1], "Fast Fire (Bắn Nhanh)", false, function(v) SetFastFire(v) end)
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
-CreateToggle(Pages[1], "Zenitsu Sword (Vĩnh Viễn + Ngủ)", false, function(v)
-    ToggleZenitsuSword(v)
-end)
+CreateToggle(Pages[1], "Zenitsu Sword (Vĩnh Viễn + Ngủ)", false, function(v) ToggleZenitsuSword(v) end)
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
 end)
