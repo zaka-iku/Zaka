@@ -41,7 +41,8 @@ local Settings = {
     TriggerBot = false,
     WallbangMode = false,
     AutoRangeAttack = false,
-
+    NPCAimbot = false,
+    InfiniteAmmo = false,
     -- ESP Visuals & Chams
     ESP = false,
     ESPBox = true,
@@ -1147,7 +1148,84 @@ local function FlingAll()
     bvf:Destroy()
     root.CFrame = originalCF
 end
+--==============================================================================--
+--                    2 CHỨC NĂNG MỚI - COMBAT                                  --
+--==============================================================================--
 
+-- 1. NPC Aimbot (chỉ nhắm NPC)
+local function GetClosestNPCHead()
+    local closest = nil
+    local shortest = Settings.AimbotFOV or 120
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("Head") then
+            if Players:GetPlayerFromCharacter(obj) then continue end -- bỏ qua người chơi
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local head = obj.Head
+            if hum.Health <= 0 then continue end
+
+            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = head
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if Settings.NPCAimbot then
+        local target = GetClosestNPCHead()
+        if target then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth or 0.2)
+        end
+    end
+end)
+
+-- 2. Infinite Ammo + Fast Fire
+local AmmoConn = nil
+local function SetInfiniteAmmo(state)
+    Settings.InfiniteAmmo = state
+    if AmmoConn then
+        AmmoConn:Disconnect()
+        AmmoConn = nil
+    end
+
+    if state then
+        AmmoConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+
+            for _, tool in ipairs(char:GetChildren()) do
+                if tool:IsA("Tool") then
+                    pcall(function()
+                        if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
+                        if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
+                        if tool:FindFirstChild("CurrentAmmo") then tool.CurrentAmmo.Value = 999 end
+                        if tool:FindFirstChild("MaxAmmo") then tool.MaxAmmo.Value = 999 end
+                    end)
+                end
+            end
+
+            local bag = LocalPlayer:FindFirstChild("Backpack")
+            if bag then
+                for _, tool in ipairs(bag:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        pcall(function()
+                            if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
+                            if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+end
 --==============================================================================--
 --                  GIAO DIỆN ONE UI v1.1 CHUYÊN NGHIỆP + SEARCH                 --
 --==============================================================================--
@@ -1394,7 +1472,6 @@ SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
         end
     end
 end)
-
 --==============================================================================--
 --                     NẠP CÁC TÍNH NĂNG ĐẦY ĐỦ (>15 BẢN GHI/TAB)               --
 --==============================================================================--
@@ -1415,6 +1492,8 @@ CreateToggle(Pages[1], "Tự Động Bật Giáp / Shield", false, function() en
 CreateToggle(Pages[1], "Bắn Xuyên Tường Light Wallbang", false, function(v) Settings.WallbangMode = v end)
 CreateToggle(Pages[1], "Tự Động Khóa Địch Gần Nhất", false, function() end)
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
+CreateToggle(Pages[1], "NPC Aimbot (Chỉ Nhắm NPC)", false, function(v) Settings.NPCAimbot = v end)
+CreateToggle(Pages[1], "Infinite Ammo + Fast Fire", false, function(v) SetInfiniteAmmo(v) end)
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
 end)
