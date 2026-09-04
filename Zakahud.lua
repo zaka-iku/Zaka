@@ -1394,33 +1394,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 --==============================================================================--
---                    BRING PLAYER (Tele người tới mình)
---==============================================================================--
-
-local function BringPlayer(plr)
-    if not plr or not plr.Character then return end
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-    if myRoot and targetRoot then
-        pcall(function()
-            targetRoot.CFrame = myRoot.CFrame * CFrame.new(0, 0, -3)
-        end)
-    end
-end
-
-local function BringAllPlayers()
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            pcall(function()
-                plr.Character.HumanoidRootPart.CFrame = myRoot.CFrame * CFrame.new(math.random(-4,4), 0, math.random(-4,4))
-            end)
-        end
-    end
-end
---==============================================================================--
 --                  GIAO DIỆN ONE UI v1.1 CHUYÊN NGHIỆP + SEARCH                 --
 --==============================================================================--
 local ScreenGui = Instance.new("ScreenGui")
@@ -1827,9 +1800,6 @@ CreateButton(Pages[4], "Teleport Theo Camera Look Vector", function()
     if root then root.CFrame = CFrame.new(root.Position + Camera.CFrame.LookVector * 15) end
 end)
 CreateButton(Pages[4], "Reset Kết Nối Dịch Chuyển", function() end)
-CreateButton(Pages[4], "Bring All Players (Tele tất cả tới mình)", function()
-    BringAllPlayers()
-end)
 
 -- Tab 5: Troll & Server Utilities (15 Tính năng)
 CreateButton(Pages[5], "Kích Hoạt The Real Dropkick (RawScripts)", function() RunRealDropkick() end)
