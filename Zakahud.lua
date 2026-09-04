@@ -1151,20 +1151,29 @@ end
 --==============================================================================--
 --                    2 CHỨC NĂNG MỚI - COMBAT                                  --
 --==============================================================================--
-
--- 1. NPC Aimbot (chỉ nhắm NPC)
+    -- NPC Aimbot cải tiến (bắt quái, bot, zombie, sói, rắn...)
 local function GetClosestNPCHead()
     local closest = nil
-    local shortest = Settings.AimbotFOV or 120
+    local shortest = Settings.AimbotFOV or 140
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("Head") then
-            if Players:GetPlayerFromCharacter(obj) then continue end -- bỏ qua người chơi
-            local hum = obj:FindFirstChildOfClass("Humanoid")
-            local head = obj.Head
-            if hum.Health <= 0 then continue end
+            -- Bỏ qua người chơi thật
+            if Players:GetPlayerFromCharacter(obj) then continue end
 
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local head = obj:FindFirstChild("Head")
+            if not hum or hum.Health <= 0 then continue end
+
+            -- Ưu tiên các model có tên giống quái
+            local name = string.lower(obj.Name)
+            local isMonster = name:find("zombie") or name:find("wolf") or name:find("snake") or name:find("bot")
+                or name:find("npc") or name:find("monster") or name:find("enemy") or name:find("mob")
+                or name:find("creeper") or name:find("skeleton") or name:find("spider") or name:find("boss")
+
+            -- Nếu không có tên đặc biệt thì vẫn bắt (tránh bỏ sót)
             local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
             if onScreen then
                 local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
@@ -1178,16 +1187,19 @@ local function GetClosestNPCHead()
     return closest
 end
 
+-- Vòng FOV + Aim
 RunService.RenderStepped:Connect(function()
     if Settings.NPCAimbot then
+        FOVCircle.Visible = true
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Radius = Settings.AimbotFOV or 140
+
         local target = GetClosestNPCHead()
         if target then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth or 0.2)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth or 0.18)
         end
     end
 end)
-
--- 2. Infinite Ammo + Fast Fire
 local AmmoConn = nil
 local function SetInfiniteAmmo(state)
     Settings.InfiniteAmmo = state
@@ -1201,26 +1213,34 @@ local function SetInfiniteAmmo(state)
             local char = LocalPlayer.Character
             if not char then return end
 
-            for _, tool in ipairs(char:GetChildren()) do
-                if tool:IsA("Tool") then
-                    pcall(function()
-                        if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
-                        if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
-                        if tool:FindFirstChild("CurrentAmmo") then tool.CurrentAmmo.Value = 999 end
-                        if tool:FindFirstChild("MaxAmmo") then tool.MaxAmmo.Value = 999 end
-                    end)
-                end
+            local function trySetAmmo(tool)
+                if not tool or not tool:IsA("Tool") then return end
+                pcall(function()
+                    -- Các tên giá trị đạn phổ biến
+                    local names = {"Ammo", "Clip", "CurrentAmmo", "MaxAmmo", "Bullets", "AmmoCount", "Round", "Magazine", "AmmoValue", "GunAmmo"}
+                    for _, n in ipairs(names) do
+                        local val = tool:FindFirstChild(n)
+                        if val and (val:IsA("IntValue") or val:IsA("NumberValue")) then
+                            val.Value = 9999
+                        end
+                    end
+
+                    -- Attribute (một số game dùng)
+                    if tool:GetAttribute("Ammo") then tool:SetAttribute("Ammo", 9999) end
+                    if tool:GetAttribute("Clip") then tool:SetAttribute("Clip", 9999) end
+                end)
             end
 
+            -- Súng đang cầm
+            for _, tool in ipairs(char:GetChildren()) do
+                trySetAmmo(tool)
+            end
+
+            -- Súng trong Backpack
             local bag = LocalPlayer:FindFirstChild("Backpack")
             if bag then
                 for _, tool in ipairs(bag:GetChildren()) do
-                    if tool:IsA("Tool") then
-                        pcall(function()
-                            if tool:FindFirstChild("Ammo") then tool.Ammo.Value = 999 end
-                            if tool:FindFirstChild("Clip") then tool.Clip.Value = 999 end
-                        end)
-                    end
+                    trySetAmmo(tool)
                 end
             end
         end)
