@@ -1494,11 +1494,11 @@ CreateToggle(Pages[1], "Tự Động Khóa Địch Gần Nhất", false, functio
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
 CreateToggle(Pages[1], "NPC Aimbot (Chỉ Nhắm NPC)", false, function(v) Settings.NPCAimbot = v end)
 CreateToggle(Pages[1], "Infinite Ammo + Fast Fire", false, function(v) SetInfiniteAmmo(v) end)
+CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
 end)
 CreateButton(Pages[1], "Xóa Hút Tâm Bắn Địch", function() Camera.CFrame = CFrame.new(Camera.CFrame.Position) end)
-
 -- Tab 2: ESP & Visuals (16 Tính năng)
 CreateToggle(Pages[2], "Bật ESP Tổng (ESP Main)", false, function(v) Settings.ESP = v end)
 CreateToggle(Pages[2], "Khung ESP Box", true, function(v) Settings.ESPBox = v end)
