@@ -1790,7 +1790,7 @@ end)
 --                     NẠP CÁC TÍNH NĂNG ĐẦY ĐỦ (>15 BẢN GHI/TAB)               --
 --==============================================================================--
 
--- Tab 1: Combat (19 Tính năng)
+-- Tab 1: Combat (20 Tính năng)
 CreateToggle(Pages[1], "Aimbot Lock Head (Khóa Đầu)", false, function(v) Settings.Aimbot = v end)
 CreateToggle(Pages[1], "Silent Aim (Bắn Tự Hướng)", false, function(v) Settings.SilentAim = v end)
 CreateInput(Pages[1], "Kích Thước FOV Aimbot", 120, 800, function(v) Settings.AimbotFOV = v end)
@@ -1812,6 +1812,9 @@ CreateInput(Pages[1], "Độ Lớn Vòng NPC FOV", 140, 400, function(v) Setting
 CreateToggle(Pages[1], "Infinite Ammo (Vô Hạn Đạn)", false, function(v) SetInfiniteAmmo(v) end)
 CreateToggle(Pages[1], "Fast Fire (Bắn Nhanh)", false, function(v) SetFastFire(v) end)
 CreateButton(Pages[1], "Tháo Vũ Khí Nhanh (Fast Unequip)", function()
+CreateToggle(Pages[1], "Zenitsu Sword (Vĩnh Viễn + Ngủ)", false, function(v)
+    ToggleZenitsuSword(v)
+end)
     local char = LocalPlayer.Character
     if char then char:UnequipTools() end
 end)
@@ -1988,9 +1991,6 @@ CreateButton(Pages[5], "Gửi Tin Nhắn Ẩn Danh", function() end)
 CreateButton(Pages[5], "Dọn Dẹp Rác Client Script", function() collectgarbage() end)
 
 -- Tab 6: FE Magic Skills (15 Tính năng)
-CreateToggle(Pages[6], "Zenitsu Sword (Vĩnh Viễn + Ngủ)", false, function(v)
-    ToggleZenitsuSword(v)
-end)
 CreateToggle(Pages[6], "Rồng Lửa Cưỡi (Fixed Control 3D Animated)", false, function(v) SetFireDragonMount(v) end)
 CreateToggle(Pages[6], "Cánh Thiên Thần Khổng Lồ + Khiên Cầu Vồng", false, function(v) SetRainbowAngel(v) end)
 CreateToggle(Pages[6], "Cầm Bông Hoa Trân Trọng Game 3D Model", false, function(v) SetGentlemanFlower(v) end)
