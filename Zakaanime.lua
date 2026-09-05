@@ -1,8 +1,5 @@
 --[[
-    ╔════════════════════════════════════════════════════════════════════════════════╗
-    ║                     ZENITSU MENU - VERSION 1.1 FULL                            ║
-    ║              Hơi Thở Sấm Sét | Kéo được | Đầy đủ chiêu thức                   ║
-    ╚════════════════════════════════════════════════════════════════════════════════╝
+    ZENITSU MENU - CỐ DAMAGE THẬT + HIỆU ỨNG MẠNH
 ]]
 
 local Players = game:GetService("Players")
@@ -14,42 +11,111 @@ local Debris = game:GetService("Debris")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
---==================== BIẾN ====================--
 local SwordOn = false
-local Cool = {S1 = false, S2 = false, S3 = false, S4 = false, Atk = false}
+local Cool = {S1=false, S2=false, S3=false, S4=false, Atk=false}
 local SwordModel, Bubble = nil, nil
 
---==================== HIỆU ỨNG SÉT ====================--
+--==================== HIỆU ỨNG SÉT MẠNH ====================--
 local function Lightning(pos, n)
-    n = n or 5
+    n = n or 6
     for i = 1, n do
         local p = Instance.new("Part")
-        p.Size = Vector3.new(0.12, math.random(3, 7), 0.12)
-        p.Color = Color3.fromRGB(255, 235, 60)
+        p.Size = Vector3.new(0.15, math.random(4, 9), 0.15)
+        p.Color = Color3.fromRGB(255, 235, 50)
         p.Material = Enum.Material.Neon
         p.Anchored = true
         p.CanCollide = false
-        p.CFrame = CFrame.new(pos + Vector3.new(math.random(-3,3), math.random(0,4), math.random(-3,3)))
+        p.CFrame = CFrame.new(pos + Vector3.new(math.random(-4,4), math.random(0,5), math.random(-4,4)))
             * CFrame.Angles(math.rad(math.random(0,360)), 0, math.rad(math.random(0,360)))
         p.Parent = workspace
-        Debris:AddItem(p, 0.2)
+        Debris:AddItem(p, 0.25)
     end
 end
 
-local function Zoom(time)
+local function LightningStreak(startPos, endPos)
+    local dist = (endPos - startPos).Magnitude
+    local p = Instance.new("Part")
+    p.Size = Vector3.new(0.35, 0.35, dist)
+    p.CFrame = CFrame.new(startPos, endPos) * CFrame.new(0, 0, -dist/2)
+    p.Anchored = true
+    p.CanCollide = false
+    p.Material = Enum.Material.Neon
+    p.Color = Color3.fromRGB(255, 230, 40)
+    p.Parent = workspace
+    TweenService:Create(p, TweenInfo.new(0.3), {Transparency = 1, Size = Vector3.new(0.05, 0.05, dist)}):Play()
+    Debris:AddItem(p, 0.35)
+end
+
+local function Zoom(t)
     local old = Camera.FieldOfView
-    TweenService:Create(Camera, TweenInfo.new(0.2), {FieldOfView = 38}):Play()
-    task.delay(time or 0.8, function()
+    TweenService:Create(Camera, TweenInfo.new(0.2), {FieldOfView = 36}):Play()
+    task.delay(t or 0.9, function()
         TweenService:Create(Camera, TweenInfo.new(0.35), {FieldOfView = old}):Play()
     end)
 end
 
---==================== KIẾM + BONG BÓNG ====================--
+--==================== CỐ GÂY DAMAGE + HẤT VĂNG ====================--
+local function TryRealDamage(targetRoot, knockPower)
+    if not targetRoot or not targetRoot.Parent then return end
+    local hum = targetRoot.Parent:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return end
+
+    -- Cố trừ máu (một số game yếu vẫn ăn)
+    pcall(function()
+        hum.Health = math.max(0, hum.Health - 80)
+    end)
+
+    -- Hất văng mạnh
+    pcall(function()
+        targetRoot.AssemblyLinearVelocity = knockPower
+        hum:ChangeState(Enum.HumanoidStateType.PlatformStand)
+    end)
+
+    Lightning(targetRoot.Position, 8)
+end
+
+local function GetClosestEnemy(range)
+    local closest, shortest = nil, range or 40
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    -- Ưu tiên Player
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr \~= LocalPlayer and plr.Character then
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hum and root and hum.Health > 0 then
+                local d = (root.Position - myRoot.Position).Magnitude
+                if d < shortest then
+                    shortest = d
+                    closest = root
+                end
+            end
+        end
+    end
+
+    -- Thêm NPC / quái
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and not Players:GetPlayerFromCharacter(obj) then
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj.PrimaryPart
+            if hum and root and hum.Health > 0 then
+                local d = (root.Position - myRoot.Position).Magnitude
+                if d < shortest then
+                    shortest = d
+                    closest = root
+                end
+            end
+        end
+    end
+    return closest
+end
+
+--==================== KIẾM + NGỦ ====================--
 local function CreateSword()
     local char = LocalPlayer.Character
     if not char then return end
     if SwordModel then SwordModel:Destroy() end
-
     local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
     if not torso then return end
 
@@ -58,14 +124,14 @@ local function CreateSword()
 
     local handle = Instance.new("Part")
     handle.Size = Vector3.new(0.28, 1, 0.28)
-    handle.Color = Color3.fromRGB(40, 30, 20)
+    handle.Color = Color3.fromRGB(35, 25, 18)
     handle.CanCollide = false
     handle.Massless = true
     handle.Parent = model
 
     local blade = Instance.new("Part")
-    blade.Size = Vector3.new(0.18, 3.9, 0.1)
-    blade.Color = Color3.fromRGB(255, 230, 60)
+    blade.Size = Vector3.new(0.18, 4, 0.1)
+    blade.Color = Color3.fromRGB(255, 230, 50)
     blade.Material = Enum.Material.Neon
     blade.CanCollide = false
     blade.Massless = true
@@ -74,13 +140,13 @@ local function CreateSword()
     local w = Instance.new("Weld")
     w.Part0 = handle
     w.Part1 = blade
-    w.C0 = CFrame.new(0, 2.35, 0)
+    w.C0 = CFrame.new(0, 2.4, 0)
     w.Parent = blade
 
     local weld = Instance.new("Weld")
     weld.Part0 = torso
     weld.Part1 = handle
-    weld.C0 = CFrame.new(1.12, 0.2, 0.52) * CFrame.Angles(math.rad(-10), math.rad(90), math.rad(-20))
+    weld.C0 = CFrame.new(1.12, 0.2, 0.55) * CFrame.Angles(math.rad(-10), math.rad(90), math.rad(-20))
     weld.Parent = handle
 
     model.Parent = char
@@ -99,7 +165,7 @@ local function CreateBubble()
     b.Size = Vector3.new(0.36, 0.36, 0.36)
     b.Color = Color3.fromRGB(180, 230, 255)
     b.Material = Enum.Material.Glass
-    b.Transparency = 0.28
+    b.Transparency = 0.3
     b.CanCollide = false
     b.Massless = true
     b.Parent = head
@@ -107,7 +173,7 @@ local function CreateBubble()
     local w = Instance.new("Weld")
     w.Part0 = head
     w.Part1 = b
-    w.C0 = CFrame.new(0, -0.16, -0.56)
+    w.C0 = CFrame.new(0, -0.16, -0.55)
     w.Parent = b
     Bubble = b
 end
@@ -117,7 +183,6 @@ local function ToggleSword(state)
     local char = LocalPlayer.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
-
     if state then
         CreateSword()
         CreateBubble()
@@ -129,70 +194,87 @@ local function ToggleSword(state)
     end
 end
 
---==================== 3 CHIÊU CHÍNH + CHIÊU PHỤ ====================--
-local function Skill1() -- Lướt ngủ
+--==================== 4 SKILL ====================--
+local function Skill1()
     if Cool.S1 or not SwordOn then return end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not root then return end
     Cool.S1 = true
+    local start = root.Position
     local dir = root.CFrame.LookVector
-    for i = 1, 9 do
-        root.CFrame = root.CFrame + dir * 4.3
-        Lightning(root.Position, 3)
-        task.wait(0.035)
+    for i = 1, 8 do
+        root.CFrame = root.CFrame + dir * 5
+        Lightning(root.Position, 4)
+        task.wait(0.04)
+    end
+    LightningStreak(start, root.Position)
+    local target = GetClosestEnemy(18)
+    if target then
+        TryRealDamage(target, dir * 90 + Vector3.new(0, 70, 0))
     end
     task.delay(2.2, function() Cool.S1 = false end)
 end
 
-local function Skill2() -- Lướt 6 lần
+local function Skill2()
     if Cool.S2 or not SwordOn then return end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not root then return end
     Cool.S2 = true
-    Zoom(1.1)
+    Zoom(1.2)
     for i = 1, 6 do
-        root.CFrame = root.CFrame + root.CFrame.LookVector * 7.2
+        local start = root.Position
+        root.CFrame = root.CFrame + root.CFrame.LookVector * 7.5
+        LightningStreak(start, root.Position)
         Lightning(root.Position, 6)
-        task.wait(0.07)
+        local target = GetClosestEnemy(16)
+        if target then
+            TryRealDamage(target, (target.Position - root.Position).Unit * 70 + Vector3.new(0, 55, 0))
+        end
+        task.wait(0.08)
     end
-    task.delay(3.0, function() Cool.S2 = false end)
+    task.delay(3.2, function() Cool.S2 = false end)
 end
 
-local function Skill3() -- Lao + Hất + Đóng kiếm
+local function Skill3()
     if Cool.S3 or not SwordOn then return end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not root then return end
     Cool.S3 = true
-    Zoom(1.3)
+    Zoom(1.4)
+    local start = root.Position
     for i = 1, 7 do
-        root.CFrame = root.CFrame + root.CFrame.LookVector * 5.2
+        root.CFrame = root.CFrame + root.CFrame.LookVector * 5.5
         Lightning(root.Position, 5)
         task.wait(0.04)
     end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local t = plr.Character.HumanoidRootPart
-            if (t.Position - root.Position).Magnitude < 14 then
-                pcall(function() t.AssemblyLinearVelocity = Vector3.new(0, 95, 0) end)
-                Lightning(t.Position, 8)
-            end
-        end
+    LightningStreak(start, root.Position)
+    local target = GetClosestEnemy(20)
+    if target then
+        TryRealDamage(target, Vector3.new(0, 120, 0) + (target.Position - root.Position).Unit * 40)
     end
     task.wait(0.2)
-    Lightning(root.Position, 10)
+    Lightning(root.Position, 12)
     task.delay(3.8, function() Cool.S3 = false end)
 end
 
-local function Skill4() -- Sét quanh thân
+local function Skill4()
     if Cool.S4 or not SwordOn then return end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not root then return end
     Cool.S4 = true
-    for i = 1, 12 do
-        Lightning(root.Position, 4)
-        task.wait(0.06)
+    for i = 1, 15 do
+        Lightning(root.Position, 5)
+        task.wait(0.05)
     end
-    task.delay(2.5, function() Cool.S4 = false end)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local t = plr.Character.HumanoidRootPart
+            if (t.Position - root.Position).Magnitude < 25 then
+                TryRealDamage(t, (t.Position - root.Position).Unit * 60 + Vector3.new(0, 80, 0))
+            end
+        end
+    end
+    task.delay(2.8, function() Cool.S4 = false end)
 end
 
 -- Đánh thường
@@ -201,20 +283,23 @@ UserInputService.InputBegan:Connect(function(input, gp)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         Cool.Atk = true
         local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then Lightning(root.Position + root.CFrame.LookVector * 3.5, 4) end
+        if root then
+            Lightning(root.Position + root.CFrame.LookVector * 3, 4)
+            local target = GetClosestEnemy(12)
+            if target then
+                TryRealDamage(target, (target.Position - root.Position).Unit * 45 + Vector3.new(0, 35, 0))
+            end
+        end
         task.delay(0.35, function() Cool.Atk = false end)
     end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1.3)
-    if SwordOn then
-        CreateSword()
-        CreateBubble()
-    end
+    if SwordOn then CreateSword() CreateBubble() end
 end)
 
---==================== MENU (KÉO ĐƯỢC) ====================--
+--==================== MENU ====================--
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZenitsuMenu"
 ScreenGui.ResetOnSpawn = false
@@ -233,8 +318,8 @@ ToggleIcon.Parent = ScreenGui
 Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 300, 0, 380)
-Main.Position = UDim2.new(0.5, -150, 0.5, -190)
+Main.Size = UDim2.new(0, 300, 0, 390)
+Main.Position = UDim2.new(0.5, -150, 0.5, -195)
 Main.BackgroundColor3 = Color3.fromRGB(18, 14, 10)
 Main.Active = true
 Main.Draggable = true
@@ -251,14 +336,14 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "ZENITSU | Hơi Thở Sấm Sét"
+Title.Text = "ZENITSU | Cố Damage Thật"
 Title.TextColor3 = Color3.fromRGB(255, 220, 60)
 Title.TextSize = 14
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
-local function AddBtn(text, y, callback)
+local function AddBtn(text, y, cb)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, -20, 0, 36)
     b.Position = UDim2.new(0, 10, 0, y)
@@ -269,18 +354,18 @@ local function AddBtn(text, y, callback)
     b.Font = Enum.Font.Gotham
     b.Parent = Main
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    b.MouseButton1Click:Connect(callback)
+    b.MouseButton1Click:Connect(cb)
 end
 
 AddBtn("Bật / Tắt Kiếm + Ngủ", 50, function() ToggleSword(not SwordOn) end)
-AddBtn("Skill 1: Lướt Ngủ", 95, function() Skill1() end)
-AddBtn("Skill 2: Lướt 6 Lần + Sét", 140, function() Skill2() end)
-AddBtn("Skill 3: Lao + Hất + Đóng Kiếm", 185, function() Skill3() end)
-AddBtn("Skill 4: Sét Quanh Thân", 230, function() Skill4() end)
-AddBtn("Đóng Menu", 290, function() Main.Visible = false end)
+AddBtn("Skill 1: Lướt + Damage", 95, function() Skill1() end)
+AddBtn("Skill 2: Lướt 6 Lần + Damage", 140, function() Skill2() end)
+AddBtn("Skill 3: Lao + Hất Lên + Damage", 185, function() Skill3() end)
+AddBtn("Skill 4: Sét AoE + Damage", 230, function() Skill4() end)
+AddBtn("Đóng Menu", 300, function() Main.Visible = false end)
 
 ToggleIcon.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
-print("Zenitsu Menu Full Loaded")
+print("Zenitsu Damage Attempt Menu Loaded")
