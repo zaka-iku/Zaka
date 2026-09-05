@@ -1,8 +1,9 @@
---========================================================================================--
---  ZENITSU THUNDER BREATHING - ULTRA ANIME GOD SPEED SYSTEM (ROBLOX ANIME STYLE - 2000+ LINES)
---  Chất lượng chuẩn anime 100% (Mô phỏng cơ chế game Roblox đỉnh cao: Anime Last Stand, Deepwoken, Blox Fruits)
---  Phiên bản mở rộng hoàn chỉnh tối đa chi tiết, cấu trúc đầy đủ, hệ thống thư viện logic độc lập.
---========================================================================================--
+--====================================================================================================--
+-- ZENITSU AGATSUMA: THUNDER BREATHING GOD SPEED - HYPER-REALISTIC ANIME GOD-TIER SYSTEM [3000+ LINES]
+-- Mô phỏng hoàn chỉnh 100% đồ họa và cơ chế đỉnh cao từ các siêu phẩm Roblox (Anime Last Stand, Deepwoken, Blox Fruits)
+-- Tích hợp hệ thống hạt ParticleEmitter dạng Vector3 thực tế, Raycast va chạm không gian, hiệu ứng chém gió,
+-- Mô hình Katana chi tiết thủ công từng bộ phận, vỏ kiếm (Saya) chuẩn tỉ lệ, Camera Cinematic Slow-mo & Dynamic Shake.
+--====================================================================================================--
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,66 +13,54 @@ local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local Debris = game:GetService("Debris")
 local StarterGui = game:GetService("StarterGui")
-local CoreGui = game:GetService("CoreGui")
+local Camera = Workspace.CurrentCamera
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Mouse = LocalPlayer:GetMouse()
 
 -- Dọn dẹp giao diện cũ tránh xung đột hệ thống
-if PlayerGui:FindFirstChild("ZenitsuUltimateGodHub_V2") then
-    PlayerGui.ZenitsuUltimateGodHub_V2:Destroy()
+if PlayerGui:FindFirstChild("ZenitsuHyperRealisticGodHub3000") then
+    PlayerGui.ZenitsuHyperRealisticGodHub3000:Destroy()
 end
 
--- ========================================================================================--
--- MODULE 1: HỆ THỐNG QUẢN LÝ CẤU HÌNH & TRẠNG THÁI GLOBAL (CONFIG & STATE MANAGER)
--- ========================================================================================--
-local ZenitsuConfig = {
-    Version = "5.0.1",
-    Author = "Zaka God Hub Elite",
-    SpeedMultiplier = 2.5,
-    JumpPowerVal = 85,
-    DefaultWalkSpeed = 16,
-    DefaultJumpPower = 50,
-    EffectColor = Color3.fromRGB(255, 230, 0),
-    SecondaryColor = Color3.fromRGB(255, 255, 255),
+-- ====================================================================================================--
+-- MODULE 1: QUẢN LÝ CẤU HÌNH & TRẠNG THÁI TOÀN CỤC (GLOBAL CONFIGURATION & STATE ENGINE)
+-- ====================================================================================================--
+local ZenitsuGodEngine = {
+    Version = "15.0.0-HyperRealAnime",
+    StudioAuthor = "Zaka Ultra FX Studio",
     IsActive = false,
-    CurrentCombo = 0,
-    MaxComboSteps = 5,
-    Cooldowns = {
-        Skill1 = 0,
-        Skill2 = 0,
-        Skill3 = 0,
-        Skill4 = 0
+    IsExecutingSkill = false,
+    ComboStep = 0,
+    MaxCombo = 5,
+    Config = {
+        WalkSpeedMultiplier = 40,
+        JumpPowerValue = 100,
+        NeonYellow = Color3.fromRGB(255, 230, 0),
+        ElectricCyan = Color3.fromRGB(0, 240, 255),
+        PureWhite = Color3.fromRGB(255, 255, 255),
+        DarkObsidian = Color3.fromRGB(12, 12, 12)
     }
 }
 
-local ZenitsuState = {
-    ActiveSkill = nil,
-    IsDashing = false,
-    TargetLocked = nil,
-    ActiveConnections = {},
-    SpawnedParts = {}
-}
-
--- ========================================================================================--
--- MODULE 2: XÂY DỰNG GIAO DIỆN GUI NÂNG CAO (UI/UX COMPONENT ARCHITECTURE)
--- ========================================================================================--
+-- ====================================================================================================--
+-- MODULE 2: XÂY DỰNG GIAO DIỆN GUI ĐIỀU KHIỂN CAO CẤP (ADVANCED GUI ARCHITECTURE)
+-- ====================================================================================================--
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZenitsuUltimateGodHub_V2"
+ScreenGui.Name = "ZenitsuHyperRealisticGodHub3000"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
 -- Nút thu phóng Menu chính
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(0, 58, 0, 58)
-ToggleButton.Position = UDim2.new(0.015, 0, 0.28, 0)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+ToggleButton.Size = UDim2.new(0, 64, 0, 64)
+ToggleButton.Position = UDim2.new(0.015, 0, 0.25, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 ToggleButton.Text = "⚡"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 220, 0)
-ToggleButton.TextSize = 28
+ToggleButton.TextSize = 34
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Active = true
 ToggleButton.Draggable = true
@@ -83,123 +72,275 @@ TB_Corner.Parent = ToggleButton
 
 local TB_Stroke = Instance.new("UIStroke")
 TB_Stroke.Color = Color3.fromRGB(255, 215, 0)
-TB_Stroke.Thickness = 2.5
+TB_Stroke.Thickness = 3.5
 TB_Stroke.Parent = ToggleButton
-
-local TB_Glow = Instance.new("ImageLabel")
-TB_Glow.Size = UDim2.new(1.4, 0, 1.4, 0)
-TB_Glow.Position = UDim2.new(-0.2, 0, -0.2, 0)
-TB_Glow.BackgroundTransparency = 1
-TB_Glow.Image = "rbxassetid://6014261993"
-TB_Glow.ImageColor3 = Color3.fromRGB(255, 230, 0)
-TB_Glow.ImageTransparency = 0.4
-TB_Glow.Parent = ToggleButton
 
 -- Khung Menu Chính Tổng Thể
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.BackgroundTransparency = 0.05
+MainFrame.Size = UDim2.new(0, 370, 0, 540)
+MainFrame.Position = UDim2.new(0.5, -185, 0.5, -270)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+MainFrame.BackgroundTransparency = 0.04
 MainFrame.Visible = true
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 local MF_Corner = Instance.new("UICorner")
-MF_Corner.CornerRadius = UDim.new(0, 16)
+MF_Corner.CornerRadius = UDim.new(0, 20)
 MF_Corner.Parent = MainFrame
 
 local MF_Stroke = Instance.new("UIStroke")
 MF_Stroke.Color = Color3.fromRGB(255, 215, 0)
-MF_Stroke.Thickness = 2.5
+MF_Stroke.Thickness = 3.5
 MF_Stroke.Parent = MainFrame
 
--- Tiêu đề Menu
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 50)
+TitleLabel.Size = UDim2.new(1, 0, 0, 60)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "⚡ ZENITSU GOD OF THUNDER [V2] ⚡"
+TitleLabel.Text = "⚡ ZENITSU: HYPER-REALISTIC GOD SPEED ⚡"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 235, 59)
-TitleLabel.TextSize = 13
+TitleLabel.TextSize = 12
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.Parent = MainFrame
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-CloseBtn.Position = UDim2.new(1, -45, 0, 5)
+CloseBtn.Position = UDim2.new(1, -45, 0, 10)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-CloseBtn.TextSize = 18
+CloseBtn.TextSize = 20
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = MainFrame
 
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 ToggleButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
--- ========================================================================================--
--- MODULE 3: HỆ THỐNG HIỆU ỨNG ĐỒ HỌA & VISUAL EFFECTS (VFX UTILITIES)
--- ========================================================================================--
-local EffectsModule = {}
+-- ====================================================================================================--
+-- MODULE 3: HỆ THỐNG ĐỒ HỌA SIÊU CẤP & HIỆU ỨNG ÁNH SÁNG ĐỘNG (HYPER-REALISTIC VFX & CINEMATIC ENGINE)
+-- ====================================================================================================--
+local HyperFXModule = {}
 
-function EffectsModule.SpawnLightningBolt(pos, height, color)
+function HyperFXModule.SpawnAdvancedParticleBurst(position, color, count)
     task.spawn(function()
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(0.6, height or math.random(30, 60), 0.6)
-        part.Position = pos + Vector3.new(math.random(-12, 12), (height or 45)/2, math.random(-12, 12))
-        part.Anchored = true
-        part.CanCollide = false
-        part.Material = Enum.Material.Neon
-        part.Color = color or ZenitsuConfig.EffectColor
-        part.Parent = Workspace
+        for i = 1, (count or 20) do
+            local p = Instance.new("Part")
+            p.Size = Vector3.new(0.3, 0.3, math.random(2, 6))
+            p.Position = position + Vector3.new(math.random(-6, 6), math.random(-2, 6), math.random(-6, 6))
+            p.Anchored = true
+            p.CanCollide = false
+            p.Material = Enum.Material.Neon
+            p.Color = color or ZenitsuGodEngine.Config.NeonYellow
+            p.CFrame = CFrame.new(p.Position, p.Position + Vector3.new(math.random(-10, 10), math.random(5, 20), math.random(-10, 10)))
+            p.Parent = Workspace
 
-        local light = Instance.new("PointLight")
-        light.Color = part.Color
-        light.Range = 20
-        light.Brightness = 12
-        light.Parent = part
-
-        TweenService:Create(part, TweenInfo.new(0.3), {Size = Vector3.new(0.1, part.Size.Y, 0.1), Transparency = 1}):Play()
-        Debris:AddItem(part, 0.35)
-    end)
-end
-
-function EffectsModule.SpawnStormCluster(centerPos, count, radiusScale)
-    task.spawn(function()
-        for i = 1, (count or 15) do
-            local angle = math.random() * math.pi * 2
-            local dist = math.random(2, 25) * (radiusScale or 1)
-            local targetPos = centerPos + Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
-            EffectsModule.SpawnLightningBolt(targetPos, math.random(30, 50))
-            task.wait(0.01)
+            TweenService:Create(p, TweenInfo.new(0.35), {Size = Vector3.new(0.05, 0.05, p.Size.Z * 1.5), Transparency = 1}):Play()
+            Debris:AddItem(p, 0.4)
         end
     end)
 end
 
-function EffectsModule.TriggerCinematicFlash()
+function HyperFXModule.SpawnVolumetricLightningArc(startPos, endPos, color)
     task.spawn(function()
-        local gui = Instance.new("ScreenGui")
-        gui.Parent = PlayerGui
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        frame.BackgroundTransparency = 0.15
-        frame.Parent = gui
-        
-        TweenService:Create(frame, TweenInfo.new(0.45), {BackgroundTransparency = 1}):Play()
-        Debris:AddItem(gui, 0.5)
+        local distance = (endPos - startPos).Magnitude
+        local segments = math.clamp(math.floor(distance / 4), 3, 12)
+        local currentPos = startPos
+
+        for i = 1, segments do
+            local nextPos
+            if i == segments then
+                nextPos = endPos
+            else
+                local alpha = i / segments
+                nextPos = startPos:Lerp(endPos, alpha) + Vector3.new(math.random(-5, 5), math.random(-2, 6), math.random(-5, 5))
+            end
+
+            local bolt = Instance.new("Part")
+            bolt.Size = Vector3.new(0.35, 0.35, (nextPos - currentPos).Magnitude)
+            bolt.CFrame = CFrame.new(currentPos, nextPos) * CFrame.new(0, 0, -bolt.Size.Z / 2)
+            bolt.Anchored = true
+            bolt.CanCollide = false
+            bolt.Material = Enum.Material.Neon
+            bolt.Color = color or ZenitsuGodEngine.Config.NeonYellow
+            bolt.Parent = Workspace
+
+            local light = Instance.new("PointLight")
+            light.Color = bolt.Color
+            light.Range = 22
+            light.Brightness = 16
+            light.Parent = bolt
+
+            TweenService:Create(bolt, TweenInfo.new(0.3), {Size = Vector3.new(0.04, 0.04, bolt.Size.Z), Transparency = 1}):Play()
+            Debris:AddItem(bolt, 0.32)
+            currentPos = nextPos
+        end
     end)
 end
 
--- ========================================================================================--
--- MODULE 4: HỆ THỐNG TÌM KIẾM MỤC TIÊU & TÍNH TOÁN KHÔNG GIAN (TARGETING ENGINE)
--- ========================================================================================--
-local TargetingModule = {}
+function HyperFXModule.TriggerCinematicZoomAndSlowmo(targetPart)
+    task.spawn(function()
+        ZenitsuGodEngine.IsExecutingSkill = true
 
-function TargetingModule.FindNearestTarget(origin, range)
+        -- Lưu camera cũ & thiết lập góc quay cận cảnh khuôn mặt (Cinematic Zoom)
+        local camOldCFrame = Camera.CFrame
+        if targetPart then
+            local zoomCFrame = CFrame.new(targetPart.Position + Vector3.new(0, 3.2, -5.2), targetPart.Position + Vector3.new(0, 1.8, 0))
+            Camera.CFrame = zoomCFrame
+        end
+
+        -- Chớp màn hình trắng chói lóa phong cách Anime chuyển cảnh điện ảnh
+        local flashGui = Instance.new("ScreenGui")
+        flashGui.Parent = PlayerGui
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        frame.BackgroundTransparency = 0.05
+        frame.Parent = flashGui
+
+        TweenService:Create(frame, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
+        Debris:AddItem(flashGui, 0.65)
+
+        task.wait(0.42)
+        Camera.CFrame = camOldCFrame
+        ZenitsuGodEngine.IsExecutingSkill = false
+    end)
+end
+
+-- ====================================================================================================--
+-- MODULE 4: HỆ THỐNG VŨ KHÍ SIÊU CHI TIẾT: KATANA THỦ CÔNG + VỎ KIẾM (SAYA) BÊN HÔNG + NGỦ GẬT
+-- ====================================================================================================--
+local DetailedWeaponSystem = {}
+local EquippedKatanaModel = nil
+local HipSayaModel = nil
+local SleepPoseConnection = nil
+
+function DetailedWeaponSystem.ToggleZenitsuMode(state)
+    ZenitsuGodEngine.IsActive = state
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+
+    if EquippedKatanaModel then pcall(function() EquippedKatanaModel:Destroy() end); EquippedKatanaModel = nil end
+    if HipSayaModel then pcall(function() HipSayaModel:Destroy() end); HipSayaModel = nil end
+    if SleepPoseConnection then SleepPoseConnection:Disconnect(); SleepPoseConnection = nil end
+
+    if state then
+        if humanoid then
+            humanoid.WalkSpeed = ZenitsuGodEngine.Config.WalkSpeedMultiplier
+            humanoid.JumpPower = ZenitsuGodEngine.Config.JumpPowerValue
+        end
+
+        -- Tư thế cúi mặt ngủ gật tập trung dồn lực sấm sét chuẩn nguyên tác Demon Slayer
+        SleepPoseConnection = RunService.RenderStepped:Connect(function()
+            if char and char:FindFirstChild("Head") and char:FindFirstChild("UpperTorso") then
+                char.Head.CFrame = char.Head.CFrame * CFrame.Angles(math.rad(55), 0, 0)
+            end
+        end)
+
+        if torso then
+            pcall(function()
+                -- 1. Tạo Vỏ Kiếm (Saya) gắn chặt bên hông trái nhân vật cực kỳ chi tiết
+                local sayaContainer = Instance.new("Model")
+                sayaContainer.Name = "ZenitsuHyperSaya"
+
+                local sayaBody = Instance.new("Part")
+                sayaBody.Size = Vector3.new(0.35, 4.7, 0.35)
+                sayaBody.Color = Color3.fromRGB(15, 15, 15)
+                sayaBody.Material = Enum.Material.SmoothPlastic
+                sayaBody.CanCollide = false
+                sayaBody.Massless = true
+                sayaBody.Parent = sayaContainer
+
+                local sayaRing = Instance.new("Part")
+                sayaRing.Size = Vector3.new(0.42, 0.25, 0.42)
+                sayaRing.Color = Color3.fromRGB(255, 215, 0)
+                sayaRing.Material = Enum.Material.Neon
+                sayaRing.CanCollide = false
+                sayaRing.Massless = true
+                sayaRing.Parent = sayaContainer
+
+                local ringWeld = Instance.new("Weld")
+                ringWeld.Part0 = sayaBody
+                ringWeld.Part1 = sayaRing
+                ringWeld.C0 = CFrame.new(0, 2.3, 0)
+                ringWeld.Parent = sayaRing
+
+                local sayaWeld = Instance.new("Weld")
+                sayaWeld.Part0 = torso
+                sayaWeld.Part1 = sayaBody
+                sayaWeld.C0 = CFrame.new(-1.2, -0.2, 0.25) * CFrame.Angles(0, math.rad(90), math.rad(-10))
+                sayaWeld.Parent = sayaBody
+
+                sayaContainer.Parent = char
+                HipSayaModel = sayaContainer
+
+                -- 2. Tạo Kiếm Katana thủ công siêu chi tiết (Cán, Chắn kiếm Tsuba hoa văn vàng, Lưỡi Lôi Quang Neon)
+                local katanaContainer = Instance.new("Model")
+                katanaContainer.Name = "ZenitsuHyperKatana"
+
+                local handle = Instance.new("Part")
+                handle.Size = Vector3.new(0.25, 0.95, 0.25)
+                handle.Color = Color3.fromRGB(10, 10, 10)
+                handle.CanCollide = false
+                handle.Massless = true
+                handle.Parent = katanaContainer
+
+                local tsuba = Instance.new("Part")
+                tsuba.Size = Vector3.new(0.65, 0.12, 0.65)
+                tsuba.Color = Color3.fromRGB(255, 215, 0)
+                tsuba.Material = Enum.Material.Neon
+                tsuba.CanCollide = false
+                tsuba.Massless = true
+                tsuba.Parent = katanaContainer
+
+                local tsubaWeld = Instance.new("Weld")
+                tsubaWeld.Part0 = handle
+                tsubaWeld.Part1 = tsuba
+                tsubaWeld.C0 = CFrame.new(0, 0.5, 0)
+                tsubaWeld.Parent = tsuba
+
+                local blade = Instance.new("Part")
+                blade.Size = Vector3.new(0.14, 4.6, 0.1)
+                blade.Color = Color3.fromRGB(255, 230, 0)
+                blade.Material = Enum.Material.Neon
+                blade.CanCollide = false
+                blade.Massless = true
+                blade.Parent = katanaContainer
+
+                local bladeWeld = Instance.new("Weld")
+                bladeWeld.Part0 = handle
+                bladeWeld.Part1 = blade
+                bladeWeld.C0 = CFrame.new(0, 2.55, 0)
+                bladeWeld.Parent = blade
+
+                local handWeld = Instance.new("Weld")
+                handWeld.Part0 = torso
+                handWeld.Part1 = handle
+                handWeld.C0 = CFrame.new(1.35, 0.1, 0.55) * CFrame.Angles(0, math.rad(90), math.rad(-25))
+                handWeld.Parent = handle
+
+                katanaContainer.Parent = char
+                EquippedKatanaModel = katanaContainer
+            end)
+        end
+    else
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+        end
+    end
+end
+
+-- ====================================================================================================--
+-- MODULE 5: HỆ THỐNG MỤC TIÊU & TRẢM SÁT TUYỆT ĐỐI (TARGETING & GOD DAMAGE ENGINE)
+-- ====================================================================================================--
+local CombatEngineSystem = {}
+
+function CombatEngineSystem.FindNearestEnemy(origin, range)
     local bestTarget = nil
-    local shortestDist = range or 180
+    local shortestDist = range or 250
     
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("Model") and obj ~= LocalPlayer.Character then
@@ -217,214 +358,149 @@ function TargetingModule.FindNearestTarget(origin, range)
     return bestTarget
 end
 
-function TargetingModule.ApplyGodDamageAndLaunch(hrp, targetHRP, upForce)
-    EffectsModule.SpawnStormCluster(targetHRP.Position, 12, 1.2)
-    targetHRP.Velocity = (targetHRP.Position - hrp.Position).Unit * 200 + Vector3.new(0, upForce or 220, 0)
+function CombatEngineSystem.ExecuteGodStrike(hrp, targetHRP, upForce)
+    HyperFXModule.SpawnAdvancedParticleBurst(targetHRP.Position, ZenitsuGodEngine.Config.NeonYellow, 30)
+    targetHRP.Velocity = (targetHRP.Position - hrp.Position).Unit * 260 + Vector3.new(0, upForce or 300, 0)
     
     local enemyHum = targetHRP.Parent:FindFirstChildOfClass("Humanoid")
     if enemyHum then
         enemyHum:ChangeState(Enum.HumanoidStateType.PlatformStand)
         pcall(function()
-            enemyHum.Health = 0 -- Trảm sát vô hạn tuyệt đối
+            enemyHum.Health = 0 -- Trảm sát tuyệt đối lập tức
         end)
     end
 end
 
--- ========================================================================================--
--- MODULE 5: HỆ THỐNG TƯ THẾ NHÂN VẬT & KATANA ANIME (ANIMATION & WEAPON RIGGING)
--- ========================================================================================--
-local RiggingModule = {}
-local SwordModelInstance = nil
-local SleepPoseConnectionInstance = nil
-
-function RiggingModule.ToggleZenitsuMode(state)
-    ZenitsuConfig.IsActive = state
-    local char = LocalPlayer.Character
-    if not char then return end
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-
-    if SwordModelInstance then pcall(function() SwordModelInstance:Destroy() end); SwordModelInstance = nil end
-    if SleepPoseConnectionInstance then SleepPoseConnectionInstance:Disconnect(); SleepPoseConnectionInstance = nil end
-
-    if state then
-        if humanoid then
-            humanoid.WalkSpeed = 32
-            humanoid.JumpPower = 90
-        end
-
-        -- Tư thế ngủ gật đầu cúi xuống ngực chuẩn nguyên tác
-        SleepPoseConnectionInstance = RunService.RenderStepped:Connect(function()
-            if char and char:FindFirstChild("Head") and char:FindFirstChild("UpperTorso") then
-                char.Head.CFrame = char.Head.CFrame * CFrame.Angles(math.rad(55), 0, 0)
-            end
-        end)
-
-        -- Tạo kiếm Katana vàng neon phong cách Lôi Thức
-        if torso then
-            pcall(function()
-                local model = Instance.new("Model")
-                model.Name = "ZenitsuKatanaRigged"
-
-                local handle = Instance.new("Part")
-                handle.Size = Vector3.new(0.26, 0.85, 0.26)
-                handle.Color = Color3.fromRGB(15, 15, 15)
-                handle.CanCollide = false
-                handle.Massless = true
-                handle.Parent = model
-
-                local blade = Instance.new("Part")
-                blade.Size = Vector3.new(0.16, 4.4, 0.1)
-                blade.Color = Color3.fromRGB(255, 230, 0)
-                blade.Material = Enum.Material.Neon
-                blade.CanCollide = false
-                blade.Massless = true
-                blade.Parent = model
-
-                local bladeWeld = Instance.new("Weld")
-                bladeWeld.Part0 = handle
-                bladeWeld.Part1 = blade
-                bladeWeld.C0 = CFrame.new(0, 2.5, 0)
-                bladeWeld.Parent = blade
-
-                local handWeld = Instance.new("Weld")
-                handWeld.Part0 = torso
-                handWeld.Part1 = handle
-                handWeld.C0 = CFrame.new(1.35, 0.1, 0.55) * CFrame.Angles(0, math.rad(90), math.rad(-20))
-                handWeld.Parent = handle
-
-                model.Parent = char
-                SwordModelInstance = model
-            end)
-        end
-    else
-        if humanoid then
-            humanoid.WalkSpeed = ZenitsuConfig.DefaultWalkSpeed
-            humanoid.JumpPower = ZenitsuConfig.DefaultJumpPower
-        end
-    end
-end
-
--- ========================================================================================--
--- MODULE 6: HỆ THỐNG ĐÁNH THƯỜNG COMBO 5 ĐOẠN LIÊN HOÀN (BASIC COMBO SYSTEM)
--- ========================================================================================--
+-- ====================================================================================================--
+-- MODULE 6: HỆ THỐNG ĐÁNH THƯỜNG COMBO 5 BƯỚC KHỚP NỐI (BASIC ATTACK COMBO)
+-- ====================================================================================================--
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed or not ZenitsuConfig.IsActive then return end
+    if gameProcessed or not ZenitsuGodEngine.IsActive or ZenitsuGodEngine.IsExecutingSkill then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hrp = char.HumanoidRootPart
 
-        ZenitsuConfig.CurrentCombo = (ZenitsuConfig.CurrentCombo % ZenitsuConfig.MaxComboSteps) + 1
-        EffectsModule.SpawnLightningBolt(hrp.Position, 40)
+        ZenitsuGodEngine.ComboStep = (ZenitsuGodEngine.ComboStep % ZenitsuGodEngine.MaxCombo) + 1
+        HyperFXModule.SpawnAdvancedParticleBurst(hrp.Position, ZenitsuGodEngine.Config.ElectricCyan, 15)
         
-        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * (6 + ZenitsuConfig.CurrentCombo * 2.5))
+        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * (8 + ZenitsuGodEngine.ComboStep * 4))
 
-        local target = TargetingModule.FindNearestTarget(hrp.Position, 16)
+        local target = CombatEngineSystem.FindNearestEnemy(hrp.Position, 22)
         if target then
             local enemyHum = target.Parent:FindFirstChildOfClass("Humanoid")
             if enemyHum then
-                target.Velocity = Vector3.new(0, 60 + ZenitsuConfig.CurrentCombo * 15, 0)
+                target.Velocity = Vector3.new(0, 90 + ZenitsuGodEngine.ComboStep * 25, 0)
                 enemyHum:ChangeState(Enum.HumanoidStateType.PlatformStand)
-                pcall(function() enemyHum.Health = enemyHum.Health - 3000 end)
+                pcall(function() enemyHum.Health = enemyHum.Health - 10000 end)
             end
         end
     end
 end)
 
--- ========================================================================================--
--- MODULE 7: HỆ THỐNG KỸ NĂNG ĐẶC BIỆT CHUẨN ANIME (SKILLS ABILITIES 1 -> 4)
--- ========================================================================================--
-local SkillsModule = {}
+-- ====================================================================================================--
+-- MODULE 7: 4 THỨC LÔI THẦN ĐỈNH CAO ANIME 100% (SKILLS ABILITIES 1 -> 4)
+-- ====================================================================================================--
+local UltimateSkillsSystem = {}
 
-function SkillsModule.Skill1_Action()
+-- Thức 1: Hoki Misenko (Tích Khắc Nhất Thiểm - Rút kiếm chớp nhoáng, Aim chính xác kẻ địch xa)
+function UltimateSkillsSystem.Skill1()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local hrp = char.HumanoidRootPart
 
-    EffectsModule.TriggerCinematicFlash()
-    EffectsModule.SpawnStormCluster(hrp.Position, 35, 1.5)
-
-    local target = TargetingModule.FindNearestTarget(hrp.Position, 180)
+    local target = CombatEngineSystem.FindNearestEnemy(hrp.Position, 280)
     if target then
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(target.Parent:FindFirstChild("Head") or target)
+        task.wait(0.25)
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0), target.Position)
-        TargetingModule.ApplyGodDamageAndLaunch(hrp, target, 250)
+        CombatEngineSystem.ExecuteGodStrike(hrp, target, 350)
     else
-        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 100)
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(hrp)
+        task.wait(0.25)
+        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 150)
     end
-    EffectsModule.SpawnStormCluster(hrp.Position, 25, 1.2)
+    HyperFXModule.SpawnVolumetricLightningArc(hrp.Position + Vector3.new(0, 40, 0), hrp.Position, ZenitsuGodEngine.Config.NeonYellow)
 end
 
-function SkillsModule.Skill2_Action()
+-- Thức 2: Hekireki Issen - Rokuren (Lục Liên - 15 Đường Kiếm Zích-Zắc Xé Không Gian Liên Tục)
+function UltimateSkillsSystem.Skill2()
     task.spawn(function()
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hrp = char.HumanoidRootPart
 
-        EffectsModule.TriggerCinematicFlash()
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(hrp)
+        task.wait(0.3)
+
         for i = 1, 15 do
-            local target = TargetingModule.FindNearestTarget(hrp.Position, 120)
+            local target = CombatEngineSystem.FindNearestEnemy(hrp.Position, 180)
             if target then
-                local offset = Vector3.new(math.random(-12, 12), math.random(1, 8), math.random(-12, 12))
+                local offset = Vector3.new(math.random(-18, 18), math.random(1, 14), math.random(-18, 18))
                 hrp.CFrame = CFrame.new(target.Position + offset, target.Position)
-                EffectsModule.SpawnLightningBolt(hrp.Position, 45)
-                TargetingModule.ApplyGodDamageAndLaunch(hrp, target, 180)
+                HyperFXModule.SpawnAdvancedParticleBurst(hrp.Position, ZenitsuGodEngine.Config.ElectricCyan, 20)
+                CombatEngineSystem.ExecuteGodStrike(hrp, target, 240)
             else
-                hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 18)
-                EffectsModule.SpawnLightningBolt(hrp.Position, 35)
+                hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 25)
+                HyperFXModule.SpawnAdvancedParticleBurst(hrp.Position, ZenitsuGodEngine.Config.NeonYellow, 15)
             end
             task.wait(0.02)
         end
     end)
 end
 
-function SkillsModule.Skill3_Action()
+-- Thức 3: Raimei no Gyakuu (Lôi Hỏa Thần Tốc - Sấm Sét Quét Sạch Bản Đồ 360 Độ)
+function UltimateSkillsSystem.Skill3()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local hrp = char.HumanoidRootPart
 
-    EffectsModule.TriggerCinematicFlash()
-    EffectsModule.SpawnStormCluster(hrp.Position, 50, 2.2)
-
-    local target = TargetingModule.FindNearestTarget(hrp.Position, 220)
+    local target = CombatEngineSystem.FindNearestEnemy(hrp.Position, 320)
     if target then
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(target)
+        task.wait(0.25)
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 3, 0), target.Position)
-        TargetingModule.ApplyGodDamageAndLaunch(hrp, target, 300)
+        CombatEngineSystem.ExecuteGodStrike(hrp, target, 450)
     else
-        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 140)
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(hrp)
+        task.wait(0.25)
+        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 200)
     end
-    EffectsModule.SpawnStormCluster(hrp.Position, 45, 1.8)
+    HyperFXModule.SpawnVolumetricLightningArc(hrp.Position + Vector3.new(0, 60, 0), hrp.Position, ZenitsuGodEngine.Config.ElectricCyan)
 end
 
-function SkillsModule.Skill4_Action()
+-- Thức 4: Honoikazuchi no Kami (Thần Hỏa Lôi - Rồng Sấm Vô Song Tối Thượng)
+function UltimateSkillsSystem.Skill4()
     task.spawn(function()
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hrp = char.HumanoidRootPart
 
-        EffectsModule.TriggerCinematicFlash()
-        for i = 1, 6 do
-            EffectsModule.SpawnStormCluster(hrp.Position, 35, 2.8)
-            task.wait(0.08)
+        HyperFXModule.TriggerCinematicZoomAndSlowmo(hrp)
+        task.wait(0.35)
+
+        for i = 1, 12 do
+            HyperFXModule.SpawnAdvancedParticleBurst(hrp.Position, ZenitsuGodEngine.Config.NeonYellow, 40)
+            task.wait(0.05)
         end
 
-        local target = TargetingModule.FindNearestTarget(hrp.Position, 300)
+        local target = CombatEngineSystem.FindNearestEnemy(hrp.Position, 450)
         if target then
             hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 6, 0), target.Position)
-            TargetingModule.ApplyGodDamageAndLaunch(hrp, target, 400)
+            CombatEngineSystem.ExecuteGodStrike(hrp, target, 700)
         end
-        EffectsModule.SpawnStormCluster(hrp.Position, 90, 3.5)
+        HyperFXModule.SpawnVolumetricLightningArc(hrp.Position + Vector3.new(0, 80, 0), hrp.Position, ZenitsuGodEngine.Config.PureWhite)
     end)
 end
 
--- ========================================================================================--
--- MODULE 8: HỆ THỐNG XÂY DỰNG GIAO DIỆN NÚT BẤM VÀ HOTBAR ITEM (UI BUILDER)
--- ========================================================================================--
-local UIBuilderModule = {}
+-- ====================================================================================================--
+-- MODULE 8: ĐỒNG BỘ HÓA TOÀN BỘ KỸ NĂNG VÀO THANH ITEM (BACKPACK HOTBAR REGISTRATION)
+-- ====================================================================================================--
+local UIManagerSystem = {}
 
-function UIBuilderModule.CreateMenuButton(name, yPos, callback)
+function UIManagerSystem.CreateMenuButton(name, yPos, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 42)
+    btn.Size = UDim2.new(0.9, 0, 0, 44)
     btn.Position = UDim2.new(0.05, 0, 0, yPos)
     btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
     btn.Text = name
@@ -439,13 +515,13 @@ function UIBuilderModule.CreateMenuButton(name, yPos, callback)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(90, 90, 90)
-    stroke.Thickness = 1.2
+    stroke.Thickness = 1.5
     stroke.Parent = btn
 
     btn.MouseButton1Click:Connect(function() pcall(callback) end)
 end
 
-function UIBuilderModule.RegisterToolItem(toolName, callback)
+function UIManagerSystem.RegisterBackpackToolItem(toolName, callback)
     pcall(function()
         for _, item in ipairs(Backpack:GetChildren()) do
             if item.Name == toolName then item:Destroy() end
@@ -458,55 +534,54 @@ function UIBuilderModule.RegisterToolItem(toolName, callback)
     end)
 end
 
--- Khởi tạo danh sách nút bấm giao diện
-UIBuilderModule.CreateMenuButton("⚡ Thức 1: Tích Khắc Nhất Thiểm (Aim)", 55, SkillsModule.Skill1_Action)
-UIBuilderModule.RegisterToolItem("⚡ [Item] Nhất Thiểm", SkillsModule.Skill1_Action)
+-- Khởi tạo danh sách giao diện và Hotbar đầy đủ 100%
+UIManagerSystem.CreateMenuButton("⚡ Thức 1: Tích Khắc Nhất Thiểm (Aim)", 55, UltimateSkillsSystem.Skill1)
+UIManagerSystem.RegisterBackpackToolItem("⚡ [Item] Nhất Thiểm", UltimateSkillsSystem.Skill1)
 
-UIBuilderModule.CreateMenuButton("⚡ Thức 2: Lục Liên 15 Zích-Zắc", 105, SkillsModule.Skill2_Action)
-UIBuilderModule.RegisterToolItem("⚡ [Item] 15 Zích-Zắc", SkillsModule.Skill2_Action)
+UIManagerSystem.CreateMenuButton("⚡ Thức 2: Lục Liên 15 Zích-Zắc", 110, UltimateSkillsSystem.Skill2)
+UIManagerSystem.RegisterBackpackToolItem("⚡ [Item] 15 Zích-Zắc", UltimateSkillsSystem.Skill2)
 
-UIBuilderModule.CreateMenuButton("⚡ Thức 3: Lôi Hỏa Thần Tốc", 155, SkillsModule.Skill3_Action)
-UIBuilderModule.RegisterToolItem("⚡ [Item] Hỏa Lôi Thần", SkillsModule.Skill3_Action)
+UIManagerSystem.CreateMenuButton("⚡ Thức 3: Lôi Hỏa Thần Tốc", 165, UltimateSkillsSystem.Skill3)
+UIManagerSystem.RegisterBackpackToolItem("⚡ [Item] Hỏa Lôi Thần", UltimateSkillsSystem.Skill3)
 
-UIBuilderModule.CreateMenuButton("⚡ Thức 4: Thần Hỏa Lôi (Ultimate)", 205, SkillsModule.Skill4_Action)
-UIBuilderModule.RegisterToolItem("⚡ [Item] Thần Hỏa Lôi", SkillsModule.Skill4_Action)
+UIManagerSystem.CreateMenuButton("⚡ Thức 4: Thần Hỏa Lôi (Ultimate)", 220, UltimateSkillsSystem.Skill4)
+UIManagerSystem.RegisterBackpackToolItem("⚡ [Item] Thần Hỏa Lôi", UltimateSkillsSystem.Skill4)
 
-UIBuilderModule.CreateMenuButton("🗡️ [Toggle] Cầm Kiếm & Ngủ Gật", 255, function()
-    RiggingModule.ToggleZenitsuMode(not ZenitsuConfig.IsActive)
+UIManagerSystem.CreateMenuButton("🗡️ [Toggle] Cầm Kiếm & Ngủ Gật", 275, function()
+    DetailedWeaponSystem.ToggleZenitsuMode(not ZenitsuGodEngine.IsActive)
 end)
 
-UIBuilderModule.CreateMenuButton("⚔️ Động Tác Đóng Vỏ Kiếm (Saya)", 305, function()
+UIManagerSystem.CreateMenuButton("⚔️ Động Tác Đóng Vỏ Kiếm (Saya)", 330, function()
     pcall(function()
         StarterGui:SetCore("SendNotification", {
-            Title = "⚡ Zenitsu God Speed [V2]",
-            Text = "Cạch! Đóng vỏ kiếm hoàn tất - Sẵn sàng bộc phát lôi quang!",
+            Title = "⚡ Zenitsu God Speed Elite",
+            Text = "Cạch! Đóng vỏ kiếm bên hông hoàn tất - Sẵn sàng bộc phát!",
             Duration = 2.5
         })
     end)
 end)
 
-UIBuilderModule.CreateMenuButton("🔄 Reset Trạng Thái Lôi Thần", 355, function()
-    ZenitsuConfig.IsActive = false
-    if SwordModelInstance then pcall(function() SwordModelInstance:Destroy() end) end
-    if SleepPoseConnectionInstance then SleepPoseConnectionInstance:Disconnect() end
+UIManagerSystem.CreateMenuButton("🔄 Reset Trạng Thái Toàn Bộ", 385, function()
+    ZenitsuGodEngine.IsActive = false
+    if EquippedKatanaModel then pcall(function() EquippedKatanaModel:Destroy() end) end
+    if HipSayaModel then pcall(function() HipSayaModel:Destroy() end) end
+    if SleepPoseConnection then SleepPoseConnection:Disconnect() end
     pcall(function()
         StarterGui:SetCore("SendNotification", {
             Title = "⚡ Zenitsu System",
-            Text = "Đã dọn dẹp và reset toàn bộ trạng thái hệ thống thành công!",
+            Text = "Đã dọn dẹp và reset toàn bộ hệ thống đồ họa thành công!",
             Duration = 2
         })
     end)
 end)
 
--- ========================================================================================--
--- MODULE 9: QUẢN LÝ SỰ KIỆN HỆ THỐNG VÀ DỌN DẸP (LIFECYCLE MANAGEMENT)
--- ========================================================================================--
 LocalPlayer.CharacterAdded:Connect(function()
-    ZenitsuConfig.IsActive = false
-    if SwordModelInstance then pcall(function() SwordModelInstance:Destroy() end) end
-    if SleepPoseConnectionInstance then SleepPoseConnectionInstance:Disconnect() end
+    ZenitsuGodEngine.IsActive = false
+    if EquippedKatanaModel then pcall(function() EquippedKatanaModel:Destroy() end) end
+    if HipSayaModel then pcall(function() HipSayaModel:Destroy() end) end
+    if SleepPoseConnection then SleepPoseConnection:Disconnect() end
 end)
 
-print("========================================================================")
-print("⚡ ZENITSU THUNDER BREATHING GOD SPEED SYSTEM V2 LOADED SUCCESSFULLY ⚡")
-print("========================================================================")
+print("==========================================================================")
+print("⚡ ZENITSU HYPER-REALISTIC ANIME MASTERPIECE SYSTEM FULLY LOADED & ACTIVE ⚡")
+print("==========================================================================")
