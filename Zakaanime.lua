@@ -3,19 +3,19 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Xóa menu cũ nếu có để tránh lỗi trùng lặp
-if PlayerGui:FindFirstChild("ZenitsuFixedHub") then
-    PlayerGui.ZenitsuFixedHub:Destroy()
+-- Dọn dẹp menu cũ nếu chạy lại
+if PlayerGui:FindFirstChild("ZenitsuUltimateHub") then
+    PlayerGui.ZenitsuUltimateHub:Destroy()
 end
 
--- Tạo GUI chính bám chặt vào màn hình điện thoại
+-- Tạo GUI chính chạy mượt trên Delta Client Mobile
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZenitsuFixedHub"
+ScreenGui.Name = "ZenitsuUltimateHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
--- 1. Nút tròn mở/đóng menu (Nằm nổi bên trái màn hình)
+-- Nút tròn mở/đóng menu (Có thể kéo thả trên màn hình)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -26,7 +26,7 @@ ToggleBtn.TextColor3 = Color3.fromRGB(255, 220, 0)
 ToggleBtn.TextSize = 22
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.Active = true
-ToggleBtn.Draggable = true -- Cho phép kéo thả nút trên mobile
+ToggleBtn.Draggable = true
 ToggleBtn.Parent = ScreenGui
 
 local BtnCorner = Instance.new("UICorner")
@@ -38,14 +38,14 @@ BtnStroke.Color = Color3.fromRGB(255, 215, 0)
 BtnStroke.Thickness = 2
 BtnStroke.Parent = ToggleBtn
 
--- 2. Khung Menu chính
+-- Khung Menu chính
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 260, 0, 310)
 MainFrame.Position = UDim2.new(0.5, -130, 0.5, -155)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BackgroundTransparency = 0.05
-MainFrame.Visible = true -- Mặc định hiện luôn để thấy ngay
+MainFrame.Visible = true -- Hiện ngay lập tức để kiểm tra
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
@@ -63,18 +63,18 @@ MainStroke.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ ZENITSU MENU ⚡"
+Title.Text = "⚡ ZENITSU THUNDER MENU ⚡"
 Title.TextColor3 = Color3.fromRGB(255, 235, 59)
 Title.TextSize = 13
 Title.Font = Enum.Font.GothamBold
 Title.Parent = MainFrame
 
--- Nút ẩn/hiện bảng menu khi bấm nút ⚡
+-- Sự kiện ẩn/hiện menu khi bấm nút ⚡
 ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Hàm tạo các nút chức năng chuẩn không bị lỗi click
+-- Hàm tạo các nút bấm chức năng an toàn
 local function createMenuButton(text, yPos, onClick)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0.9, 0, 0, 42)
@@ -96,11 +96,13 @@ local function createMenuButton(text, yPos, onClick)
     stroke.Parent = btn
 
     btn.MouseButton1Click:Connect(function()
-        pcall(onClick, btn)
+        pcall(function()
+            onClick(btn)
+        end)
     end)
 end
 
--- Biến trạng thái kiếm
+-- Biến lưu trạng thái Kiếm Zenitsu
 local ZenitsuOn = false
 local SwordModel = nil
 
@@ -111,7 +113,7 @@ local function RemoveSword()
     end
 end
 
--- Nút 1: Kiếm & Tốc độ
+-- 1. Tính năng Zenitsu Sword & Tốc độ
 createMenuButton("🗡️ [1] Bật/Tắt Kiếm Sấm Sét", 45, function(btn)
     ZenitsuOn = not ZenitsuOn
     local char = LocalPlayer.Character
@@ -173,7 +175,7 @@ createMenuButton("🗡️ [1] Bật/Tắt Kiếm Sấm Sét", 45, function(btn)
     end
 end)
 
--- Nút 2: Kỹ năng 1
+-- 2. Kỹ năng 1: Lướt nhanh
 createMenuButton("⚡ Thức 1: Tích Khắc Nhất Thiểm", 95, function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -182,7 +184,7 @@ createMenuButton("⚡ Thức 1: Tích Khắc Nhất Thiểm", 95, function()
     end
 end)
 
--- Nút 3: Kỹ năng 2
+-- 3. Kỹ năng 2: Lướt 6 lần
 createMenuButton("⚡ Thức 2: Liên Hoàn Điện Quang", 145, function()
     task.spawn(function()
         local char = LocalPlayer.Character
@@ -195,7 +197,7 @@ createMenuButton("⚡ Thức 2: Liên Hoàn Điện Quang", 145, function()
     end)
 end)
 
--- Nút 4: Kỹ năng 3
+-- 4. Kỹ năng 3: Lao tới áp sát
 createMenuButton("⚡ Thức 3: Hỏa Lôi Thần Tốc", 195, function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -204,7 +206,7 @@ createMenuButton("⚡ Thức 3: Hỏa Lôi Thần Tốc", 195, function()
     end
 end)
 
--- Nút 5: Đóng kiếm
+-- 5. Động tác đóng kiếm
 createMenuButton("⚔️ Động Tác Đóng Kiếm Ngầu", 245, function()
     print("Đã thực hiện động tác đóng kiếm Katana!")
 end)
