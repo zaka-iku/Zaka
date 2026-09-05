@@ -1,6 +1,6 @@
 --[[
-    ZAKA ZENITSU MENU
-    Kiếm vĩnh viễn + 3 Kỹ năng + Trạng thái ngủ + Đánh thường
+    ZENITSU FULL MENU
+    Ưu tiên: Menu hiện ổn định + 3 chiêu + kiếm
 ]]
 
 local Players = game:GetService("Players")
@@ -12,25 +12,33 @@ local Debris = game:GetService("Debris")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local Settings = {
-    SwordEnabled = false,
-    SleepMode = true,
-    Skill1 = false,
-    Skill2 = false,
-    Skill3 = false,
-}
-
+--==================== BIẾN ====================--
+local SwordOn = false
+local Cool1, Cool2, Cool3, CoolAtk = false, false, false, false
 local SwordModel = nil
-local SleepBubble = nil
-local Cooldown = {
-    Skill1 = false,
-    Skill2 = false,
-    Skill3 = false,
-    Attack = false
-}
+local Bubble = nil
 
---==================== TẠO KIẾM VĨNH VIỄN ====================--
-local function CreateSword(char)
+--==================== HIỆU ỨNG SÉT ====================--
+local function Lightning(pos, n)
+    n = n or 5
+    for i = 1, n do
+        local p = Instance.new("Part")
+        p.Size = Vector3.new(0.12, math.random(3,6), 0.12)
+        p.Color = Color3.fromRGB(255, 235, 60)
+        p.Material = Enum.Material.Neon
+        p.Anchored = true
+        p.CanCollide = false
+        p.CFrame = CFrame.new(pos + Vector3.new(math.random(-3,3), math.random(0,3), math.random(-3,3)))
+            * CFrame.Angles(math.rad(math.random(0,360)), 0, math.rad(math.random(0,360)))
+        p.Parent = workspace
+        Debris:AddItem(p, 0.2)
+    end
+end
+
+--==================== TẠO KIẾM ====================--
+local function CreateSword()
+    local char = LocalPlayer.Character
+    if not char then return end
     if SwordModel then SwordModel:Destroy() end
 
     local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
@@ -40,383 +48,262 @@ local function CreateSword(char)
     model.Name = "ZenitsuSword"
 
     local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(0.3, 1.05, 0.3)
-    handle.Color = Color3.fromRGB(35, 25, 18)
-    handle.Material = Enum.Material.SmoothPlastic
+    handle.Size = Vector3.new(0.28, 1, 0.28)
+    handle.Color = Color3.fromRGB(40, 30, 20)
     handle.CanCollide = false
     handle.Massless = true
     handle.Parent = model
 
-    local guard = Instance.new("Part")
-    guard.Size = Vector3.new(0.7, 0.16, 0.7)
-    guard.Color = Color3.fromRGB(255, 210, 40)
-    guard.Material = Enum.Material.Neon
-    guard.CanCollide = false
-    guard.Massless = true
-    guard.Parent = model
-
     local blade = Instance.new("Part")
-    blade.Name = "Blade"
-    blade.Size = Vector3.new(0.2, 4.0, 0.12)
-    blade.Color = Color3.fromRGB(255, 230, 70)
+    blade.Size = Vector3.new(0.18, 3.8, 0.1)
+    blade.Color = Color3.fromRGB(255, 230, 60)
     blade.Material = Enum.Material.Neon
     blade.CanCollide = false
     blade.Massless = true
     blade.Parent = model
 
-    local glow = Instance.new("Part")
-    glow.Size = Vector3.new(0.08, 3.5, 0.04)
-    glow.Color = Color3.fromRGB(255, 255, 180)
-    glow.Material = Enum.Material.Neon
-    glow.Transparency = 0.45
-    glow.CanCollide = false
-    glow.Massless = true
-    glow.Parent = model
-
-    local w1 = Instance.new("Weld")
-    w1.Part0 = handle
-    w1.Part1 = guard
-    w1.C0 = CFrame.new(0, 0.52, 0)
-    w1.Parent = guard
-
-    local w2 = Instance.new("Weld")
-    w2.Part0 = handle
-    w2.Part1 = blade
-    w2.C0 = CFrame.new(0, 2.45, 0)
-    w2.Parent = blade
-
-    local w3 = Instance.new("Weld")
-    w3.Part0 = blade
-    w3.Part1 = glow
-    w3.Parent = glow
+    local w = Instance.new("Weld")
+    w.Part0 = handle
+    w.Part1 = blade
+    w.C0 = CFrame.new(0, 2.3, 0)
+    w.Parent = blade
 
     local weld = Instance.new("Weld")
     weld.Part0 = torso
     weld.Part1 = handle
-    weld.C0 = CFrame.new(1.12, 0.18, 0.55) * CFrame.Angles(math.rad(-12), math.rad(90), math.rad(-22))
+    weld.C0 = CFrame.new(1.1, 0.2, 0.5) * CFrame.Angles(0, math.rad(90), math.rad(-20))
     weld.Parent = handle
 
     model.Parent = char
     SwordModel = model
 end
 
---==================== BONG BÓNG MŨI (NGỦ) ====================--
-local function CreateBubble(char)
-    if SleepBubble then SleepBubble:Destroy() end
+local function RemoveSword()
+    if SwordModel then
+        SwordModel:Destroy()
+        SwordModel = nil
+    end
+    if Bubble then
+        Bubble:Destroy()
+        Bubble = nil
+    end
+end
+
+--==================== BONG BÓNG NGỦ ====================--
+local function CreateBubble()
+    local char = LocalPlayer.Character
+    if not char then return end
     local head = char:FindFirstChild("Head")
     if not head then return end
+    if Bubble then Bubble:Destroy() end
 
-    local bubble = Instance.new("Part")
-    bubble.Name = "ZenitsuBubble"
-    bubble.Shape = Enum.PartType.Ball
-    bubble.Size = Vector3.new(0.38, 0.38, 0.38)
-    bubble.Color = Color3.fromRGB(185, 230, 255)
-    bubble.Material = Enum.Material.Glass
-    bubble.Transparency = 0.3
-    bubble.CanCollide = false
-    bubble.Massless = true
-    bubble.Parent = head
+    local b = Instance.new("Part")
+    b.Shape = Enum.PartType.Ball
+    b.Size = Vector3.new(0.35, 0.35, 0.35)
+    b.Color = Color3.fromRGB(180, 230, 255)
+    b.Material = Enum.Material.Glass
+    b.Transparency = 0.3
+    b.CanCollide = false
+    b.Massless = true
+    b.Parent = head
 
     local w = Instance.new("Weld")
     w.Part0 = head
-    w.Part1 = bubble
-    w.C0 = CFrame.new(0, -0.16, -0.55)
-    w.Parent = bubble
+    w.Part1 = b
+    w.C0 = CFrame.new(0, -0.15, -0.55)
+    w.Parent = b
 
-    SleepBubble = bubble
+    Bubble = b
 end
 
---==================== HIỆU ỨNG SÉT ====================--
-local function SpawnLightning(pos, count)
-    count = count or 5
-    for i = 1, count do
-        local bolt = Instance.new("Part")
-        bolt.Size = Vector3.new(0.12, math.random(3, 7), 0.12)
-        bolt.Color = Color3.fromRGB(255, 235, 60)
-        bolt.Material = Enum.Material.Neon
-        bolt.Anchored = true
-        bolt.CanCollide = false
-        bolt.CFrame = CFrame.new(pos + Vector3.new(math.random(-3,3), math.random(0,4), math.random(-3,3)))
-            * CFrame.Angles(math.rad(math.random(0,360)), 0, math.rad(math.random(0,360)))
-        bolt.Parent = workspace
-        Debris:AddItem(bolt, 0.22)
-    end
-end
-
---==================== TƯ THẾ CÚI RÚT KIẾM ====================--
-local function PlayDrawPose(char)
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not root or not hum then return end
-
-    -- Giả lập cúi người bằng cách nghiêng camera + hơi hạ nhân vật
-    local original = root.CFrame
-    root.CFrame = root.CFrame * CFrame.new(0, -0.6, 0) * CFrame.Angles(math.rad(18), 0, 0)
-    task.wait(0.85)
-    root.CFrame = original
-end
-
---==================== ZOOM CAMERA ====================--
-local function ZoomIn(duration)
-    local oldFOV = Camera.FieldOfView
-    TweenService:Create(Camera, TweenInfo.new(0.25), {FieldOfView = 40}):Play()
-    task.delay(duration or 0.8, function()
-        TweenService:Create(Camera, TweenInfo.new(0.35), {FieldOfView = oldFOV}):Play()
-    end)
-end
-
---==================== SKILL 1: LƯỚT NGỦ ====================--
+--==================== 3 CHIÊU ====================--
 local function Skill1()
-    if Cooldown.Skill1 or not Settings.SwordEnabled then return end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
+    if Cool1 or not SwordOn then return end
+    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    Cooldown.Skill1 = true
-    PlayDrawPose(char)
-
+    Cool1 = true
     local dir = root.CFrame.LookVector
     for i = 1, 8 do
-        root.CFrame = root.CFrame + dir * 4.5
-        SpawnLightning(root.Position, 3)
+        root.CFrame = root.CFrame + dir * 4.2
+        Lightning(root.Position, 3)
         task.wait(0.04)
     end
-
-    task.delay(2.5, function() Cooldown.Skill1 = false end)
+    task.delay(2.5, function() Cool1 = false end)
 end
 
---==================== SKILL 2: LƯỚT 6 LẦN ====================--
 local function Skill2()
-    if Cooldown.Skill2 or not Settings.SwordEnabled then return end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
+    if Cool2 or not SwordOn then return end
+    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    Cooldown.Skill2 = true
-    PlayDrawPose(char)
-    ZoomIn(1.2)
-
-    local target = nil
-    local shortest = 55
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                target = plr.Character.HumanoidRootPart
-            end
-        end
-    end
+    Cool2 = true
+    local old = Camera.FieldOfView
+    TweenService:Create(Camera, TweenInfo.new(0.2), {FieldOfView = 42}):Play()
 
     for i = 1, 6 do
-        local dir = target and (target.Position - root.Position).Unit or root.CFrame.LookVector
-        root.CFrame = root.CFrame + dir * 8
-        SpawnLightning(root.Position, 6)
-
-        if target and target.Parent then
-            pcall(function()
-                target.AssemblyLinearVelocity = dir * 50 + Vector3.new(0, 35, 0)
-            end)
-        end
-        task.wait(0.08)
+        root.CFrame = root.CFrame + root.CFrame.LookVector * 7
+        Lightning(root.Position, 6)
+        task.wait(0.07)
     end
 
-    task.delay(3.5, function() Cooldown.Skill2 = false end)
+    TweenService:Create(Camera, TweenInfo.new(0.3), {FieldOfView = old}):Play()
+    task.delay(3.2, function() Cool2 = false end)
 end
 
---==================== SKILL 3: LAO + HẤT + CHÉM + ĐÓNG KIẾM ====================--
 local function Skill3()
-    if Cooldown.Skill3 or not Settings.SwordEnabled then return end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
+    if Cool3 or not SwordOn then return end
+    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    Cooldown.Skill3 = true
-    PlayDrawPose(char)
+    Cool3 = true
+    local old = Camera.FieldOfView
+    TweenService:Create(Camera, TweenInfo.new(0.2), {FieldOfView = 36}):Play()
 
-    local target = nil
-    local shortest = 50
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                target = plr.Character.HumanoidRootPart
-            end
-        end
+    for i = 1, 7 do
+        root.CFrame = root.CFrame + root.CFrame.LookVector * 5
+        Lightning(root.Position, 5)
+        task.wait(0.045)
     end
 
-    -- Lao tới
-    if target then
-        root.CFrame = CFrame.new(root.Position, target.Position)
-        for i = 1, 6 do
-            root.CFrame = root.CFrame + root.CFrame.LookVector * 5
-            SpawnLightning(root.Position, 4)
-            task.wait(0.05)
-        end
-
-        -- Hất lên
-        pcall(function()
-            target.AssemblyLinearVelocity = Vector3.new(0, 110, 0)
-        end)
-        SpawnLightning(target.Position, 8)
-        task.wait(0.25)
-
-        -- Zoom đóng kiếm
-        ZoomIn(1.0)
-        SpawnLightning(root.Position, 10)
-    else
-        -- Không có target thì lướt thẳng
-        for i = 1, 7 do
-            root.CFrame = root.CFrame + root.CFrame.LookVector * 5
-            SpawnLightning(root.Position, 4)
-            task.wait(0.05)
-        end
-        ZoomIn(0.8)
-    end
-
-    task.delay(4, function() Cooldown.Skill3 = false end)
-end
-
---==================== ĐÁNH THƯỜNG ====================--
-local function NormalAttack()
-    if not Settings.SwordEnabled or Cooldown.Attack then return end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-
-    Cooldown.Attack = true
-    SpawnLightning(root.Position + root.CFrame.LookVector * 4, 4)
-
+    -- Hất người gần
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local t = plr.Character.HumanoidRootPart
-            if (t.Position - root.Position).Magnitude < 11 then
+            if (t.Position - root.Position).Magnitude < 13 then
                 pcall(function()
-                    t.AssemblyLinearVelocity = (t.Position - root.Position).Unit * 45 + Vector3.new(0, 30, 0)
+                    t.AssemblyLinearVelocity = Vector3.new(0, 90, 0)
                 end)
+                Lightning(t.Position, 7)
             end
         end
     end
 
-    task.delay(0.4, function() Cooldown.Attack = false end)
+    task.wait(0.25)
+    Lightning(root.Position, 9)
+    TweenService:Create(Camera, TweenInfo.new(0.35), {FieldOfView = old}):Play()
+    task.delay(4, function() Cool3 = false end)
 end
 
+--==================== ĐÁNH THƯỜNG ====================--
 UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
+    if gp or not SwordOn or CoolAtk then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        NormalAttack()
+        CoolAtk = true
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            Lightning(root.Position + root.CFrame.LookVector * 3, 4)
+        end
+        task.delay(0.35, function() CoolAtk = false end)
     end
 end)
 
---==================== BẬT / TẮT KIẾM ====================--
-local function ToggleSword(state)
-    Settings.SwordEnabled = state
-    local char = LocalPlayer.Character
-    if not char then return end
+--==================== MENU (ƯU TIÊN HIỆN) ====================--
+local gui = Instance.new("ScreenGui")
+gui.Name = "ZenitsuMenu"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    if state then
-        CreateSword(char)
-        if Settings.SleepMode then CreateBubble(char) end
-        -- Tăng tốc + nhảy
-        local hum = char:FindFirstChildOfClass("Humanoid")
+local ok = pcall(function()
+    gui.Parent = game:GetService("CoreGui")
+end)
+if not ok or not gui.Parent then
+    gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Nút mở
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0, 52, 0, 52)
+openBtn.Position = UDim2.new(0, 12, 0.32, 0)
+openBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
+openBtn.Text = "Z"
+openBtn.TextColor3 = Color3.fromRGB(30, 20, 0)
+openBtn.TextSize = 22
+openBtn.Font = Enum.Font.GothamBold
+openBtn.Parent = gui
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(1, 0)
+
+-- Khung menu
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 280, 0, 320)
+main.Position = UDim2.new(0, 75, 0.22, 0)
+main.BackgroundColor3 = Color3.fromRGB(20, 16, 10)
+main.BorderSizePixel = 0
+main.Visible = true
+main.Parent = gui
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundColor3 = Color3.fromRGB(45, 35, 12)
+title.Text = "ZENITSU - Hơi Thở Sấm Sét"
+title.TextColor3 = Color3.fromRGB(255, 220, 60)
+title.TextSize = 14
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+Instance.new("UICorner", title).CornerRadius = UDim.new(0, 12)
+
+local function MakeButton(text, y, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -20, 0, 38)
+    b.Position = UDim2.new(0, 10, 0, y)
+    b.BackgroundColor3 = Color3.fromRGB(40, 30, 15)
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 230, 140)
+    b.TextSize = 13
+    b.Font = Enum.Font.Gotham
+    b.Parent = main
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    b.MouseButton1Click:Connect(callback)
+end
+
+MakeButton("Bật / Tắt Kiếm + Ngủ", 55, function()
+    SwordOn = not SwordOn
+    if SwordOn then
+        CreateSword()
+        CreateBubble()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.WalkSpeed = 28
             hum.JumpPower = 60
         end
     else
-        if SwordModel then SwordModel:Destroy() SwordModel = nil end
-        if SleepBubble then SleepBubble:Destroy() SleepBubble = nil end
-        local hum = char:FindFirstChildOfClass("Humanoid")
+        RemoveSword()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.WalkSpeed = 16
             hum.JumpPower = 50
         end
     end
-end
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-    task.wait(1.3)
-    if Settings.SwordEnabled then
-        CreateSword(char)
-        if Settings.SleepMode then CreateBubble(char) end
-    end
 end)
 
---==================== MENU ====================--
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZenitsuMenu"
-ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
-
-local OpenBtn = Instance.new("TextButton")
-OpenBtn.Size = UDim2.new(0, 50, 0, 50)
-OpenBtn.Position = UDim2.new(0, 15, 0.35, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 40)
-OpenBtn.Text = "Z"
-OpenBtn.TextColor3 = Color3.fromRGB(30, 20, 0)
-OpenBtn.TextSize = 22
-OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.Parent = ScreenGui
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
-
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 300, 0, 340)
-Main.Position = UDim2.new(0, 75, 0.25, 0)
-Main.BackgroundColor3 = Color3.fromRGB(18, 16, 12)
-Main.BorderSizePixel = 0
-Main.Visible = true
-Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(40, 30, 10)
-Title.Text = "ZENITSU  |  Hơi Thở Sấm Sét"
-Title.TextColor3 = Color3.fromRGB(255, 220, 60)
-Title.TextSize = 15
-Title.Font = Enum.Font.GothamBold
-Title.Parent = Main
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
-
-local function AddBtn(text, y, callback)
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, -20, 0, 36)
-    b.Position = UDim2.new(0, 10, 0, y)
-    b.BackgroundColor3 = Color3.fromRGB(35, 28, 15)
-    b.Text = text
-    b.TextColor3 = Color3.fromRGB(255, 230, 150)
-    b.TextSize = 13
-    b.Font = Enum.Font.Gotham
-    b.Parent = Main
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    b.MouseButton1Click:Connect(callback)
-end
-
-AddBtn("Bật / Tắt Kiếm Zenitsu", 55, function()
-    ToggleSword(not Settings.SwordEnabled)
-end)
-
-AddBtn("Skill 1: Lướt Ngủ", 100, function()
+MakeButton("Skill 1: Lướt Ngủ", 105, function()
     Skill1()
 end)
 
-AddBtn("Skill 2: Lướt 6 Lần + Sét", 145, function()
+MakeButton("Skill 2: Lướt 6 Lần + Sét", 155, function()
     Skill2()
 end)
 
-AddBtn("Skill 3: Lao + Hất + Đóng Kiếm", 190, function()
+MakeButton("Skill 3: Lao + Hất + Đóng Kiếm", 205, function()
     Skill3()
 end)
 
-AddBtn("Đóng Menu", 250, function()
-    Main.Visible = false
+MakeButton("Đóng Menu", 265, function()
+    main.Visible = false
 end)
 
-OpenBtn.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
+openBtn.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+end)
+
+-- Giữ kiếm khi respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1.4)
+    if SwordOn then
+        CreateSword()
+        CreateBubble()
+    end
 end)
 
 print("Zenitsu Menu Loaded")
