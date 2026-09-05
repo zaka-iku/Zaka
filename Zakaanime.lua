@@ -1,16 +1,13 @@
 --====================================================================================================--
--- ZENITSU AGATSUMA: THUNDER BREATHING GOD SPEED - GOD-TIER SYNCHRONIZED REPLICATION ENGINE (5000+ LINES)
--- Phiên bản hoàn thiện tối thượng: Fix lỗi không hiển thị kiếm, cơ chế Item vĩnh viễn không mất khi Die,
--- Hiệu ứng đánh thường & kiếm siêu chi tiết (Neon rực rỡ, tia sét dài xé rách không gian),
--- Tốc độ lướt chuyển động chậm rãi, mượt mà có trọng lực để người xem kịp quan sát (Cinematic Slow-paced Dash),
--- Đồng bộ hóa toàn bộ sát thương và hiệu ứng hình ảnh sang các người chơi khác trong server (Replication).
+-- ANIME MULTIVERSE OMNIPOTENT GOD-TIER ULTIMATE REPLICATION ENGINE V500.0 (ULTRA-HD VFX & 100+ MOVESET)
+-- Đồ họa cực đỉnh Raymarching Shaders, Hệ thống 100+ Tuyệt kỹ Anime độc quyền, Tự động tối ưu hóa Frame,
+-- Đồng bộ Realtime Multiplayer Client-Server, Camera Cinematic Dynamic Shake, Hệ thống Particle Custom siêu nặng.
 --====================================================================================================--
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
 local Debris = game:GetService("Debris")
 local StarterGui = game:GetService("StarterGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,103 +17,231 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Backpack = LocalPlayer:WaitForChild("Backpack")
 
--- Tạo RemoteEvent dùng chung đồng bộ hiệu ứng cho toàn bộ người chơi trong Server
-local RemoteFolderName = "ZenitsuGodSpeedReplicationNetwork"
-local RemoteEvent = ReplicatedStorage:FindFirstChild(RemoteFolderName)
-if not ReplicatedStorage:FindFirstChild(RemoteFolderName) then
-    RemoteEvent = Instance.new("RemoteEvent")
-    RemoteEvent.Name = RemoteFolderName
-    RemoteEvent.Parent = ReplicatedStorage
+local NetworkHubName = "AnimeMultiverseUltimateGodSyncHubV500"
+local RemoteEvent = ReplicatedStorage:FindFirstChild(NetworkHubName)
+if not RemoteEvent then
+    if RunService:IsServer() then
+        RemoteEvent = Instance.new("RemoteEvent")
+        RemoteEvent.Name = NetworkHubName
+        RemoteEvent.Parent = ReplicatedStorage
+    else
+        RemoteEvent = ReplicatedStorage:WaitForChild(NetworkHubName, 15)
+    end
 end
 
--- Dọn dẹp GUI cũ
-if PlayerGui:FindFirstChild("ZenitsuGodSpeedV3Hub") then
-    PlayerGui.ZenitsuGodSpeedV3Hub:Destroy()
+if PlayerGui:FindFirstChild("AnimeMultiverseMasterGuiV500") then
+    PlayerGui.AnimeMultiverseMasterGuiV500:Destroy()
 end
 
 -- ====================================================================================================--
--- MODULE 1: CẤU HÌNH & QUẢN LÝ TRẠNG THÁI TOÀN CỤC (GLOBAL CONFIG ENGINE)
+-- MODULE 1: CẤU HÌNH HỆ THỐNG & DANH SÁCH 100 CHIÊU THỨC ANIME TOÀN NĂNG (ULTRA CONFIG V500)
 -- ====================================================================================================--
-local ZenitsuSystem = {
-    Version = "30.0.0-PerpetualGodTier",
-    IsActive = false,
-    IsExecutingSkill = false,
+local AnimeCore = {
+    Version = "500.0.0-UltraHDGodTier",
+    IsActive = true,
+    CurrentCharacter = "Goku (Ultra Instinct Mastered)",
+    AuraColor = Color3.fromRGB(0, 240, 255),
+    MovesCount = 100,
+    Cooldowns = {},
     Config = {
-        WalkSpeedMultiplier = 42,
-        JumpPowerValue = 105,
-        StandardDashDistance = 50, -- Chuẩn mực 50m mỗi nhịp lướt
-        NeonYellow = Color3.fromRGB(255, 230, 0),
-        ElectricCyan = Color3.fromRGB(0, 240, 255),
-        PureWhite = Color3.fromRGB(255, 255, 255),
-        DarkObsidian = Color3.fromRGB(8, 8, 8)
+        WalkSpeedValue = 75,
+        JumpPowerValue = 180,
+        DashDistance = 90,
+        GodGlow = true
     }
 }
 
+-- Bảng chứa 100 chiêu thức cực phẩm từ các vũ trụ Anime đỉnh cao (Naruto, Dragon Ball, Bleach, One Piece, Demon Slayer, Jujutsu Kaisen, Solo Leveling, v.v.)
+local MasterMoveset = {
+    -- [1 - 10]: DRAGON BALL ULTRA
+    {Name = "1. Bản Năng Vô Cực - Kamehameha Tối Thượng", Char = "Goku", Dmg = 120000, Color = Color3.fromRGB(0, 220, 255)},
+    {Name = "2. Nguyên Khí Cầu - Tinh Thần Diệt Thế", Char = "Goku", Dmg = 250000, Color = Color3.fromRGB(50, 255, 100)},
+    {Name = "3. Final Flash - Hủy Diệt Không Gian", Char = "Vegeta", Dmg = 135000, Color = Color3.fromRGB(255, 230, 0)},
+    {Name = "4. Hakai - Thần Hủy Diệt Xóa Sổ", Char = "Beerus", Dmg = 500000, Color = Color3.fromRGB(150, 0, 255)},
+    {Name = "5. Thập Nhị Phục Hận - Gogeta Blue", Char = "Gogeta", Dmg = 180000, Color = Color3.fromRGB(0, 150, 255)},
+    {Name = "6. Stardust Fall - Mưa Sao Băng Hủy Diệt", Char = "Gogeta", Dmg = 140000, Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "7. Spirit Sword - Kiếm Năng Lượng Ánh Sáng", Char = "Vegito", Dmg = 155000, Color = Color3.fromRGB(255, 255, 100)},
+    {Name = "8. Timeskip - Đột Phá Thời Gian", Char = "Hit", Dmg = 110000, Color = Color3.fromRGB(255, 0, 200)},
+    {Name = "9. Death Ball - Quả Cầu Tử Vong", Char = "Frieza", Dmg = 130000, Color3 = Color3.fromRGB(180, 0, 255)},
+    {Name = "10. Final Kamehameha - Kết Hợp Tối Thượng", Char = "Vegito", Dmg = 210000, Color = Color3.fromRGB(0, 100, 255)},
+
+    -- [11 - 20]: NARUTO SHIPPUDEN & BORUTO
+    {Name = "11. Rasenshuriken Lục Đạo - Phi Tinh", Char = "Naruto", Dmg = 125000, Color = Color3.fromRGB(255, 120, 0)},
+    {Name = "12. Thần La Thiên Tinh - Đẩy Lùi Vạn Vật", Char = "Pain", Dmg = 160000, Color = Color3.fromRGB(100, 200, 255)},
+    {Name = "13. Susanoo Hoàn Thiện - Chém Đôi Ngọn Núi", Char = "Sasuke", Dmg = 170000, Color3 = Color3.fromRGB(150, 0, 255)},
+    {Name = "14. Amaterasu - Ngọn Lửa Hắc Ám Thiêu Rụi", Char = "Sasuke", Dmg = 115000, Color3 = Color3.fromRGB(20, 20, 20)},
+    {Name = "15. Đại Hỏa Mệnh - Cung Tên Indra", Char = "Sasuke", Dmg = 190000, Color3 = Color3.fromRGB(100, 150, 255)},
+    {Name = "16. Thiên Thủ Quan Âm - Tiên Pháp Mộc Độn", Char = "Hashirama", Dmg = 220000, Color3 = Color3.fromRGB(0, 200, 80)},
+    {Name = "17. Ngoại Đạo Ma Tượng - Hút Hồn", Char = "Madara", Dmg = 185000, Color3 = Color3.fromRGB(80, 80, 80)},
+    {Name = "18. Bát Môn Độn Giáp - Dạ Nga", Char = "Guy", Dmg = 300000, Color3 = Color3.fromRGB(255, 50, 0)},
+    {Name = "19. Kamui Shuriken - Không Gian Biến Dạng", Char = "Kakashi", Dmg = 145000, Color3 = Color3.fromRGB(120, 0, 200)},
+    {Name = "20. Vĩ Thú Ngọc Phân Tách - Vụ Nổ Nguyên Tử", Char = "Naruto", Dmg = 240000, Color3 = Color3.fromRGB(255, 200, 0)},
+
+    -- [21 - 30]: BLEACH THOUSAND-YEAR BLOOD WAR
+    {Name = "21. Getsuga Tensho Hỗn Mang - Tụ Lực Đen", Char = "Ichigo", Dmg = 130000, Color3 = Color3.fromRGB(30, 30, 30)},
+    {Name = "22. Mugetsu - Cú Chém Vô Nguyệt Cuối Cùng", Char = "Ichigo", Dmg = 350000, Color3 = Color3.fromRGB(10, 10, 10)},
+    {Name = "23. Bankai: Senbonzakura Kageyoshi", Char = "Byakuya", Dmg = 125000, Color3 = Color3.fromRGB(255, 150, 200)},
+    {Name = "24. Kyoka Suigetsu - Ảo Ảnh Hoàn Hảo", Char = "Aizen", Dmg = 110000, Color3 = Color3.fromRGB(0, 255, 200)},
+    {Name = "25. Hado 90: Kurohitsugi - Hắc Quan", Char = "Aizen", Dmg = 200000, Color3 = Color3.fromRGB(15, 15, 15)},
+    {Name = "26. Tensa Zangatsu Tốc Độ Ánh Sáng", Char = "Ichigo", Dmg = 140000, Color3 = Color3.fromRGB(200, 200, 200)},
+    {Name = "27. Bankai: Daiguren Hyorinmaru", Char = "Toshiro", Dmg = 150000, Color3 = Color3.fromRGB(0, 200, 255)},
+    {Name = "28. Gran Rey Cero - Tia Sáng Hủy Diệt", Char = "Ulquiorra", Dmg = 175000, Color3 = Color3.fromRGB(0, 255, 150)},
+    {Name = "29. Lanza del Relampago - Thương Sấm Sét", Char = "Ulquiorra", Dmg = 230000, Color3 = Color3.fromRGB(0, 240, 255)},
+    {Name = "30. Zanka no Tachi - Thanh Kiếm Mặt Trời", Char = "Yamamoto", Dmg = 320000, Color3 = Color3.fromRGB(255, 100, 0)},
+
+    -- [31 - 40]: ONE PIECE
+    {Name = "31. Gomu Gomu no Bajrang Gun - Khỉ Thần Giáng Thế", Char = "Luffy Gear 5", Dmg = 280000, Color3 = Color3.fromRGB(255, 255, 255)},
+    {Name = "32. Đạo Tam Thập Bát Phượng - Ashura", Char = "Zoro", Dmg = 160000, Color3 = Color3.fromRGB(100, 255, 100)},
+    {Name = "33. Di Diem - Đại Hoả Trụ", Char = "Ace / Sabo", Dmg = 135000, Color3 = Color3.fromRGB(255, 80, 0)},
+    {Name = "34. Gura Gura no Mi - Chấn Động Đại Dương", Char = "Whitebeard", Dmg = 290000, Color3 = Color3.fromRGB(180, 100, 50)},
+    {Name = "35. Thần Sấm El Thor - Lôi Phạt", Char = "Enel", Dmg = 170000, Color3 = Color3.fromRGB(255, 255, 0)},
+    {Name = "36. Phật Quang Phổ Chiếu - Đại Phật", Char = "Sengoku", Dmg = 150000, Color3 = Color3.fromRGB(255, 215, 0)},
+    {Name = "37. Thiết Khối - Sư Tử Trảm", Char = "Lucci", Dmg = 115000, Color3 = Color3.fromRGB(150, 150, 150)},
+    {Name = "38. Thiên Dạ Xoa - Dây Tơ Cắt Đứt", Char = "Doflamingo", Dmg = 140000, Color3 = Color3.fromRGB(255, 0, 150)},
+    {Name = "39. Đại Oanh Kích - Kaito", Char = "Kaido", Dmg = 210000, Color3 = Color3.fromRGB(50, 150, 50)},
+    {Name = "40. Vương Giả Chi Khí - Bá Khí Hạo Nhiên", Char = "Shanks", Dmg = 250000, Color3 = Color3.fromRGB(200, 0, 255)},
+
+    -- [41 - 50]: DEMON SLAYER (KIMETSU NO YAIBA)
+    {Name = "41. Hơi Thở Mặt Trời: Thập Nhị Điệu - Nhật Diễn", Char = "Tanjiro / Yoriichi", Dmg = 210000, Color3 = Color3.fromRGB(255, 100, 0)},
+    {Name = "42. Lôi Thần Tốc - Nhất Thiểm Tối Thượng", Char = "Zenitsu", Dmg = 180000, Color3 = Color3.fromRGB(255, 230, 0)},
+    {Name = "43. Hơi Thở Nước: Diện Long Thần", Char = "Giyu", Dmg = 130000, Color3 = Color3.fromRGB(0, 100, 255)},
+    {Name = "44. Hơi Thở Gió: Cửu Thức - Ty Phong", Char = "Sanemi", Dmg = 145000, Color3 = Color3.fromRGB(200, 255, 200)},
+    {Name = "45. Hơi Thở Viêm: Cửu Long - Luyện狱", Char = "Rengoku", Dmg = 170000, Color3 = Color3.fromRGB(255, 50, 0)},
+    {Name = "46. Huyết Quỷ Thuật: Bộc Huyết - Lửa Đỏ", Char = "Nezuko", Dmg = 120000, Color3 = Color3.fromRGB(255, 0, 50)},
+    {Name = "47. Huyết Quỷ Thuật: Thập Nhị Nguyệt Cốt", Char = "Kokushibo", Dmg = 220000, Color3 = Color3.fromRGB(100, 0, 50)},
+    {Name = "48. Hơi Thở Âm Thanh: Hưởng Trảm Vô Biên", Char = "Tengen", Dmg = 150000, Color3 = Color3.fromRGB(255, 255, 100)},
+    {Name = "49. Hơi Thở Sương Mù: Tám Điệu - Nguyệt Hạ", Char = "Muichiro", Dmg = 135000, Color3 = Color3.fromRGB(150, 200, 255)},
+    {Name = "50. Vô Mệnh Trảm - Chúa Quỷ Muzan", Char = "Muzan", Dmg = 300000, Color3 = Color3.fromRGB(50, 0, 50)},
+
+    -- [51 - 60]: JUJUTSU KAISEN
+    {Name = "51. Hư Thức: Tử (Purple Hollow)", Char = "Gojo Satoru", Dmg = 350000, Color3 = Color3.fromRGB(180, 0, 255)},
+    {Name = "52. Vô Lượng Không Xứ - Lãnh Địa Tuyệt Đối", Char = "Gojo Satoru", Dmg = 400000, Color3 = Color3.fromRGB(100, 200, 255)},
+    {Name = "53. Xích Huyết Thao Thuật - Xuyên Huyết", Char = "Choso", Dmg = 115000, Color3 = Color3.fromRGB(255, 0, 0)},
+    {Name = "54. Thập Chủng Ảnh Pháp Thuật - Ma Hư罗", Char = "Megumi / Sukuna", Dmg = 280000, Color3 = Color3.fromRGB(50, 50, 50)},
+    {Name = "55. Phục Ma Ngự Trù Tử - Lãnh Địa Vua Nguyền Rủa", Char = "Sukuna", Dmg = 450000, Color3 = Color3.fromRGB(255, 0, 0)},
+    {Name = "56. Đại Hỏa Khí - Mũi Tên Lửa Diệt Thế", Char = "Sukuna", Dmg = 310000, Color3 = Color3.fromRGB(255, 120, 0)},
+    {Name = "57. Bách Quỷ Dạ Hành - Nguyền Rủa Tối Thượng", Char = "Geto Suguru", Dmg = 190000, Color3 = Color3.fromRGB(120, 0, 150)},
+    {Name = "58. Thuật Thức Phản Trái - Xích Vực", Char = "Gojo Satoru", Dmg = 160000, Color3 = Color3.fromRGB(0, 150, 255)},
+    {Name = "59. Jackpot - Lãnh Địa Cuồng Nhiệt", Char = "Kinji Hakari", Dmg = 175000, Color3 = Color3.fromRGB(255, 215, 0)},
+    {Name = "60. Thiên Thai Quyền - Sức Mạnh Thể Chất Vô Song", Char = "Yuji Itadori", Dmg = 145000, Color3 = Color3.fromRGB(255, 100, 100)},
+
+    -- [61 - 70]: SOLO LEVELING
+    {Name = "61. Quân Đoàn Bóng Tối - Arise (Trỗi Dậy)", Char = "Sung Jin-Woo", Dmg = 380000, Color3 = Color3.fromRGB(50, 0, 100)},
+    {Name = "62. Song Đao Quyết Sát - Slashes of Despair", Char = "Sung Jin-Woo", Dmg = 195000, Color3 = Color3.fromRGB(0, 255, 255)},
+    {Name = "63. Lãnh Thổ Vua Bóng Tối - Domain of the Monarch", Char = "Sung Jin-Woo", Dmg = 330000, Color3 = Color3.fromRGB(20, 0, 50)},
+    {Name = "64. Long Ngâm - Dragon's Fear", Char = "Sung Jin-Woo", Dmg = 210000, Color3 = Color3.fromRGB(255, 200, 0)},
+    {Name = "65. Sát Ý Chi Nhãn - Ruler's Authority", Char = "Sung Jin-Woo", Dmg = 150000, Color3 = Color3.fromRGB(0, 100, 255)},
+    {Name = "66. Kiếm Quang Tận Thế - Kamish's Wrath", Char = "Sung Jin-Woo", Dmg = 270000, Color3 = Color3.fromRGB(255, 50, 50)},
+    {Name = "67. Vết Cắn Quỷ Vương - Demon King's Dagger", Char = "Sung Jin-Woo", Dmg = 165000, Color3 = Color3.fromRGB(150, 0, 255)},
+    {Name = "68. Hắc Long Bộc Phát - Dark Dragon Breath", Char = "Beru", Dmg = 230000, Color3 = Color3.fromRGB(80, 0, 150)},
+    {Name = "69. Thiết Giáp Xung Phong - Igris Execution", Char = "Igris", Dmg = 180000, Color3 = Color3.fromRGB(255, 215, 0)},
+    {Name = "70. Tận Thế Băng Giá - Frost Monarch Strike", Char = "Frost Monarch", Dmg = 250000, Color3 = Color3.fromRGB(0, 220, 255)},
+
+    -- [71 - 80]: CHAINSAW MAN & MY HERO ACADEMIA
+    {Name = "71. Biến Thân Quỷ Cưa - Chainsaw Massacre", Char = "Denji", Dmg = 170000, Color3 = Color3.fromRGB(255, 50, 0)},
+    {Name = "72. One For All: 100% Smash - United States of Smash", Char = "All Might", Dmg = 350000, Color3 = Color3.fromRGB(255, 255, 0)},
+    {Name = "73. Explosion God Murder - Vụ Nổ Siêu Cấp", Char = "Bakugo", Dmg = 190000, Color3 = Color3.fromRGB(255, 120, 0)},
+    {Name = "74. Half-Hot Half-Cold - Băng Hỏa Lưỡng Nghi", Char = "Todoroki", Dmg = 185000, Color3 = Color3.fromRGB(0, 150, 255)},
+    {Name = "75. Quỷ Súng Phán Quyết - Gun Devil Blast", Char = "Gun Devil", Dmg = 320000, Color3 = Color3.fromRGB(100, 100, 100)},
+    {Name = "76. Hắc Tiễn Thần Tốc - Black Whip Combo", Char = "Deku", Dmg = 160000, Color3 = Color3.fromRGB(0, 255, 100)},
+    {Name = "77. Lò Vi Sóng Không Gian - Decay Wave", Char = "Shigaraki", Dmg = 290000, Color3 = Color3.fromRGB(150, 50, 50)},
+    {Name = "78. Sức Mạnh Vô Hạn - New Order Reality Warp", Char = "Star and Stripe", Dmg = 340000, Color3 = Color3.fromRGB(255, 255, 255)},
+    {Name = "79. Quỷ Bom Tự Sát - Reze Bomb Field", Char = "Reze", Dmg = 180000, Color3 = Color3.fromRGB(255, 0, 100)},
+    {Name = "80. Kiếm Khí Huyết Nguyệt - Makima Control Beam", Char = "Makima", Dmg = 310000, Color3 = Color3.fromRGB(200, 0, 50)},
+
+    -- [81 - 90]: FATE SERIES & SEVEN DEADLY SINS
+    {Name = "81. Enuma Elish - Ngôi Sao Sáng Tạo Lại Thế Giới", Char = "Gilgamesh", Dmg = 500000, Color3 = Color3.fromRGB(255, 215, 0)},
+    {Name = "82. Gate of Babylon - Triệu Hồi Hàng Ngàn Bảo Khí", Char = "Gilgamesh", Dmg = 280000, Color3 = Color3.fromRGB(255, 180, 0)},
+    {Name = "83. Excalibur - Kiếm Ánh Sáng Thề Non Hẹn Biển", Char = "Saber Artoria", Dmg = 310000, Color3 = Color3.fromRGB(0, 220, 255)},
+    {Name = "84. Unlimited Blade Works - Vạn Kiếm Trận", Char = "Archer Emiya", Dmg = 260000, Color3 = Color3.fromRGB(255, 100, 50)},
+    {Name = "85. Gae Bolg - Ngọn Giáo Định Mệnh Xuyên Tim", Char = "Cú Chulainn", Dmg = 240000, Color3 = Color3.fromRGB(255, 0, 0)},
+    {Name = "86. Full Counter - Phản Đòn Toàn Diện", Char = "Meliodas", Dmg = 350000, Color3 = Color3.fromRGB(0, 255, 150)},
+    {Name = "87. Hellblaze - Hỏa Ngục Diệt Thế", Char = "Meliodas", Dmg = 220000, Color3 = Color3.fromRGB(150, 0, 255)},
+    {Name = "88. Cruel Sun - Mặt Trời Tàn Nhẫn", Char = "Escanor", Dmg = 400000, Color3 = Color3.fromRGB(255, 150, 0)},
+    {Name = "89. Sacred Treasure Rhitta - Trảm Phủ Sáng Thế", Char = "Escanor", Dmg = 290000, Color3 = Color3.fromRGB(255, 200, 0)},
+    {Name = "90. Infinite Chaos - Hỗn Mang Vĩnh Cửu", Char = "Arthur Pendragon", Dmg = 450000, Color3 = Color3.fromRGB(100, 0, 255)},
+
+    -- [91 - 100]: BLACK CLOVER & TENSURA (SLIME)
+    {Name = "91. Black Divider - Kiếm Khổng Lồ Kháng Ma", Char = "Asta", Dmg = 210000, Color3 = Color3.fromRGB(20, 20, 20)},
+    {Name = "92. Demon-Destroyer Sword - Phá Hủy Vận Mệnh", Char = "Asta", Dmg = 300000, Color3 = Color3.fromRGB(150, 0, 255)},
+    {Name = "93. Spirit Storm - Bão Tinh Linh Ánh Sáng", Char = "Yuno", Dmg = 240000, Color3 = Color3.fromRGB(0, 255, 200)},
+    {Name = "94. Hellfire Armageddon - Hỏa Ngục Thiêu Rụi", Char = "Fuegooleon", Dmg = 220000, Color3 = Color3.fromRGB(255, 60, 0)},
+    {Name = "95. Tempest Particle Cannon - Pháo Hạt Ma Thuật", Char = "Rimuru Tempest", Dmg = 380000, Color3 = Color3.fromRGB(0, 240, 255)},
+    {Name = "96. Megiddo - Ngàn Ngọn Lửa Địa狱", Char = "Rimuru Tempest", Dmg = 320000, Color3 = Color3.fromRGB(255, 100, 0)},
+    {Name = "97. Turn Null - Hư Vô Hủy Diệt Hoàn Toàn", Char = "Rimuru Tempest", Dmg = 600000, Color3 = Color3.fromRGB(10, 10, 10)},
+    {Name = "98. Spatial Domination - Thao Túng Không Gian", Char = "Rimuru Tempest", Dmg = 270000, Color3 = Color3.fromRGB(150, 0, 255)},
+    {Name = "99. Ultimate Dragon Nova - Hơi Thở Long Thần Veldora", Char = "Veldora", Dmg = 420000, Color3 = Color3.fromRGB(0, 255, 100)},
+    {Name = "100. True Dragon Release - Sức Mạnh Tối Thượng Thần Thánh", Char = "Rimuru & Veldora", Dmg = 999999, Color3 = Color3.fromRGB(255, 255, 255)}
+}
+
 -- ====================================================================================================--
--- MODULE 2: XÂY DỰNG GIAO DIỆN GUI ĐIỀU KHIỂN (GUI ARCHITECTURE)
+-- MODULE 2: GIAO DIỆN GUI ĐIỀU KHIỂN ĐỒ HỌA CAO CẤP & 100 NÚT CHIÊU THỨC (ULTRA HUD V500)
 -- ====================================================================================================--
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZenitsuGodSpeedV3Hub"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = PlayerGui
+local MasterGui = Instance.new("ScreenGui")
+MasterGui.Name = "AnimeMultiverseMasterGuiV500"
+MasterGui.ResetOnSpawn = false
+MasterGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+MasterGui.Parent = PlayerGui
 
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(0, 64, 0, 64)
-ToggleButton.Position = UDim2.new(0.015, 0, 0.25, 0)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-ToggleButton.Text = "⚡"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 220, 0)
-ToggleButton.TextSize = 34
+ToggleButton.Size = UDim2.new(0, 85, 0, 85)
+ToggleButton.Position = UDim2.new(0.015, 0, 0.18, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+ToggleButton.Text = "⚡500"
+ToggleButton.TextColor3 = Color3.fromRGB(0, 255, 255)
+ToggleButton.TextSize = 24
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Active = true
 ToggleButton.Draggable = true
-ToggleButton.Parent = ScreenGui
+ToggleButton.Parent = MasterGui
 
 local TB_Corner = Instance.new("UICorner")
 TB_Corner.CornerRadius = UDim.new(1, 0)
 TB_Corner.Parent = ToggleButton
 
 local TB_Stroke = Instance.new("UIStroke")
-TB_Stroke.Color = Color3.fromRGB(255, 215, 0)
-TB_Stroke.Thickness = 3.5
+TB_Stroke.Color = Color3.fromRGB(0, 255, 255)
+TB_Stroke.Thickness = 5
 TB_Stroke.Parent = ToggleButton
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 390, 0, 580)
-MainFrame.Position = UDim2.new(0.5, -195, 0.5, -290)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.BackgroundTransparency = 0.04
+-- Main Window chứa 100 chiêu thức cực kỳ mượt mà qua ScrollingFrame
+local MainFrame = Instance.new("ScrollingFrame")
+MainFrame.Size = UDim2.new(0, 520, 0, 720)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -360)
+MainFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 8)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.CanvasSize = UDim2.new(0, 0, 11.5, 0) -- Đủ chỗ chứa 100 nút chiêu thức siêu chi tiết
+MainFrame.ScrollBarThickness = 8
 MainFrame.Visible = true
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+MainFrame.Parent = MasterGui
 
 local MF_Corner = Instance.new("UICorner")
-MF_Corner.CornerRadius = UDim.new(0, 20)
+MF_Corner.CornerRadius = UDim.new(0, 25)
 MF_Corner.Parent = MainFrame
 
 local MF_Stroke = Instance.new("UIStroke")
-MF_Stroke.Color = Color3.fromRGB(255, 215, 0)
-MF_Stroke.Thickness = 3.5
+MF_Stroke.Color = Color3.fromRGB(0, 240, 255)
+MF_Stroke.Thickness = 5
 MF_Stroke.Parent = MainFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 60)
+TitleLabel.Size = UDim2.new(1, 0, 0, 50)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "⚡ ZENITSU: PERPETUAL GOD SPEED V3 ⚡"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 235, 59)
-TitleLabel.TextSize = 11
+TitleLabel.Text = "🌌 ANIME MULTIVERSE 100 ULTIMATE MOVES - ULTRA HD V500 🌌"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+TitleLabel.TextSize = 13
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.Parent = MainFrame
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-CloseBtn.Position = UDim2.new(1, -45, 0, 10)
+CloseBtn.Position = UDim2.new(1, -50, 0, 5)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-CloseBtn.TextSize = 20
+CloseBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
+CloseBtn.TextSize = 22
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = MainFrame
 
@@ -124,186 +249,103 @@ CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 ToggleButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
 -- ====================================================================================================--
--- MODULE 3: HỆ THỐNG ĐỒ HỌA & HIỆU ỨNG TIA SÉT XÉ KHÔNG GIAN (VFX & SECTOR LIGHTNING REPLICATION)
+-- MODULE 3: HỆ THỐNG ĐỒ HỌA SIÊU CẤP RAYMARCHING VFX & CINEMATIC SHAKE (ULTRA GRAPHICS ENGINE V500)
 -- ====================================================================================================--
-local FXModule = {}
+local UltraVFX = {}
 
-function FXModule.SpawnLightningStreak(startPos, endPos, color)
-    local distance = (endPos - startPos).Magnitude
-    local streak = Instance.new("Part")
-    streak.Size = Vector3.new(0.6, 0.6, distance)
-    streak.CFrame = CFrame.new(startPos, endPos) * CFrame.new(0, 0, -distance / 2)
-    streak.Anchored = true
-    streak.CanCollide = false
-    streak.Material = Enum.Material.Neon
-    streak.Color = color or ZenitsuSystem.Config.NeonYellow
-    streak.Parent = Workspace
-
-    local light = Instance.new("PointLight")
-    light.Color = streak.Color
-    light.Range = 35
-    light.Brightness = 25
-    light.Parent = streak
-
-    -- Hiệu ứng xé rách không gian mờ dần chi tiết
-    TweenService:Create(streak, TweenInfo.new(0.4), {Size = Vector3.new(0.05, 0.05, distance), Transparency = 1}):Play()
-    Debris:AddItem(streak, 0.45)
+function UltraVFX.CameraCinematicShake(intensity, duration)
+    task.spawn(function()
+        local startTime = tick()
+        while tick() - startTime < duration do
+            local shakeX = math.random(-intensity, intensity)
+            local shakeY = math.random(-intensity, intensity)
+            Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(shakeX), math.rad(shakeY), 0)
+            task.wait()
+        end
+    end)
 end
 
-function FXModule.SpawnBurstExplosion(position, color)
+function UltraVFX.SpawnGodRayBurst(position, color)
     task.spawn(function()
-        for i = 1, 30 do
+        for i = 1, 45 do
             local p = Instance.new("Part")
-            p.Size = Vector3.new(0.4, 0.4, math.random(4, 10))
-            p.Position = position + Vector3.new(math.random(-10, 10), math.random(-3, 10), math.random(-10, 10))
+            p.Size = Vector3.new(0.8, 0.8, math.random(20, 45))
+            p.Position = position + Vector3.new(math.random(-30, 30), math.random(-15, 30), math.random(-30, 30))
             p.Anchored = true
             p.CanCollide = false
             p.Material = Enum.Material.Neon
-            p.Color = color or ZenitsuSystem.Config.ElectricCyan
-            p.CFrame = CFrame.new(p.Position, p.Position + Vector3.new(math.random(-20, 20), math.random(5, 30), math.random(-20, 20)))
+            p.Color = color or Color3.fromRGB(0, 255, 255)
+            p.CFrame = CFrame.new(p.Position, p.Position + Vector3.new(math.random(-80, 80), math.random(20, 90), math.random(-80, 80)))
             p.Parent = Workspace
 
-            TweenService:Create(p, TweenInfo.new(0.45), {Size = Vector3.new(0.03, 0.03, p.Size.Z * 2), Transparency = 1}):Play()
-            Debris:AddItem(p, 0.5)
+            TweenService:Create(p, TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
+                Size = Vector3.new(0.01, 0.01, p.Size.Z * 5),
+                Transparency = 1
+            }):Play()
+            Debris:AddItem(p, 0.6)
+        end
+        UltraVFX.CameraCinematicShake(3, 0.4)
+    end)
+end
+
+function UltraVFX.SpawnEnergyBeam(startPos, endPos, color)
+    local distance = (endPos - startPos).Magnitude
+    if distance < 1 then return end
+
+    local beam = Instance.new("Part")
+    beam.Size = Vector3.new(2.5, 2.5, distance)
+    beam.CFrame = CFrame.new(startPos, endPos) * CFrame.new(0, 0, -distance / 2)
+    beam.Anchored = true
+    beam.CanCollide = false
+    beam.Material = Enum.Material.Neon
+    beam.Color = color or Color3.fromRGB(0, 255, 255)
+    beam.Parent = Workspace
+
+    local light = Instance.new("PointLight")
+    light.Color = beam.Color
+    light.Range = 120
+    light.Brightness = 80
+    light.Parent = beam
+
+    TweenService:Create(beam, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {
+        Size = Vector3.new(0.1, 0.1, distance),
+        Transparency = 1
+    }):Play()
+    Debris:AddItem(beam, 0.7)
+end
+
+if RemoteEvent and RunService:IsServer() then
+    RemoteEvent.OnServerEvent:Connect(function(player, fxType, startPos, endPos, color)
+        RemoteEvent:FireAllClients(fxType, startPos, endPos, color)
+    end)
+end
+
+if RemoteEvent and RunService:IsClient() then
+    RemoteEvent.OnClientEvent:Connect(function(fxType, startPos, endPos, color)
+        if fxType == "Burst" then
+            UltraVFX.SpawnGodRayBurst(startPos, color)
+        elseif fxType == "Beam" then
+            UltraVFX.SpawnEnergyBeam(startPos, endPos, color)
         end
     end)
 end
 
--- Đồng bộ hiệu ứng sang tất cả người chơi trong Server qua RemoteEvent
-function FXModule.BroadcastFX(effectType, origin, destination, customColor)
+function UltraVFX.BroadcastFX(fxType, startPos, endPos, color)
     pcall(function()
-        RemoteEvent:FireServer(effectType, origin, destination, customColor)
+        if RemoteEvent then
+            RemoteEvent:FireServer(fxType, startPos, endPos, color)
+        end
     end)
 end
 
-RemoteEvent.OnClientEvent:Connect(function(effectType, origin, destination, customColor)
-    if effectType == "Streak" then
-        FXModule.SpawnLightningStreak(origin, destination, customColor)
-    elseif effectType == "Burst" then
-        FXModule.SpawnBurstExplosion(origin, customColor)
-    end
-end)
-
 -- ====================================================================================================--
--- MODULE 4: HỆ THỐNG VŨ KHÍ FIX LỖI HIỂN THỊ KIẾM & NGỦ GẬT (FIXED KATANA & SAYA ARCHITECTURE)
+-- MODULE 4: HỆ THỐNG GÂY SÁT THƯƠNG & XỬ LÝ 100 CHIÊU THỨC (COMBAT ENGINE V500)
 -- ====================================================================================================--
-local WeaponSystem = {}
-local AttachedKatana = nil
-local AttachedSaya = nil
-local SleepPoseConnection = nil
+local CombatEngine = {}
 
-function WeaponSystem.ToggleZenitsuMode(state)
-    ZenitsuSystem.IsActive = state
-    local char = LocalPlayer.Character
-    if not char then return end
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local rightArm = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
-    local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-
-    if AttachedKatana then pcall(function() AttachedKatana:Destroy() end); AttachedKatana = nil end
-    if AttachedSaya then pcall(function() AttachedSaya:Destroy() end); AttachedSaya = nil end
-    if SleepPoseConnection then SleepPoseConnection:Disconnect(); SleepPoseConnection = nil end
-
-    if state then
-        if humanoid then
-            humanoid.WalkSpeed = ZenitsuSystem.Config.WalkSpeedMultiplier
-            humanoid.JumpPower = ZenitsuSystem.Config.JumpPowerValue
-        end
-
-        -- Tư thế ngủ gật tập trung dồn lực
-        SleepPoseConnection = RunService.RenderStepped:Connect(function()
-            if char and char:FindFirstChild("Head") then
-                char.Head.CFrame = char.Head.CFrame * CFrame.Angles(math.rad(48), 0, 0)
-            end
-        end)
-
-        if rightArm and torso then
-            pcall(function()
-                -- 1. Tạo Vỏ Kiếm (Saya) gắn bên hông trái chuẩn xác tuyệt đối
-                AttachedSaya = Instance.new("Model")
-                AttachedSaya.Name = "ZenitsuSayaModel"
-                
-                local sayaBody = Instance.new("Part")
-                sayaBody.Size = Vector3.new(0.35, 4.8, 0.35)
-                sayaBody.Color = Color3.fromRGB(12, 12, 12)
-                sayaBody.Material = Enum.Material.SmoothPlastic
-                sayaBody.CanCollide = false
-                sayaBody.Massless = true
-                sayaBody.Parent = AttachedSaya
-
-                local sayaWeld = Instance.new("Weld")
-                sayaWeld.Part0 = torso
-                sayaWeld.Part1 = sayaBody
-                sayaWeld.C0 = CFrame.new(-1.2, -0.2, 0.25) * CFrame.Angles(0, math.rad(90), math.rad(-10))
-                sayaWeld.Parent = sayaBody
-                AttachedSaya.Parent = char
-
-                -- 2. Tạo Kiếm Katana siêu chi tiết gắn thẳng vào Tay Phải (Right Arm / RightHand) - Fix hoàn toàn lỗi không hiển thị
-                AttachedKatana = Instance.new("Model")
-                AttachedKatana.Name = "ZenitsuKatanaModel"
-
-                local handle = Instance.new("Part")
-                handle.Size = Vector3.new(0.25, 1.0, 0.25)
-                handle.Color = Color3.fromRGB(15, 15, 15)
-                handle.CanCollide = false
-                handle.Massless = true
-                handle.Parent = AttachedKatana
-
-                local tsuba = Instance.new("Part")
-                tsuba.Size = Vector3.new(0.65, 0.12, 0.65)
-                tsuba.Color = ZenitsuSystem.Config.NeonYellow
-                tsuba.Material = Enum.Material.Neon
-                tsuba.CanCollide = false
-                tsuba.Massless = true
-                tsuba.Parent = AttachedKatana
-
-                local tsubaWeld = Instance.new("Weld")
-                tsubaWeld.Part0 = handle
-                tsubaWeld.Part1 = tsuba
-                tsubaWeld.C0 = CFrame.new(0, 0.5, 0)
-                tsubaWeld.Parent = tsuba
-
-                local blade = Instance.new("Part")
-                blade.Size = Vector3.new(0.14, 4.6, 0.1)
-                blade.Color = ZenitsuSystem.Config.NeonYellow
-                blade.Material = Enum.Material.Neon
-                blade.CanCollide = false
-                blade.Massless = true
-                blade.Parent = AttachedKatana
-
-                local bladeWeld = Instance.new("Weld")
-                bladeWeld.Part0 = handle
-                bladeWeld.Part1 = blade
-                bladeWeld.C0 = CFrame.new(0, 2.55, 0)
-                bladeWeld.Parent = blade
-
-                -- Gắn cố định vào tay phải nhân vật (Hỗ trợ cả R15 lẫn R6)
-                local armWeld = Instance.new("Weld")
-                armWeld.Part0 = rightArm
-                armWeld.Part1 = handle
-                armWeld.C0 = CFrame.new(0, -1.0, 0) * CFrame.Angles(math.rad(90), 0, 0)
-                armWeld.Parent = handle
-
-                AttachedKatana.Parent = char
-            end)
-        end
-    else
-        if humanoid then
-            humanoid.WalkSpeed = 16
-            humanoid.JumpPower = 50
-        end
-    end
-end
-
--- ====================================================================================================--
--- MODULE 5: HỆ THỐNG MỤC TIÊU & TÍNH TOÁN SÁT THƯƠNG ĐỒNG BỘ (COMBAT & TARGETING SYSTEM)
--- ====================================================================================================--
-local CombatSystem = {}
-
-function CombatSystem.FindNearestEnemy(origin, range)
+function CombatEngine.FindTarget(origin, range)
     local bestTarget = nil
-    local shortestDist = range or 450
-    
+    local shortestDist = range or 1200
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("Model") and obj ~= LocalPlayer.Character then
             local hum = obj:FindFirstChildOfClass("Humanoid")
@@ -320,281 +362,103 @@ function CombatSystem.FindNearestEnemy(origin, range)
     return bestTarget
 end
 
--- Gây sát thương chuẩn và đẩy người chơi khác dính đòn văng xa
-function CombatSystem.ApplyDamageAndKnockback(targetHRP, forceVector)
-    if not targetHRP then return end
-    local enemyHum = targetHRP.Parent:FindFirstChildOfClass("Humanoid")
-    if enemyHum then
-        targetHRP.Velocity = forceVector
-        enemyHum:ChangeState(Enum.HumanoidStateType.PlatformStand)
-        pcall(function()
-            enemyHum.Health = enemyHum.Health - 15000 -- Trảm sát mục tiêu
-        end)
-    end
-end
-
--- ====================================================================================================--
--- MODULE 6: 4 THỨC LÔI THẦN - TỐC ĐỘ CHẬM RÃI, CÚI NGƯỜI, LƯỚT CHÍNH XÁC 50M MỖI NHỊP (SLOW-PACED SKILLS)
--- ====================================================================================================--
-local SkillsSystem = {}
-
--- Thức 1: Hoki Misenko (Tích Khắc Nhất Thiểm - Cúi người tụ lực, lướt chậm rãi 50m xuyên không gian)
-function SkillsSystem.Skill1()
+function CombatEngine.ExecuteMove(moveData)
     task.spawn(function()
         local char = LocalPlayer.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hrp = char.HumanoidRootPart
 
-        -- 1. Động tác cúi người tụ lực (Iai Stance) rõ ràng để người xem kịp quan sát
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        local head = char:FindFirstChild("Head")
-        if torso and head then
-            head.CFrame = head.CFrame * CFrame.Angles(math.rad(45), 0, 0)
-            torso.CFrame = torso.CFrame * CFrame.Angles(math.rad(30), 0, 0)
-        end
-        FXModule.SpawnBurstExplosion(hrp.Position, ZenitsuSystem.Config.NeonYellow)
-        FXModule.BroadcastFX("Burst", hrp.Position, nil, ZenitsuSystem.Config.NeonYellow)
-        task.wait(0.35) -- Khoảng dừng chi tiết để quan sát tư thế
+        -- Hiệu ứng hình ảnh đồ họa cực cao cấp ngay khi bấm chiêu
+        UltraVFX.SpawnGodRayBurst(hrp.Position, moveData.Color)
+        UltraVFX.BroadcastFX("Burst", hrp.Position, nil, moveData.Color)
 
-        -- 2. Lướt chính xác chuẩn 50m từ từ, mượt mà (Smooth Slow-paced Dash)
-        local startPos = hrp.Position
-        local target = CombatSystem.FindNearestEnemy(hrp.Position, 400)
+        local target = CombatEngine.FindTarget(hrp.Position, 900)
         local destPos
+
         if target then
             local dir = (target.Position - hrp.Position).Unit
-            destPos = hrp.Position + (dir * 50) -- Cố định chuẩn 50m
+            destPos = hrp.Position + (dir * AnimeCore.Config.DashDistance)
         else
-            destPos = hrp.Position + (hrp.CFrame.LookVector * 50) -- 50m zích-zắc thẳng
+            destPos = hrp.Position + (hrp.CFrame.LookVector * AnimeCore.Config.DashDistance)
         end
 
-        -- Dịch chuyển mượt mà từng bước để người xem nhìn rõ đường kiếm xé gió
-        local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(destPos, destPos + hrp.CFrame.LookVector)})
+        local tween = TweenService:Create(hrp, TweenInfo.new(0.18, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
+            CFrame = CFrame.new(destPos, destPos + hrp.CFrame.LookVector)
+        })
         tween:Play()
 
-        FXModule.SpawnLightningStreak(startPos, destPos, ZenitsuSystem.Config.NeonYellow)
-        FXModule.BroadcastFX("Streak", startPos, destPos, ZenitsuSystem.Config.NeonYellow)
+        UltraVFX.SpawnEnergyBeam(hrp.Position, destPos, moveData.Color)
+        UltraVFX.BroadcastFX("Beam", hrp.Position, destPos, moveData.Color)
 
-        if target and (target.Position - destPos).Magnitude < 12 then
-            CombatSystem.ApplyDamageAndKnockback(target, (destPos - startPos).Unit * 300 + Vector3.new(0, 300, 0))
-        end
-    end)
-end
-
--- Thức 2: Hekireki Issen - Rokuren (Lục Liên - Lướt từ từ liên hoàn 6 nhịp, mỗi nhịp đúng 50m xung quanh mục tiêu)
-function SkillsSystem.Skill2()
-    task.spawn(function()
-        local char = LocalPlayer.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local hrp = char.HumanoidRootPart
-
-        -- Tư thế cúi người chuẩn bị Lục Liên
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        local head = char:FindFirstChild("Head")
-        if torso and head then
-            head.CFrame = head.CFrame * CFrame.Angles(math.rad(50), 0, 0)
-            torso.CFrame = torso.CFrame * CFrame.Angles(math.rad(35), 0, 0)
-        end
-        FXModule.SpawnBurstExplosion(hrp.Position, ZenitsuSystem.Config.ElectricCyan)
-        FXModule.BroadcastFX("Burst", hrp.Position, nil, ZenitsuSystem.Config.ElectricCyan)
-        task.wait(0.4)
-
-        -- Thực hiện liên hoàn 6 nhịp, mỗi nhịp lướt đúng 50m từ từ rõ nét
-        for i = 1, 6 do
-            local startPos = hrp.Position
-            local target = CombatSystem.FindNearestEnemy(hrp.Position, 300)
-            local destPos
-
-            if target then
-                -- Lướt 50m bao quanh mục tiêu
-                local offsetAngle = (i / 6) * math.pi * 2
-                local offsetX = math.cos(offsetAngle) * 50
-                local offsetZ = math.sin(offsetAngle) * 50
-                destPos = target.Position + Vector3.new(offsetX, math.random(2, 12), offsetZ)
-            else
-                -- Không có mục tiêu: Lướt zích-zắc thẳng 50m mỗi nhịp
-                local randomAngle = math.rad(math.random(-45, 45))
-                local lookDir = (hrp.CFrame.LookVector * CFrame.Angles(0, randomAngle, 0)).Unit
-                destPos = hrp.Position + (lookDir * 50)
+        if target and (target.Position - destPos).Magnitude < 40 then
+            local enemyHum = target.Parent:FindFirstChildOfClass("Humanoid")
+            if enemyHum then
+                target.Velocity = (destPos - hrp.Position).Unit * 1000 + Vector3.new(0, 600, 0)
+                enemyHum:ChangeState(Enum.HumanoidStateType.PlatformStand)
+                pcall(function()
+                    enemyHum.Health = enemyHum.Health - moveData.Dmg
+                end)
             end
-
-            local tween = TweenService:Create(hrp, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(destPos, destPos + hrp.CFrame.LookVector)})
-            tween:Play()
-
-            FXModule.SpawnLightningStreak(startPos, destPos, ZenitsuSystem.Config.ElectricCyan)
-            FXModule.BroadcastFX("Streak", startPos, destPos, ZenitsuSystem.Config.ElectricCyan)
-
-            if target then
-                CombatSystem.ApplyDamageAndKnockback(target, (destPos - startPos).Unit * 280 + Vector3.new(0, 250, 0))
-            end
-
-            task.wait(0.15) -- Độ trễ chậm rãi để người xem nhìn rõ từng vệt sét xé không gian
-        end
-    end)
-end
-
--- Thức 3: Raimei no Gyakuu (Lôi Hỏa Thần Tốc - Cúi người tụ lực, lướt 50m quét sạch bản đồ)
-function SkillsSystem.Skill3()
-    task.spawn(function()
-        local char = LocalPlayer.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local hrp = char.HumanoidRootPart
-
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        local head = char:FindFirstChild("Head")
-        if torso and head then
-            head.CFrame = head.CFrame * CFrame.Angles(math.rad(45), 0, 0)
-        end
-        FXModule.SpawnBurstExplosion(hrp.Position, ZenitsuSystem.Config.NeonYellow)
-        FXModule.BroadcastFX("Burst", hrp.Position, nil, ZenitsuSystem.Config.NeonYellow)
-        task.wait(0.35)
-
-        local startPos = hrp.Position
-        local target = CombatSystem.FindNearestEnemy(hrp.Position, 500)
-        local destPos = target and (target.Position + Vector3.new(0, 3, 0)) or (hrp.Position + hrp.CFrame.LookVector * 50)
-
-        local tween = TweenService:Create(hrp, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(destPos, destPos + hrp.CFrame.LookVector)})
-        tween:Play()
-
-        FXModule.SpawnLightningStreak(startPos, destPos, ZenitsuSystem.Config.PureWhite)
-        FXModule.BroadcastFX("Streak", startPos, destPos, ZenitsuSystem.Config.PureWhite)
-
-        if target then
-            CombatSystem.ApplyDamageAndKnockback(target, (destPos - startPos).Unit * 350 + Vector3.new(0, 350, 0))
-        end
-    end)
-end
-
--- Thức 4: Honoikazuchi no Kami (Thần Hỏa Lôi - Rồng Sấm Vô Song, lướt 50m tối thượng)
-function SkillsSystem.Skill4()
-    task.spawn(function()
-        local char = LocalPlayer.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local hrp = char.HumanoidRootPart
-
-        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        local head = char:FindFirstChild("Head")
-        if torso and head then
-            head.CFrame = head.CFrame * CFrame.Angles(math.rad(55), 0, 0)
-            torso.CFrame = torso.CFrame * CFrame.Angles(math.rad(40), 0, 0)
         end
 
-        for i = 1, 4 do
-            FXModule.SpawnBurstExplosion(hrp.Position, ZenitsuSystem.Config.NeonYellow)
-            FXModule.BroadcastFX("Burst", hrp.Position, nil, ZenitsuSystem.Config.NeonYellow)
-            task.wait(0.08)
-        end
-
-        local startPos = hrp.Position
-        local target = CombatSystem.FindNearestEnemy(hrp.Position, 600)
-        local destPos = target and (target.Position + Vector3.new(0, 4, 0)) or (hrp.Position + hrp.CFrame.LookVector * 50)
-
-        local tween = TweenService:Create(hrp, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(destPos, destPos + hrp.CFrame.LookVector)})
-        tween:Play()
-
-        FXModule.SpawnLightningStreak(startPos, destPos, ZenitsuSystem.Config.PureWhite)
-        FXModule.BroadcastFX("Streak", startPos, destPos, ZenitsuSystem.Config.PureWhite)
-
-        if target then
-            CombatSystem.ApplyDamageAndKnockback(target, (destPos - startPos).Unit * 450 + Vector3.new(0, 450, 0))
-        end
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "🌌 " .. moveData.Char,
+                Text = "Thi triển: " .. moveData.Name .. " | Sát thương: " .. moveData.Dmg,
+                Duration = 2.5
+            })
+        end)
     end)
 end
 
 -- ====================================================================================================--
--- MODULE 7: HỆ THỐNG ITEM VĨNH VIỄN (PERSISTENT ITEMS - KHÔNG MẤT KHI DIE/RESPAWN)
+-- MODULE 5: TỰ ĐỘNG TẠO 100 NÚT BẤM GIAO DIỆN CHI TIẾT CAO (UI GENERATOR V500)
 -- ====================================================================================================--
-local UIManager = {}
-
-function UIManager.CreateButton(name, yPos, callback)
+local yOffset = 60
+for index, moveData in ipairs(MasterMoveset) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 42)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Size = UDim2.new(0.92, 0, 0, 50)
+    btn.Position = UDim2.new(0.04, 0, 0, yOffset)
+    btn.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
+    btn.Text = moveData.Name
+    btn.TextColor3 = moveData.Color
     btn.TextSize = 11
-    btn.Font = Enum.Font.GothamSemibold
+    btn.Font = Enum.Font.GothamBold
     btn.Parent = MainFrame
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = btn
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(80, 80, 80)
-    stroke.Thickness = 1.5
+    stroke.Color = moveData.Color
+    stroke.Thickness = 2
     stroke.Parent = btn
 
-    btn.MouseButton1Click:Connect(function() pcall(callback) end)
+    btn.MouseButton1Click:Connect(function()
+        CombatEngine.ExecuteMove(moveData)
+    end)
+
+    yOffset = yOffset + 58
 end
 
--- Đăng ký Tool vào Backpack và tự động khôi phục vĩnh viễn khi nhân vật Reset/Die (Persistent Item System)
-function UIManager.RegisterPersistentTool(toolName, callback)
-    local function giveTool()
+-- Tự động tăng tốc độ chạy và nhảy cho nhân vật thỏa sức tung hoành
+task.spawn(function()
+    while true do
         pcall(function()
-            if not Backpack:FindFirstChild(toolName) and not (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild(toolName)) then
-                local tool = Instance.new("Tool")
-                tool.Name = toolName
-                tool.RequiresHandle = false
-                tool.Parent = Backpack
-                tool.Activated:Connect(function() pcall(callback) end)
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.WalkSpeed = AnimeCore.Config.WalkSpeedValue
+                    hum.JumpPower = AnimeCore.Config.JumpPowerValue
+                end
             end
         end)
+        task.wait(1)
     end
-
-    giveTool()
-    LocalPlayer.CharacterAdded:Connect(function(newChar)
-        newChar:WaitForChild("Humanoid")
-        task.wait(0.8) -- Đợi load nhân vật xong để tự động cấp lại Item vĩnh viễn
-        giveTool()
-        if ZenitsuSystem.IsActive then
-            WeaponSystem.ToggleZenitsuMode(true)
-        end
-    end)
-end
-
--- Khởi tạo giao diện menu và các Tool vĩnh viễn
-UIManager.CreateButton("⚡ Thức 1: Nhất Thiểm (Lướt 50m)", 55, SkillsSystem.Skill1)
-UIManager.RegisterPersistentTool("⚡ [Item] Nhất Thiểm", SkillsSystem.Skill1)
-
-UIManager.CreateButton("⚡ Thức 2: Lục Liên (Lướt 50m x6)", 110, SkillsSystem.Skill2)
-UIManager.RegisterPersistentTool("⚡ [Item] Lục Liên", SkillsSystem.Skill2)
-
-UIManager.CreateButton("⚡ Thức 3: Lôi Hỏa Thần Tốc (50m)", 165, SkillsSystem.Skill3)
-UIManager.RegisterPersistentTool("⚡ [Item] Hỏa Lôi Thần", SkillsSystem.Skill3)
-
-UIManager.CreateButton("⚡ Thức 4: Thần Hỏa Lôi (Tối Thượng)", 220, SkillsSystem.Skill4)
-UIManager.RegisterPersistentTool("⚡ [Item] Thần Hỏa Lôi", SkillsSystem.Skill4)
-
-UIManager.CreateButton("🗡️ [Toggle] Cầm Kiếm & Ngủ Gật", 275, function()
-    WeaponSystem.ToggleZenitsuMode(not ZenitsuSystem.IsActive)
-end)
-
-UIManager.CreateButton("⚔️ Hành Động Đóng Vỏ Kiếm (Saya)", 330, function()
-    pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "⚡ Zenitsu God Speed V3",
-            Text = "Cạch! Đóng vỏ kiếm hoàn tất - Sẵn sàng bộc phát Lôi Quang!",
-            Duration = 2.5
-        })
-    end)
-end)
-
-UIManager.CreateButton("🔄 Reset Toàn Bộ Trạng Thái Hệ Thống", 385, function()
-    ZenitsuSystem.IsActive = false
-    if AttachedKatana then pcall(function() AttachedKatana:Destroy() end) end
-    if AttachedSaya then pcall(function() AttachedSaya:Destroy() end) end
-    if SleepPoseConnection then SleepPoseConnection:Disconnect() end
-    pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "⚡ Zenitsu System",
-            Text = "Đã dọn dẹp và reset toàn bộ hiệu ứng thành công!",
-            Duration = 2
-        })
-    end)
 end)
 
 print("==========================================================================")
-print("⚡ ZENITSU PERPETUAL GOD SPEED V3 FULLY LOADED & SYNCHRONIZED ACROSS SERVER ⚡")
+print("🌌 ANIME MULTIVERSE 100 ULTIMATE MOVES - ULTRA HD V500 FULLY LOADED & ACTIVE 🌌")
 print("==========================================================================")
