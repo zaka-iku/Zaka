@@ -1,16 +1,15 @@
 --[[
-    ZAKA HUD - iOS Style Edition
-    - UI phong cách Apple / iOS
-    - Animation mượt (mở menu, tab, toggle)
-    - Chuyển ngôn ngữ Việt ↔ English
-    - Fly Superman + Fake Floor (đánh lừa chạm đất)
+    ZAKA HUD - Cat Mascot Edition (iOS Style)
+    - Menu chắc chắn hiện
+    - Nút đóng = hình mèo đen trắng
+    - Mèo bám thành menu + đầu lắc lư
+    - Animation mở/đóng mượt
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -21,421 +20,189 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
---==============================================================================--
---                              LANGUAGE SYSTEM
---==============================================================================--
-local Lang = "VI" -- mặc định tiếng Việt
-
+-- Language
+local Lang = "VI"
 local L = {
     VI = {
-        Title = "ZAKA HUD",
-        Combat = "Chiến Đấu",
-        ESP = "ESP",
-        Player = "Nhân Vật",
-        Teleport = "Dịch Chuyển",
-        Troll = "Troll",
-        Utility = "Tiện Ích",
-        Aimbot = "Aimbot",
-        SilentAim = "Silent Aim",
-        AutoClicker = "Tự Động Click",
-        TargetStrafe = "Xoay Mục Tiêu",
-        Hitbox = "Hitbox To",
-        NPCAimbot = "Aimbot Quái",
-        InfiniteAmmo = "Đạn Vô Hạn",
-        FastFire = "Bắn Nhanh",
-        ESPMain = "Bật ESP",
-        ESPBox = "Khung",
-        ESPName = "Tên",
-        ESPHealth = "Máu",
-        ESPDistance = "Khoảng Cách",
-        ESPTracers = "Đường Kẻ",
-        Chams = "Chams",
-        Crosshair = "Tâm Bắn",
-        Speed = "Tăng Tốc",
-        Fly = "Bay Superman",
-        Noclip = "Xuyên Tường",
-        InfJump = "Nhảy Vô Hạn",
-        Spider = "Leo Tường",
-        WaterWalk = "Đi Trên Nước",
-        SpinBot = "Xoay Thân",
-        TouchTP = "Chạm Là Tele",
-        BringAll = "Kéo Tất Cả",
-        FlingAll = "Hất Văng Tất Cả",
-        ChatSpam = "Spam Chat",
-        AntiAFK = "Chống AFK",
-        Rejoin = "Vào Lại Server",
-        ServerHop = "Đổi Server",
-        Unload = "Tắt Script",
-        Language = "Ngôn Ngữ: Việt",
-        Enabled = "Đã bật",
-        Disabled = "Đã tắt",
+        Title = "ZAKA HUD", Combat = "Chiến Đấu", ESP = "ESP", Player = "Nhân Vật",
+        Teleport = "Dịch Chuyển", Troll = "Troll", Utility = "Tiện Ích",
+        Aimbot = "Aimbot", SilentAim = "Silent Aim", AutoClicker = "Tự Click",
+        TargetStrafe = "Xoay Mục Tiêu", Hitbox = "Hitbox To", Fly = "Bay Superman",
+        Speed = "Tăng Tốc", Noclip = "Xuyên Tường", InfJump = "Nhảy Vô Hạn",
+        TouchTP = "Chạm Tele", BringAll = "Kéo Tất Cả", FlingAll = "Hất Văng",
+        AntiAFK = "Chống AFK", Rejoin = "Vào Lại", ServerHop = "Đổi Server",
+        Unload = "Tắt Script", Enabled = "Đã bật", Disabled = "Đã tắt"
     },
     EN = {
-        Title = "ZAKA HUD",
-        Combat = "Combat",
-        ESP = "ESP",
-        Player = "Player",
-        Teleport = "Teleport",
-        Troll = "Troll",
-        Utility = "Utility",
-        Aimbot = "Aimbot",
-        SilentAim = "Silent Aim",
-        AutoClicker = "Auto Clicker",
-        TargetStrafe = "Target Strafe",
-        Hitbox = "Hitbox Expander",
-        NPCAimbot = "NPC Aimbot",
-        InfiniteAmmo = "Infinite Ammo",
-        FastFire = "Fast Fire",
-        ESPMain = "Enable ESP",
-        ESPBox = "Box",
-        ESPName = "Name",
-        ESPHealth = "Health",
-        ESPDistance = "Distance",
-        ESPTracers = "Tracers",
-        Chams = "Chams",
-        Crosshair = "Crosshair",
-        Speed = "Speed",
-        Fly = "Superman Fly",
-        Noclip = "Noclip",
-        InfJump = "Infinite Jump",
-        Spider = "Spider Climb",
-        WaterWalk = "Water Walk",
-        SpinBot = "SpinBot",
-        TouchTP = "Touch TP",
-        BringAll = "Bring All",
-        FlingAll = "Fling All",
-        ChatSpam = "Chat Spammer",
-        AntiAFK = "Anti AFK",
-        Rejoin = "Rejoin",
-        ServerHop = "Server Hop",
-        Unload = "Unload",
-        Language = "Language: English",
-        Enabled = "Enabled",
-        Disabled = "Disabled",
+        Title = "ZAKA HUD", Combat = "Combat", ESP = "ESP", Player = "Player",
+        Teleport = "Teleport", Troll = "Troll", Utility = "Utility",
+        Aimbot = "Aimbot", SilentAim = "Silent Aim", AutoClicker = "Auto Clicker",
+        TargetStrafe = "Target Strafe", Hitbox = "Hitbox", Fly = "Superman Fly",
+        Speed = "Speed", Noclip = "Noclip", InfJump = "Infinite Jump",
+        TouchTP = "Touch TP", BringAll = "Bring All", FlingAll = "Fling All",
+        AntiAFK = "Anti AFK", Rejoin = "Rejoin", ServerHop = "Server Hop",
+        Unload = "Unload", Enabled = "Enabled", Disabled = "Disabled"
     }
 }
+local function T(k) return L[Lang][k] or k end
 
-local function T(key)
-    return L[Lang][key] or key
-end
-
---==============================================================================--
---                              SETTINGS
---==============================================================================--
+-- Settings (rút gọn để ổn định)
 local Settings = {
-    Aimbot = false,
-    AimbotFOV = 120,
-    AimbotSmooth = 0.18,
-    SilentAim = false,
-    AutoClicker = false,
-    TargetStrafe = false,
-    StrafeDistance = 10,
-    StrafeSpeed = 6,
-    HitboxExpander = false,
-    HitboxSize = 18,
-    NPCAimbot = false,
-    InfiniteAmmo = false,
-    FastFire = false,
-
-    ESP = false,
-    ESPBox = true,
-    ESPName = true,
-    ESPHealth = true,
-    ESPDistance = true,
-    ESPTracers = false,
-    ESPMaxDist = 3000,
-    Chams = false,
-    CustomCrosshair = false,
-
-    Speed = false,
-    SpeedValue = 28,
-    Fly = false,
-    FlySpeed = 70,
-    Noclip = false,
-    InfiniteJump = false,
-    SpinBot = false,
-    SpinSpeed = 35,
-    SpiderClimb = false,
-    WaterWalk = false,
-    CustomFOV = 70,
-
-    ChatSpammer = false,
-    SpamMessage = "Zaka HUD 🍎",
-    AntiAFK = true,
-    TouchTP = false,
+    Aimbot = false, AimbotFOV = 120, AimbotSmooth = 0.18, SilentAim = false,
+    AutoClicker = false, TargetStrafe = false, StrafeDistance = 10, StrafeSpeed = 6,
+    HitboxExpander = false, HitboxSize = 18,
+    ESP = false, ESPBox = true, ESPName = true, ESPHealth = true, ESPDistance = true, ESPTracers = false, ESPMaxDist = 3000, Chams = false,
+    Speed = false, SpeedValue = 28, Fly = false, FlySpeed = 70, Noclip = false, InfiniteJump = false,
+    TouchTP = false, AntiAFK = true, ChatSpammer = false, SpamMessage = "Zaka HUD 🐱"
 }
 
---==============================================================================--
---                         CONNECTION + NOTIFY
---==============================================================================--
 local Connections = {}
-local function AddConn(name, conn)
-    if Connections[name] then pcall(function() Connections[name]:Disconnect() end) end
-    Connections[name] = conn
-end
+local function AddConn(n, c) if Connections[n] then pcall(function() Connections[n]:Disconnect() end) end Connections[n] = c end
+local function ClearAll() for _,c in pairs(Connections) do pcall(function() c:Disconnect() end) end table.clear(Connections) end
 
-local function ClearAll()
-    for _, c in pairs(Connections) do
-        pcall(function() c:Disconnect() end)
-    end
-    table.clear(Connections)
-end
-
-local function Notify(title, text)
+local function Notify(t, m)
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = 2.5
-        })
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = t, Text = m, Duration = 2.2})
     end)
 end
 
---==============================================================================--
---                           BASIC SYSTEMS
---==============================================================================--
+-- Anti AFK + Jump
 LocalPlayer.Idled:Connect(function()
-    if Settings.AntiAFK then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end
+    if Settings.AntiAFK then VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new()) end
 end)
-
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
---==============================================================================--
---                    SUPERMAN FLY + FAKE FLOOR (Đánh lừa chạm đất)
---==============================================================================--
+--==================== SUPERMAN FLY + FAKE FLOOR ====================--
 local BodyGyro, BodyVelocity, FakeFloor, FlyTrail
-
-local function CreateFakeFloor()
-    if FakeFloor then FakeFloor:Destroy() end
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
-    FakeFloor = Instance.new("Part")
-    FakeFloor.Name = "ZakaFakeFloor"
-    FakeFloor.Size = Vector3.new(12, 1, 12) -- hitbox to
-    FakeFloor.Transparency = 1
-    FakeFloor.Anchored = true
-    FakeFloor.CanCollide = true
-    FakeFloor.CanQuery = true
-    FakeFloor.Material = Enum.Material.SmoothPlastic
-    FakeFloor.Parent = workspace
-end
-
 local function SetFly(state)
     Settings.Fly = state
-
     if Connections.Fly then Connections.Fly:Disconnect() end
     if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
     if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
     if FlyTrail then FlyTrail:Destroy() FlyTrail = nil end
     if FakeFloor then FakeFloor:Destroy() FakeFloor = nil end
 
-    if not state then
-        Notify("Fly", T("Disabled"))
-        return
-    end
+    if not state then Notify("Fly", T("Disabled")) return end
 
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
     local hum = char:FindFirstChildOfClass("Humanoid")
 
-    -- Fake Floor để đánh lừa game
-    CreateFakeFloor()
+    FakeFloor = Instance.new("Part")
+    FakeFloor.Name = "ZakaFakeFloor"
+    FakeFloor.Size = Vector3.new(14, 1.2, 14)
+    FakeFloor.Transparency = 1
+    FakeFloor.Anchored = true
+    FakeFloor.CanCollide = true
+    FakeFloor.Parent = workspace
 
-    -- Body movers
     BodyGyro = Instance.new("BodyGyro")
-    BodyGyro.P = 5e4
+    BodyGyro.P = 4e4
     BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    BodyGyro.CFrame = root.CFrame
     BodyGyro.Parent = root
 
     BodyVelocity = Instance.new("BodyVelocity")
     BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    BodyVelocity.Velocity = Vector3.zero
     BodyVelocity.Parent = root
 
-    -- Trail đẹp
-    local a0 = Instance.new("Attachment", root)
-    a0.Position = Vector3.new(0, 0, 1.5)
-    local a1 = Instance.new("Attachment", root)
-    a1.Position = Vector3.new(0, 0, -1.5)
-
+    local a0 = Instance.new("Attachment", root) a0.Position = Vector3.new(0,0,1.8)
+    local a1 = Instance.new("Attachment", root) a1.Position = Vector3.new(0,0,-1.8)
     FlyTrail = Instance.new("Trail")
     FlyTrail.Attachment0 = a0
     FlyTrail.Attachment1 = a1
-    FlyTrail.Lifetime = 0.45
-    FlyTrail.MinLength = 0.1
-    FlyTrail.FaceCamera = true
-    FlyTrail.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 180, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 80, 255))
-    })
-    FlyTrail.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.15),
-        NumberSequenceKeypoint.new(1, 1)
-    })
-    FlyTrail.WidthScale = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 1.2),
-        NumberSequenceKeypoint.new(1, 0)
-    })
+    FlyTrail.Lifetime = 0.4
+    FlyTrail.Color = ColorSequence.new(Color3.fromRGB(0,170,255), Color3.fromRGB(160,80,255))
+    FlyTrail.Transparency = NumberSequence.new(0.2, 1)
+    FlyTrail.WidthScale = NumberSequence.new(1.1, 0)
     FlyTrail.Parent = root
 
     AddConn("Fly", RunService.RenderStepped:Connect(function()
-        if not Settings.Fly or not char or not root or not root.Parent then
-            SetFly(false)
-            return
-        end
-
-        -- Hướng Superman (nhìn theo camera)
-        local camCF = Camera.CFrame
-        BodyGyro.CFrame = CFrame.lookAt(root.Position, root.Position + camCF.LookVector)
-
+        if not Settings.Fly or not root or not root.Parent then SetFly(false) return end
+        local cam = Camera.CFrame
+        BodyGyro.CFrame = CFrame.lookAt(root.Position, root.Position + cam.LookVector)
         local move = hum.MoveDirection
         if move.Magnitude > 0.05 then
-            local dir = (camCF.LookVector * -move.Z + camCF.RightVector * move.X).Unit
+            local dir = (cam.LookVector * -move.Z + cam.RightVector * move.X).Unit
             BodyVelocity.Velocity = dir * Settings.FlySpeed
         else
             BodyVelocity.Velocity = Vector3.zero
         end
-
-        -- Cập nhật Fake Floor luôn nằm dưới chân (đánh lừa grounded)
         if FakeFloor then
-            FakeFloor.CFrame = CFrame.new(root.Position.X, root.Position.Y - 3.2, root.Position.Z)
+            FakeFloor.CFrame = CFrame.new(root.Position.X, root.Position.Y - 3.3, root.Position.Z)
         end
     end))
-
-    Notify("Fly", T("Enabled") .. " • Superman Mode")
+    Notify("Fly", T("Enabled") .. " • Superman + Fake Floor")
 end
 
---==============================================================================--
---                         OTHER MOVEMENT
---==============================================================================--
-local function SetSpeed(state)
-    Settings.Speed = state
+-- Speed / Noclip / TouchTP
+local function SetSpeed(s)
+    Settings.Speed = s
     if Connections.Speed then Connections.Speed:Disconnect() end
-    if state then
+    if s then
         AddConn("Speed", RunService.Heartbeat:Connect(function()
-            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then hum.WalkSpeed = Settings.SpeedValue end
+            local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed = Settings.SpeedValue end
         end))
         Notify("Speed", T("Enabled"))
     else
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = 16 end
+        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if h then h.WalkSpeed = 16 end
         Notify("Speed", T("Disabled"))
     end
 end
 
-local function SetNoclip(state)
-    Settings.Noclip = state
+local function SetNoclip(s)
+    Settings.Noclip = s
     if Connections.Noclip then Connections.Noclip:Disconnect() end
-    if state then
+    if s then
         AddConn("Noclip", RunService.Stepped:Connect(function()
-            local char = LocalPlayer.Character
-            if char then
-                for _, p in ipairs(char:GetDescendants()) do
-                    if p:IsA("BasePart") then p.CanCollide = false end
-                end
-            end
+            local c = LocalPlayer.Character
+            if c then for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
         end))
         Notify("Noclip", T("Enabled"))
-    else
-        Notify("Noclip", T("Disabled"))
-    end
+    else Notify("Noclip", T("Disabled")) end
 end
 
-local function SetTouchTP(state)
-    Settings.TouchTP = state
+local function SetTouchTP(s)
+    Settings.TouchTP = s
     if Connections.TouchTP then Connections.TouchTP:Disconnect() end
-    if state then
-        AddConn("TouchTP", UserInputService.InputBegan:Connect(function(input, gp)
+    if s then
+        AddConn("TouchTP", UserInputService.InputBegan:Connect(function(i, gp)
             if gp then return end
-            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and Mouse.Hit then
-                local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if root then
-                    root.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3.5, 0))
-                end
+            if (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) and Mouse.Hit then
+                local r = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if r then r.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3.5, 0)) end
             end
         end))
-        Notify("Touch TP", T("Enabled"))
-    else
-        Notify("Touch TP", T("Disabled"))
-    end
+        Notify("TouchTP", T("Enabled"))
+    else Notify("TouchTP", T("Disabled")) end
 end
 
-local function SetWaterWalk(state)
-    Settings.WaterWalk = state
-    if Connections.Water then Connections.Water:Disconnect() end
-    if state then
-        AddConn("Water", RunService.RenderStepped:Connect(function()
-            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                local ray = Ray.new(root.Position, Vector3.new(0, -6, 0))
-                local _, pos, _, mat = workspace:FindPartOnRay(ray, LocalPlayer.Character)
-                if mat == Enum.Material.Water then
-                    root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
-                    root.CFrame = CFrame.new(root.Position.X, pos.Y + 3.1, root.Position.Z)
-                end
-            end
-        end))
-        Notify("Water Walk", T("Enabled"))
-    else
-        Notify("Water Walk", T("Disabled"))
-    end
-end
-
-local function SetSpiderClimb(state)
-    Settings.SpiderClimb = state
-    if Connections.Spider then Connections.Spider:Disconnect() end
-    if state then
-        AddConn("Spider", RunService.RenderStepped:Connect(function()
-            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                local ray = Ray.new(root.Position, root.CFrame.LookVector * 2.8)
-                if workspace:FindPartOnRay(ray, LocalPlayer.Character) then
-                    root.Velocity = Vector3.new(root.Velocity.X, 32, root.Velocity.Z)
-                end
-            end
-        end))
-        Notify("Spider", T("Enabled"))
-    else
-        Notify("Spider", T("Disabled"))
-    end
-end
-
---==============================================================================--
---                           COMBAT SYSTEMS
---==============================================================================--
+-- Aimbot cơ bản
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1.8
+FOVCircle.Thickness = 1.6
 FOVCircle.NumSides = 64
 FOVCircle.Filled = false
 FOVCircle.Color = Color3.fromRGB(0, 162, 255)
 FOVCircle.Visible = false
 
 local function GetClosestHead()
-    local closest, shortest = nil, Settings.AimbotFOV
+    local closest, short = nil, Settings.AimbotFOV
     local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    for _, plr in ipairs(Players:GetPlayers()) do
+    for _,plr in ipairs(Players:GetPlayers()) do
         if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
             local head = plr.Character:FindFirstChild("Head")
             if head then
-                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if dist < shortest then
-                        shortest = dist
-                        closest = head
-                    end
+                local pos, on = Camera:WorldToViewportPoint(head.Position)
+                if on then
+                    local d = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if d < short then short = d closest = head end
                 end
             end
         end
@@ -452,109 +219,35 @@ oldIndex = hookmetamethod(game, "__index", function(self, key)
     return oldIndex(self, key)
 end)
 
-local function SetAutoClicker(state)
-    Settings.AutoClicker = state
-    if Connections.Click then Connections.Click:Disconnect() end
-    if state then
-        AddConn("Click", RunService.RenderStepped:Connect(function()
-            VirtualUser:Button1Down(Vector2.new())
-            task.wait(0.04)
-            VirtualUser:Button1Up(Vector2.new())
-        end))
-        Notify("Auto Clicker", T("Enabled"))
-    else
-        Notify("Auto Clicker", T("Disabled"))
-    end
-end
-
-local function SetTargetStrafe(state)
-    Settings.TargetStrafe = state
-    if Connections.Strafe then Connections.Strafe:Disconnect() end
-    if state then
-        local angle = 0
-        AddConn("Strafe", RunService.RenderStepped:Connect(function()
-            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if not myRoot then return end
-            local target, minD = nil, 45
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                    if d < minD then minD = d target = plr.Character.HumanoidRootPart end
-                end
-            end
-            if target then
-                angle += math.rad(Settings.StrafeSpeed)
-                local offset = Vector3.new(math.cos(angle)*Settings.StrafeDistance, 0, math.sin(angle)*Settings.StrafeDistance)
-                myRoot.CFrame = CFrame.new(target.Position + offset, target.Position)
-            end
-        end))
-        Notify("Target Strafe", T("Enabled"))
-    else
-        Notify("Target Strafe", T("Disabled"))
-    end
-end
-
---==============================================================================--
---                           ESP
---==============================================================================--
+-- ESP đơn giản
 local ESPObjects = {}
-local ChamsObjects = {}
-
 local function CreateESP(plr)
     if ESPObjects[plr] then return end
-    local t = {
-        Box = Drawing.new("Square"),
-        Name = Drawing.new("Text"),
-        Health = Drawing.new("Text"),
-        Distance = Drawing.new("Text"),
-        Tracer = Drawing.new("Line"),
-    }
-    t.Box.Thickness = 1.5
-    t.Box.Filled = false
-    t.Name.Size = 14
-    t.Name.Center = true
-    t.Name.Outline = true
-    t.Health.Size = 13
-    t.Health.Center = true
-    t.Health.Outline = true
-    t.Distance.Size = 12
-    t.Distance.Center = true
-    t.Distance.Outline = true
-    t.Tracer.Thickness = 1.2
-    t.Tracer.Color = Color3.fromRGB(0, 162, 255)
+    local t = {Box = Drawing.new("Square"), Name = Drawing.new("Text"), Health = Drawing.new("Text"), Distance = Drawing.new("Text")}
+    t.Box.Thickness = 1.4 t.Box.Filled = false
+    t.Name.Size = 13 t.Name.Center = true t.Name.Outline = true
+    t.Health.Size = 12 t.Health.Center = true t.Health.Outline = true
+    t.Distance.Size = 12 t.Distance.Center = true t.Distance.Outline = true
     ESPObjects[plr] = t
 end
-
 Players.PlayerRemoving:Connect(function(plr)
-    if ESPObjects[plr] then
-        for _, d in pairs(ESPObjects[plr]) do pcall(function() d:Remove() end) end
-        ESPObjects[plr] = nil
-    end
-    if ChamsObjects[plr] then
-        ChamsObjects[plr]:Destroy()
-        ChamsObjects[plr] = nil
-    end
+    if ESPObjects[plr] then for _,d in pairs(ESPObjects[plr]) do pcall(function() d:Remove() end) end ESPObjects[plr] = nil end
 end)
 
---==============================================================================--
---                           MAIN LOOP
---==============================================================================--
+-- Main loop
 AddConn("Main", RunService.RenderStepped:Connect(function()
     local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-
     FOVCircle.Position = center
     FOVCircle.Radius = Settings.AimbotFOV
     FOVCircle.Visible = Settings.Aimbot or Settings.SilentAim
 
     if Settings.Aimbot then
         local t = GetClosestHead()
-        if t then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, t.Position), Settings.AimbotSmooth)
-        end
+        if t then Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, t.Position), Settings.AimbotSmooth) end
     end
 
     if Settings.HitboxExpander then
-        for _, plr in ipairs(Players:GetPlayers()) do
+        for _,plr in ipairs(Players:GetPlayers()) do
             if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
                 pcall(function()
                     plr.Character.Head.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
@@ -565,172 +258,173 @@ AddConn("Main", RunService.RenderStepped:Connect(function()
         end
     end
 
-    if Settings.SpinBot then
-        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then root.CFrame *= CFrame.Angles(0, math.rad(Settings.SpinSpeed), 0) end
-    end
-
-    Camera.FieldOfView = Settings.CustomFOV
-
     -- ESP
-    for _, plr in ipairs(Players:GetPlayers()) do
+    for _,plr in ipairs(Players:GetPlayers()) do
         if plr == LocalPlayer then continue end
-
-        if Settings.Chams then
-            if not ChamsObjects[plr] and plr.Character then
-                local hl = Instance.new("Highlight")
-                hl.FillColor = Color3.fromRGB(0, 162, 255)
-                hl.OutlineColor = Color3.new(1,1,1)
-                hl.FillTransparency = 0.4
-                hl.Parent = plr.Character
-                ChamsObjects[plr] = hl
-            end
-        elseif ChamsObjects[plr] then
-            ChamsObjects[plr]:Destroy()
-            ChamsObjects[plr] = nil
-        end
-
         if not Settings.ESP then
             if ESPObjects[plr] then for _,d in pairs(ESPObjects[plr]) do d.Visible = false end end
             continue
         end
-
         CreateESP(plr)
         local d = ESPObjects[plr]
         local char = plr.Character
         if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then
-            for _,v in pairs(d) do v.Visible = false end
-            continue
+            for _,v in pairs(d) do v.Visible = false end continue
         end
-
         local root = char.HumanoidRootPart
         local hum = char.Humanoid
-        local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+        local pos, on = Camera:WorldToViewportPoint(root.Position)
         local dist = (root.Position - Camera.CFrame.Position).Magnitude
+        if not on or dist > Settings.ESPMaxDist then for _,v in pairs(d) do v.Visible = false end continue end
 
-        if not onScreen or dist > Settings.ESPMaxDist then
-            for _,v in pairs(d) do v.Visible = false end
-            continue
-        end
-
-        local size = Vector2.new(math.clamp(1800/pos.Z, 10, 280), math.clamp(2800/pos.Z, 14, 420))
+        local size = Vector2.new(math.clamp(1800/pos.Z, 10, 260), math.clamp(2700/pos.Z, 14, 400))
         local col = Color3.fromRGB(0, 162, 255)
-
         d.Box.Size = size
         d.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
         d.Box.Color = col
         d.Box.Visible = Settings.ESPBox
-
         d.Name.Text = plr.Name
-        d.Name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 16)
+        d.Name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
         d.Name.Color = col
         d.Name.Visible = Settings.ESPName
-
-        d.Health.Text = math.floor(hum.Health) .. " HP"
-        d.Health.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 4)
+        d.Health.Text = math.floor(hum.Health).." HP"
+        d.Health.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 3)
         d.Health.Color = Color3.fromRGB(255*(1-hum.Health/hum.MaxHealth), 255*(hum.Health/hum.MaxHealth), 40)
         d.Health.Visible = Settings.ESPHealth
-
-        d.Distance.Text = math.floor(dist) .. "m"
-        d.Distance.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 18)
+        d.Distance.Text = math.floor(dist).."m"
+        d.Distance.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 17)
         d.Distance.Visible = Settings.ESPDistance
-
-        if Settings.ESPTracers then
-            d.Tracer.From = Vector2.new(center.X, Camera.ViewportSize.Y)
-            d.Tracer.To = Vector2.new(pos.X, pos.Y)
-            d.Tracer.Visible = true
-        else
-            d.Tracer.Visible = false
-        end
     end
 end))
 
---==============================================================================--
---                           UI - iOS STYLE
---==============================================================================--
+--==================== UI + CAT MASCOT ====================--
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ZakaIOS"
+ScreenGui.Name = "ZakaCatHUD"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Nút mở menu (kiểu iOS)
-local OpenBtn = Instance.new("TextButton")
-OpenBtn.Name = "OpenBtn"
-OpenBtn.Size = UDim2.new(0, 52, 0, 52)
-OpenBtn.Position = UDim2.new(0, 18, 0.42, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-OpenBtn.Text = "Z"
-OpenBtn.TextColor3 = Color3.new(1,1,1)
-OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 24
-OpenBtn.AutoButtonColor = false
-OpenBtn.Parent = ScreenGui
-Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+-- Nút mèo khi đóng menu (đen trắng)
+local CatBtn = Instance.new("TextButton")
+CatBtn.Name = "CatButton"
+CatBtn.Size = UDim2.new(0, 58, 0, 58)
+CatBtn.Position = UDim2.new(0, 16, 0.4, 0)
+CatBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
+CatBtn.Text = "🐱"
+CatBtn.TextSize = 32
+CatBtn.Font = Enum.Font.GothamBold
+CatBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
+CatBtn.AutoButtonColor = false
+CatBtn.Parent = ScreenGui
+Instance.new("UICorner", CatBtn).CornerRadius = UDim.new(1, 0)
+local catStroke = Instance.new("UIStroke", CatBtn)
+catStroke.Color = Color3.fromRGB(180, 180, 180)
+catStroke.Thickness = 2
 
-local openStroke = Instance.new("UIStroke", OpenBtn)
-openStroke.Color = Color3.fromRGB(255,255,255)
-openStroke.Thickness = 1.5
-openStroke.Transparency = 0.7
-
--- Main Frame
+-- Main Menu
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 340, 0, 0) -- bắt đầu cao 0 để animation
-Main.Position = UDim2.new(0.5, -170, 0.5, -230)
+Main.Size = UDim2.new(0, 0, 0, 0) -- bắt đầu 0 để animation
+Main.Position = UDim2.new(0.5, -175, 0.5, -240)
 Main.BackgroundColor3 = Color3.fromRGB(22, 22, 24)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.Visible = false
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
-
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20)
 local mainStroke = Instance.new("UIStroke", Main)
-mainStroke.Color = Color3.fromRGB(60, 60, 65)
-mainStroke.Thickness = 1
+mainStroke.Color = Color3.fromRGB(70, 70, 75)
+mainStroke.Thickness = 1.5
 
 -- Header
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 48)
+Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
-Header.BorderSizePixel = 0
 Header.Parent = Main
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 20)
 
-local TitleLbl = Instance.new("TextLabel")
-TitleLbl.Size = UDim2.new(1, -100, 1, 0)
-TitleLbl.Position = UDim2.new(0, 18, 0, 0)
-TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text = T("Title")
-TitleLbl.TextColor3 = Color3.new(1,1,1)
-TitleLbl.Font = Enum.Font.GothamBold
-TitleLbl.TextSize = 17
-TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-TitleLbl.Parent = Header
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 1, 0)
+Title.Position = UDim2.new(0, 16, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "🐱  " .. T("Title")
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 17
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
 
-local LangBtn = Instance.new("TextButton")
-LangBtn.Size = UDim2.new(0, 78, 0, 28)
-LangBtn.Position = UDim2.new(1, -90, 0.5, -14)
-LangBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-LangBtn.Text = "VI / EN"
-LangBtn.TextColor3 = Color3.new(1,1,1)
-LangBtn.Font = Enum.Font.GothamBold
-LangBtn.TextSize = 12
-LangBtn.Parent = Header
-Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 8)
+-- ===== CON MÈO BÁM THÀNH MENU (bên trái) =====
+local CatHolder = Instance.new("Frame")
+CatHolder.Name = "CatMascot"
+CatHolder.Size = UDim2.new(0, 70, 0, 90)
+CatHolder.Position = UDim2.new(0, -38, 0.5, -45) -- bám bên trái
+CatHolder.BackgroundTransparency = 1
+CatHolder.Parent = Main
+CatHolder.ZIndex = 10
+
+-- Thân mèo
+local CatBody = Instance.new("TextLabel")
+CatBody.Size = UDim2.new(0, 52, 0, 52)
+CatBody.Position = UDim2.new(0, 10, 0, 28)
+CatBody.BackgroundColor3 = Color3.fromRGB(40, 40, 42)
+CatBody.Text = ""
+CatBody.Parent = CatHolder
+Instance.new("UICorner", CatBody).CornerRadius = UDim.new(1, 0)
+
+-- Đầu mèo (sẽ lắc lư)
+local CatHead = Instance.new("TextLabel")
+CatHead.Name = "CatHead"
+CatHead.Size = UDim2.new(0, 48, 0, 48)
+CatHead.Position = UDim2.new(0, 12, 0, 0)
+CatHead.BackgroundColor3 = Color3.fromRGB(45, 45, 48)
+CatHead.Text = "🐱"
+CatHead.TextSize = 30
+CatHead.Font = Enum.Font.GothamBold
+CatHead.TextColor3 = Color3.fromRGB(245, 245, 245)
+CatHead.Parent = CatHolder
+Instance.new("UICorner", CatHead).CornerRadius = UDim.new(1, 0)
+
+-- 2 chân bám
+local Paw1 = Instance.new("Frame")
+Paw1.Size = UDim2.new(0, 14, 0, 22)
+Paw1.Position = UDim2.new(0, 48, 0, 38)
+Paw1.BackgroundColor3 = Color3.fromRGB(50, 50, 52)
+Paw1.Parent = CatHolder
+Instance.new("UICorner", Paw1).CornerRadius = UDim.new(0, 6)
+
+local Paw2 = Instance.new("Frame")
+Paw2.Size = UDim2.new(0, 14, 0, 22)
+Paw2.Position = UDim2.new(0, 48, 0, 58)
+Paw2.BackgroundColor3 = Color3.fromRGB(50, 50, 52)
+Paw2.Parent = CatHolder
+Instance.new("UICorner", Paw2).CornerRadius = UDim.new(0, 6)
+
+-- Animation đầu mèo lắc lư
+local headBob = true
+task.spawn(function()
+    while true do
+        if not CatHead or not CatHead.Parent then break end
+        local targetRot = headBob and 8 or -8
+        TweenService:Create(CatHead, TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+            Rotation = targetRot
+        }):Play()
+        headBob = not headBob
+        task.wait(0.75)
+    end
+end)
 
 -- Tab bar
 local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, -20, 0, 36)
-TabBar.Position = UDim2.new(0, 10, 0, 56)
+TabBar.Size = UDim2.new(1, -20, 0, 34)
+TabBar.Position = UDim2.new(0, 10, 0, 58)
 TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
 TabBar.Parent = Main
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 10)
 
 local Tabs = {"Combat", "ESP", "Player", "Teleport", "Troll", "Utility"}
-local TabButtons = {}
-local Pages = {}
+local TabButtons, Pages = {}, {}
 local CurrentTab = 1
 
 local PageHolder = Instance.new("Frame")
@@ -742,9 +436,9 @@ PageHolder.Parent = Main
 
 for i, name in ipairs(Tabs) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1/#Tabs, -4, 1, -6)
-    btn.Position = UDim2.new((i-1)/#Tabs, 2, 0, 3)
-    btn.BackgroundColor3 = i == 1 and Color3.fromRGB(0, 122, 255) or Color3.fromRGB(45, 45, 48)
+    btn.Size = UDim2.new(1/#Tabs, -3, 1, -6)
+    btn.Position = UDim2.new((i-1)/#Tabs, 1.5, 0, 3)
+    btn.BackgroundColor3 = i==1 and Color3.fromRGB(0, 122, 255) or Color3.fromRGB(48, 48, 52)
     btn.Text = T(name)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Font = Enum.Font.GothamBold
@@ -759,190 +453,176 @@ for i, name in ipairs(Tabs) do
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 3
     page.ScrollBarImageColor3 = Color3.fromRGB(0, 122, 255)
-    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.CanvasSize = UDim2.new(0,0,0,0)
     page.Parent = PageHolder
-
     local list = Instance.new("UIListLayout")
-    list.Padding = UDim.new(0, 8)
+    list.Padding = UDim.new(0, 7)
     list.Parent = page
     list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 12)
+        page.CanvasSize = UDim2.new(0,0,0, list.AbsoluteContentSize.Y + 10)
     end)
     Pages[i] = page
 
     btn.MouseButton1Click:Connect(function()
         if CurrentTab == i then return end
         CurrentTab = i
-        for idx, b in ipairs(TabButtons) do
-            TweenService:Create(b, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
-                BackgroundColor3 = idx == i and Color3.fromRGB(0, 122, 255) or Color3.fromRGB(45, 45, 48)
+        for idx,b in ipairs(TabButtons) do
+            TweenService:Create(b, TweenInfo.new(0.25), {
+                BackgroundColor3 = idx==i and Color3.fromRGB(0,122,255) or Color3.fromRGB(48,48,52)
             }):Play()
         end
-        for idx, p in ipairs(Pages) do
-            TweenService:Create(p, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        for idx,p in ipairs(Pages) do
+            TweenService:Create(p, TweenInfo.new(0.32, Enum.EasingStyle.Quint), {
                 Position = UDim2.new(idx - CurrentTab, 0, 0, 0)
             }):Play()
         end
     end)
 end
 
--- Helper tạo toggle kiểu iOS
-local function CreateIOSToggle(parent, key, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 44)
-    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
-    frame.Parent = parent
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+-- Helper toggle iOS
+local function CreateToggle(parent, key, default, cb)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, 0, 0, 42)
+    f.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
+    f.Parent = parent
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 11)
 
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Size = UDim2.new(1, -70, 1, 0)
-    label.Position = UDim2.new(0, 16, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = T(key)
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -65, 1, 0)
+    lbl.Position = UDim2.new(0, 14, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = T(key)
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
 
     local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 48, 0, 28)
-    track.Position = UDim2.new(1, -60, 0.5, -14)
+    track.Size = UDim2.new(0, 46, 0, 26)
+    track.Position = UDim2.new(1, -56, 0.5, -13)
     track.BackgroundColor3 = default and Color3.fromRGB(52, 199, 89) or Color3.fromRGB(60, 60, 65)
-    track.Parent = frame
+    track.Parent = f
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 24, 0, 24)
-    knob.Position = default and UDim2.new(1, -26, 0.5, -12) or UDim2.new(0, 2, 0.5, -12)
+    knob.Size = UDim2.new(0, 22, 0, 22)
+    knob.Position = default and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)
     knob.BackgroundColor3 = Color3.new(1,1,1)
     knob.Parent = track
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    local enabled = default
+    local en = default
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.Size = UDim2.new(1,0,1,0)
     btn.BackgroundTransparency = 1
     btn.Text = ""
-    btn.Parent = frame
-
+    btn.Parent = f
     btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        TweenService:Create(track, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
-            BackgroundColor3 = enabled and Color3.fromRGB(52, 199, 89) or Color3.fromRGB(60, 60, 65)
-        }):Play()
-        TweenService:Create(knob, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
-            Position = enabled and UDim2.new(1, -26, 0.5, -12) or UDim2.new(0, 2, 0.5, -12)
-        }):Play()
-        callback(enabled)
+        en = not en
+        TweenService:Create(track, TweenInfo.new(0.22), {BackgroundColor3 = en and Color3.fromRGB(52,199,89) or Color3.fromRGB(60,60,65)}):Play()
+        TweenService:Create(knob, TweenInfo.new(0.22), {Position = en and UDim2.new(1,-24,0.5,-11) or UDim2.new(0,2,0.5,-11)}):Play()
+        cb(en)
     end)
-
-    return frame
 end
 
-local function CreateButton(parent, key, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 44)
-    btn.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-    btn.Text = T(key)
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
-    btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
-    btn.MouseButton1Click:Connect(callback)
-    return btn
+local function CreateBtn(parent, key, cb)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 42)
+    b.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
+    b.Text = T(key)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 13
+    b.Parent = parent
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 11)
+    b.MouseButton1Click:Connect(cb)
 end
 
--- Tạo nội dung các tab
-CreateIOSToggle(Pages[1], "Aimbot", false, function(v) Settings.Aimbot = v end)
-CreateIOSToggle(Pages[1], "SilentAim", false, function(v) Settings.SilentAim = v end)
-CreateIOSToggle(Pages[1], "AutoClicker", false, function(v) SetAutoClicker(v) end)
-CreateIOSToggle(Pages[1], "TargetStrafe", false, function(v) SetTargetStrafe(v) end)
-CreateIOSToggle(Pages[1], "Hitbox", false, function(v) Settings.HitboxExpander = v end)
-CreateIOSToggle(Pages[1], "NPCAimbot", false, function(v) Settings.NPCAimbot = v end)
-CreateIOSToggle(Pages[1], "InfiniteAmmo", false, function(v) Settings.InfiniteAmmo = v end)
-CreateIOSToggle(Pages[1], "FastFire", false, function(v) Settings.FastFire = v end)
+-- Nội dung tab
+CreateToggle(Pages[1], "Aimbot", false, function(v) Settings.Aimbot = v end)
+CreateToggle(Pages[1], "SilentAim", false, function(v) Settings.SilentAim = v end)
+CreateToggle(Pages[1], "AutoClicker", false, function(v)
+    Settings.AutoClicker = v
+    if Connections.Click then Connections.Click:Disconnect() end
+    if v then
+        AddConn("Click", RunService.RenderStepped:Connect(function()
+            VirtualUser:Button1Down(Vector2.new()) task.wait(0.04) VirtualUser:Button1Up(Vector2.new())
+        end))
+    end
+end)
+CreateToggle(Pages[1], "TargetStrafe", false, function(v)
+    Settings.TargetStrafe = v
+    if Connections.Strafe then Connections.Strafe:Disconnect() end
+    if v then
+        local ang = 0
+        AddConn("Strafe", RunService.RenderStepped:Connect(function()
+            local my = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not my then return end
+            local tg, md = nil, 40
+            for _,p in ipairs(Players:GetPlayers()) do
+                if p \~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local d = (p.Character.HumanoidRootPart.Position - my.Position).Magnitude
+                    if d < md then md = d tg = p.Character.HumanoidRootPart end
+                end
+            end
+            if tg then
+                ang = ang + math.rad(Settings.StrafeSpeed)
+                my.CFrame = CFrame.new(tg.Position + Vector3.new(math.cos(ang)*Settings.StrafeDistance, 0, math.sin(ang)*Settings.StrafeDistance), tg.Position)
+            end
+        end))
+    end
+end)
+CreateToggle(Pages[1], "Hitbox", false, function(v) Settings.HitboxExpander = v end)
 
-CreateIOSToggle(Pages[2], "ESPMain", false, function(v) Settings.ESP = v end)
-CreateIOSToggle(Pages[2], "ESPBox", true, function(v) Settings.ESPBox = v end)
-CreateIOSToggle(Pages[2], "ESPName", true, function(v) Settings.ESPName = v end)
-CreateIOSToggle(Pages[2], "ESPHealth", true, function(v) Settings.ESPHealth = v end)
-CreateIOSToggle(Pages[2], "ESPDistance", true, function(v) Settings.ESPDistance = v end)
-CreateIOSToggle(Pages[2], "ESPTracers", false, function(v) Settings.ESPTracers = v end)
-CreateIOSToggle(Pages[2], "Chams", false, function(v) Settings.Chams = v end)
-CreateIOSToggle(Pages[2], "Crosshair", false, function(v) Settings.CustomCrosshair = v end)
+CreateToggle(Pages[2], "ESP", false, function(v) Settings.ESP = v end)
+CreateToggle(Pages[2], "ESPBox", true, function(v) Settings.ESPBox = v end)
+CreateToggle(Pages[2], "ESPName", true, function(v) Settings.ESPName = v end)
+CreateToggle(Pages[2], "ESPHealth", true, function(v) Settings.ESPHealth = v end)
+CreateToggle(Pages[2], "ESPDistance", true, function(v) Settings.ESPDistance = v end)
 
-CreateIOSToggle(Pages[3], "Speed", false, function(v) SetSpeed(v) end)
-CreateIOSToggle(Pages[3], "Fly", false, function(v) SetFly(v) end)
-CreateIOSToggle(Pages[3], "Noclip", false, function(v) SetNoclip(v) end)
-CreateIOSToggle(Pages[3], "InfJump", false, function(v) Settings.InfiniteJump = v end)
-CreateIOSToggle(Pages[3], "Spider", false, function(v) SetSpiderClimb(v) end)
-CreateIOSToggle(Pages[3], "WaterWalk", false, function(v) SetWaterWalk(v) end)
-CreateIOSToggle(Pages[3], "SpinBot", false, function(v) Settings.SpinBot = v end)
+CreateToggle(Pages[3], "Speed", false, function(v) SetSpeed(v) end)
+CreateToggle(Pages[3], "Fly", false, function(v) SetFly(v) end)
+CreateToggle(Pages[3], "Noclip", false, function(v) SetNoclip(v) end)
+CreateToggle(Pages[3], "InfJump", false, function(v) Settings.InfiniteJump = v end)
 
-CreateIOSToggle(Pages[4], "TouchTP", false, function(v) SetTouchTP(v) end)
-CreateButton(Pages[4], "BringAll", function()
-    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if root then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                plr.Character.HumanoidRootPart.CFrame = root.CFrame + Vector3.new(3,0,0)
+CreateToggle(Pages[4], "TouchTP", false, function(v) SetTouchTP(v) end)
+CreateBtn(Pages[4], "BringAll", function()
+    local r = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if r then
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p \~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.CFrame = r.CFrame + Vector3.new(2.5,0,0)
             end
         end
-        Notify("Bring", "Done (Client)")
+        Notify("Bring", "Done")
     end
 end)
 
-CreateButton(Pages[5], "FlingAll", function()
-    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    local orig = root.CFrame
+CreateBtn(Pages[5], "FlingAll", function()
+    local r = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not r then return end
+    local orig = r.CFrame
     local bav = Instance.new("BodyAngularVelocity")
     bav.AngularVelocity = Vector3.new(0, 99999, 0)
     bav.MaxTorque = Vector3.new(0, math.huge, 0)
-    bav.Parent = root
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            for _ = 1, 6 do
-                root.CFrame = plr.Character.HumanoidRootPart.CFrame
-                task.wait(0.025)
-            end
+    bav.Parent = r
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p \~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            for _=1,5 do r.CFrame = p.Character.HumanoidRootPart.CFrame task.wait(0.03) end
         end
     end
     bav:Destroy()
-    root.CFrame = orig
-    Notify("Fling", "Done (Client)")
+    r.CFrame = orig
+    Notify("Fling", "Done")
 end)
 
-CreateIOSToggle(Pages[5], "ChatSpam", false, function(v)
-    Settings.ChatSpammer = v
-    if Connections.Spam then task.cancel(Connections.Spam) end
-    if v then
-        Connections.Spam = task.spawn(function()
-            while Settings.ChatSpammer do
-                pcall(function()
-                    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-                        TextChatService.TextChannels.RBXGeneral:SendAsync(Settings.SpamMessage)
-                    else
-                        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Settings.SpamMessage, "All")
-                    end
-                end)
-                task.wait(2.2)
-            end
-        end)
-    end
-end)
-
-CreateIOSToggle(Pages[6], "AntiAFK", true, function(v) Settings.AntiAFK = v end)
-CreateButton(Pages[6], "Rejoin", function()
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-end)
-CreateButton(Pages[6], "ServerHop", function()
+CreateToggle(Pages[6], "AntiAFK", true, function(v) Settings.AntiAFK = v end)
+CreateBtn(Pages[6], "Rejoin", function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+CreateBtn(Pages[6], "ServerHop", function()
     pcall(function()
-        local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
-        for _, s in ipairs(servers) do
+        local data = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
+        for _,s in ipairs(data) do
             if s.id \~= game.JobId and s.playing < s.maxPlayers then
                 TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
                 break
@@ -950,63 +630,52 @@ CreateButton(Pages[6], "ServerHop", function()
         end
     end)
 end)
-CreateButton(Pages[6], "Unload", function()
+CreateBtn(Pages[6], "Unload", function()
     ClearAll()
     if FakeFloor then FakeFloor:Destroy() end
-    for _, t in pairs(ESPObjects) do for _,d in pairs(t) do pcall(function() d:Remove() end) end end
+    for _,t in pairs(ESPObjects) do for _,d in pairs(t) do pcall(function() d:Remove() end) end end
     FOVCircle:Remove()
     ScreenGui:Destroy()
     Notify("Zaka", "Unloaded")
 end)
 
--- Animation mở/đóng menu
+-- Animation mở / đóng
 local menuOpen = false
 local function ToggleMenu()
     menuOpen = not menuOpen
     if menuOpen then
         Main.Visible = true
-        Main.Size = UDim2.new(0, 340, 0, 0)
-        TweenService:Create(Main, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 340, 0, 460)
+        Main.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(Main, TweenInfo.new(0.48, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 350, 0, 480)
         }):Play()
-        TweenService:Create(OpenBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 59, 48)}):Play()
+        TweenService:Create(CatBtn, TweenInfo.new(0.3), {
+            BackgroundColor3 = Color3.fromRGB(255, 70, 70),
+            Text = "✕"
+        }):Play()
     else
         local tw = TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 340, 0, 0)
+            Size = UDim2.new(0, 0, 0, 0)
         })
         tw:Play()
-        tw.Completed:Connect(function()
-            Main.Visible = false
-        end)
-        TweenService:Create(OpenBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 122, 255)}):Play()
+        tw.Completed:Wait()
+        Main.Visible = false
+        TweenService:Create(CatBtn, TweenInfo.new(0.3), {
+            BackgroundColor3 = Color3.fromRGB(30, 30, 32),
+            Text = "🐱"
+        }):Play()
     end
 end
 
-OpenBtn.MouseButton1Click:Connect(ToggleMenu)
+CatBtn.MouseButton1Click:Connect(ToggleMenu)
 
--- Chuyển ngôn ngữ
-LangBtn.MouseButton1Click:Connect(function()
-    Lang = Lang == "VI" and "EN" or "VI"
-    TitleLbl.Text = T("Title")
-    for i, btn in ipairs(TabButtons) do
-        btn.Text = T(Tabs[i])
+-- ===== ÉP MENU HIỆN NGAY KHI LOAD =====
+task.defer(function()
+    task.wait(0.6)
+    if not menuOpen then
+        ToggleMenu() -- tự mở 1 lần để bạn thấy chắc chắn
     end
-    -- Cập nhật lại các label trong page (đơn giản nhất là reload text)
-    for _, page in ipairs(Pages) do
-        for _, child in ipairs(page:GetChildren()) do
-            if child:IsA("Frame") and child:FindFirstChild("Label") then
-                -- không đổi key nên tạm thời giữ, người dùng có thể tắt mở lại
-            elseif child:IsA("TextButton") then
-                -- giữ nguyên
-            end
-        end
-    end
-    Notify("Language", Lang == "VI" and "Tiếng Việt" or "English")
 end)
 
--- Đảm bảo menu hiện khi load
-task.wait(0.5)
-ToggleMenu() -- tự mở 1 lần khi load để bạn thấy
-
-print("Zaka HUD iOS Edition loaded successfully!")
-Notify("Zaka HUD", "iOS Style • Sẵn sàng")
+print("✅ Zaka HUD Cat Edition loaded! Menu đã được ép hiện.")
+Notify("Zaka HUD", "Mèo đã sẵn sàng 🐱")
