@@ -1,14 +1,22 @@
---[[
-    ZAKA HUD - Bản Ổn Định (Menu chắc chắn hiện)
+    ╔════════════════════════════════════════════════════════════════════════════════╗
+    ║               ZAKA HUD ULTIMATE - VERSION 1.1 (EXPANDED & RESTORED)            ║
+    ║   - Logo / Toggle Button: Icon "Z"                                            ║
+    ║   - Restored FULL Visual Magic 3D Scripts (Fire Dragon, Angel Wings, Ice Cage)  ║
+    ║   - Added Search Bar, Config Concepts & Expanded ALL Categories               ║
+    ║   - Real Dropkick Script Integrated directly from RawScripts                   ║
+    ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local TextChatService = game:GetService("TextChatService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
