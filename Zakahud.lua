@@ -1,15 +1,14 @@
 --[[
-    ZAKA PURE UI - Water Drop Close Animation
-    Khi đóng / kéo → biến thành giọt nước bay về nút Z
+    ZAKA PURE UI - Water Drop (Fixed & Stable)
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Xóa bản cũ
 pcall(function()
     if PlayerGui:FindFirstChild("ZakaPureUI") then
         PlayerGui.ZakaPureUI:Destroy()
@@ -41,7 +40,7 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color = Color3.fromRGB(255, 255, 255)
 ToggleStroke.Thickness = 2
-ToggleStroke.Transparency = 0.35
+ToggleStroke.Transparency = 0.3
 ToggleStroke.Parent = ToggleBtn
 
 -- ========== MAIN ==========
@@ -114,7 +113,7 @@ local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1, -14, 1, 0)
 SearchBox.Position = UDim2.new(0, 10, 0, 0)
 SearchBox.BackgroundTransparency = 1
-SearchBox.PlaceholderText = "🔍  Tìm kiếm tính năng..."
+SearchBox.PlaceholderText = "🔍  Tìm kiếm..."
 SearchBox.PlaceholderColor3 = Color3.fromRGB(140, 150, 170)
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -122,15 +121,6 @@ SearchBox.Font = Enum.Font.Gotham
 SearchBox.TextSize = 13
 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 SearchBox.Parent = SearchFrame
-
-SearchBox.Focused:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.25, Size = UDim2.new(1, -118, 0, 38)}):Play()
-    TweenService:Create(SearchStroke, TweenInfo.new(0.25), {Transparency = 0.3, Thickness = 1.6}):Play()
-end)
-SearchBox.FocusLost:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.4, Size = UDim2.new(1, -118, 0, 34)}):Play()
-    TweenService:Create(SearchStroke, TweenInfo.new(0.25), {Transparency = 0.7, Thickness = 1.2}):Play()
-end)
 
 -- Tab dọc
 local TabContainer = Instance.new("Frame")
@@ -151,10 +141,10 @@ Content.ClipsDescendants = true
 Content.Parent = Main
 
 local TabsData = {
-    {Name = "Home",   Icon = "⌂"},
+    {Name = "Home", Icon = "⌂"},
     {Name = "Visual", Icon = "✦"},
     {Name = "Player", Icon = "◉"},
-    {Name = "World",  Icon = "◈"},
+    {Name = "World", Icon = "◈"},
     {Name = "Config", Icon = "⚙"},
 }
 
@@ -186,15 +176,6 @@ local function CreateSmartCard(parent, text)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = card
 
-    card.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {BackgroundTransparency = 0.28, Size = UDim2.new(1, 0, 0, 48)}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.4}):Play()
-    end)
-    card.MouseLeave:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {BackgroundTransparency = 0.42, Size = UDim2.new(1, 0, 0, 44)}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.75}):Play()
-    end)
-
     table.insert(AllCards, {Frame = card, Text = text:lower(), Parent = parent})
     return card
 end
@@ -224,7 +205,6 @@ for i, data in ipairs(TabsData) do
     page.ScrollBarThickness = 3
     page.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
     page.Visible = false
-    page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.Parent = Content
 
     local list = Instance.new("UIListLayout")
@@ -247,7 +227,7 @@ local function SwitchTab(index)
     local old = TabButtons[CurrentTab]
     local new = TabButtons[index]
 
-    TweenService:Create(old.Button, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+    TweenService:Create(old.Button, TweenInfo.new(0.3), {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundTransparency = 0.5,
         TextColor3 = Color3.fromRGB(170, 180, 200)
@@ -279,56 +259,32 @@ TabButtons[1].Button.TextColor3 = Color3.new(1, 1, 1)
 TabButtons[1].Stroke.Transparency = 0.3
 Pages[1].Visible = true
 
--- Search filter
+-- Search
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local keyword = SearchBox.Text:lower()
     for _, item in ipairs(AllCards) do
         if item.Parent.Visible then
             local match = keyword == "" or item.Text:find(keyword)
-            if match then
-                item.Frame.Visible = true
-                TweenService:Create(item.Frame, TweenInfo.new(0.22), {
-                    BackgroundTransparency = 0.42,
-                    Size = UDim2.new(1, 0, 0, 44)
-                }):Play()
-            else
-                TweenService:Create(item.Frame, TweenInfo.new(0.18), {
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 0)
-                }):Play()
-                task.delay(0.18, function()
-                    if not (keyword == "" or item.Text:find(keyword)) then
-                        item.Frame.Visible = false
-                    end
-                end)
-            end
+            item.Frame.Visible = match
         end
     end
 end)
 
--- ======================== WATER DROP CLOSE ANIMATION ========================
+-- ========== MỞ / ĐÓNG (WATER DROP) ==========
 local isOpen = false
-local isDraggingMain = false
 
 local function OpenMenu()
     if isOpen then return end
     isOpen = true
+
     Main.Visible = true
-    Main.Size = UDim2.new(0, 56, 0, 56) -- bắt đầu từ kích thước nút Z
+    Main.Size = UDim2.new(0, 56, 0, 56)
     Main.Position = ToggleBtn.Position
     Main.BackgroundTransparency = 0.1
-    MainCorner.CornerRadius = UDim.new(1, 0) -- tròn
+    MainCorner.CornerRadius = UDim.new(1, 0)
 
-    -- Ẩn nội dung tạm
-    for _, child in ipairs(Main:GetChildren()) do
-        if child \~= MainCorner and child \~= MainStroke then
-            child.Visible = false
-        end
-    end
-
-    -- Phóng ra thành menu
-    local openInfo = TweenInfo.new(0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    TweenService:Create(Main, openInfo, {
+    local info = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    TweenService:Create(Main, info, {
         Size = UDim2.new(0, 390, 0, 460),
         Position = UDim2.new(0.5, -195, 0.5, -230),
         BackgroundTransparency = 0.32
@@ -336,97 +292,43 @@ local function OpenMenu()
     TweenService:Create(MainCorner, TweenInfo.new(0.4), {
         CornerRadius = UDim.new(0, 18)
     }):Play()
-
-    task.delay(0.25, function()
-        for _, child in ipairs(Main:GetChildren()) do
-            if child \~= MainCorner and child \~= MainStroke then
-                child.Visible = true
-            end
-        end
-    end)
 end
 
 local function CloseMenu()
     if not isOpen then return end
     isOpen = false
 
-    -- Ẩn nội dung trước
-    for _, child in ipairs(Main:GetChildren()) do
-        if child \~= MainCorner and child \~= MainStroke then
-            child.Visible = false
-        end
-    end
-
-    -- Biến thành giọt nước (tròn + hơi dãn)
-    local dropInfo = TweenInfo.new(0.38, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-
-    TweenService:Create(Main, dropInfo, {
-        Size = UDim2.new(0, 64, 0, 64),
+    -- Thu thành giọt nước
+    TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+        Size = UDim2.new(0, 60, 0, 60),
         BackgroundTransparency = 0.05
     }):Play()
     TweenService:Create(MainCorner, TweenInfo.new(0.3), {
         CornerRadius = UDim.new(1, 0)
     }):Play()
-    TweenService:Create(MainStroke, TweenInfo.new(0.3), {
-        Thickness = 2.5,
-        Transparency = 0.2
-    }):Play()
 
-    -- Bay về nút Z với chuyển động đẹp
-    task.delay(0.15, function()
-        local flyInfo = TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut)
-        local tw = TweenService:Create(Main, flyInfo, {
+    -- Bay về nút Z
+    task.delay(0.12, function()
+        local tw = TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
             Position = ToggleBtn.Position,
             Size = UDim2.new(0, 56, 0, 56)
         })
         tw:Play()
         tw.Completed:Connect(function()
-            Main.Visible = false
-            -- reset
-            MainCorner.CornerRadius = UDim.new(0, 18)
-            MainStroke.Thickness = 1.4
-            MainStroke.Transparency = 0.45
+            if not isOpen then
+                Main.Visible = false
+                MainCorner.CornerRadius = UDim.new(0, 18)
+            end
         end)
     end)
 end
 
--- Kéo Main (làm cảm giác lỏng)
-local dragStart, startPos
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        isDraggingMain = true
-        dragStart = input.Position
-        startPos = Main.Position
-
-        -- Khi bắt đầu kéo → bo góc mạnh hơn (cảm giác lỏng)
-        TweenService:Create(MainCorner, TweenInfo.new(0.2), {
-            CornerRadius = UDim.new(0, 28)
-        }):Play()
-    end
-end)
-
-Header.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        isDraggingMain = false
-        TweenService:Create(MainCorner, TweenInfo.new(0.25), {
-            CornerRadius = UDim.new(0, 18)
-        }):Play()
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if isDraggingMain and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- Sự kiện
 ToggleBtn.MouseButton1Click:Connect(function()
     if isOpen then CloseMenu() else OpenMenu() end
 end)
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
 
+-- Hover nút Z
 ToggleBtn.MouseEnter:Connect(function()
     TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 62, 0, 62)}):Play()
 end)
@@ -435,25 +337,27 @@ ToggleBtn.MouseLeave:Connect(function()
 end)
 
 -- Kéo nút Z
-local tDragging, tDragStart, tStartPos
+local dragging, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        tDragging = true
-        tDragStart = input.Position
-        tStartPos = ToggleBtn.Position
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleBtn.Position
     end
 end)
 ToggleBtn.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        tDragging = false
+        dragging = false
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if tDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - tDragStart
-        ToggleBtn.Position = UDim2.new(tStartPos.X.Scale, tStartPos.X.Offset + delta.X, tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-task.delay(0.5, OpenMenu)
-print("✅ Zaka Pure UI - Water Drop Animation loaded!")
+-- Tự mở lần đầu
+task.delay(0.6, OpenMenu)
+
+print("✅ Zaka Pure UI đã load thành công!")
