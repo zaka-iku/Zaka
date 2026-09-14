@@ -1,8 +1,8 @@
 --[[
     ╔════════════════════════════════════════════════════════════════════════════════╗
-    ║               ZAKA HUD ULTIMATE - VERSION 1.2 (PURE UI EDITION)                ║
-    ║   - Smart Vertical Tabs & Smooth Search Animation Included                    ║
-    ║   - Fully Restored & Expanded Features across Combat, ESP, Physics & Troll   ║
+    ║               ZAKA PURE UI - ULTIMATE SMART VERTICAL & ANIMATION               ║
+    ║   - Giữ nguyên toàn bộ khung UI mượt mà, trong suốt, Tab dọc phóng to/thu nhỏ   ║
+    ║   - Tích hợp đầy đủ tính năng thật: Combat, ESP, Movement, World, Troll        ║
     ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -12,7 +12,6 @@ local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -26,7 +25,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 --                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
 --==============================================================================--
 local Settings = {
-    -- Combat & Hitbox
+    -- Combat
     Aimbot = false,
     AimbotFOV = 120,
     AimbotSmooth = 0.2,
@@ -37,15 +36,10 @@ local Settings = {
     StrafeSpeed = 5,
     HitboxExpander = false,
     HitboxSize = 20,
-    TriggerBot = false,
-    WallbangMode = false,
-    NPCAimbot = false,
-    NPCAimbotFOV = 140,
-    NPCAimbotSmooth = 0.16,
     InfiniteAmmo = false,
     FastFire = false,
 
-    -- ESP Visuals & Chams
+    -- Visuals & ESP
     ESP = false,
     ESPBox = true,
     ESPName = true,
@@ -56,8 +50,7 @@ local Settings = {
     Chams = false,
     ChamsColor = Color3.fromRGB(0, 180, 255),
     CustomCrosshair = false,
-    ESPHeadDot = false,
-    ESPSkeleton = false,
+    GlowTrail = false,
 
     -- Movement & Physics
     Speed = false,
@@ -70,48 +63,30 @@ local Settings = {
     SpinSpeed = 40,
     SpiderClimb = false,
     WaterWalk = false,
-    GravityValue = 196.2,
-    HighJump = false,
 
-    -- Troll Systems & Server Utilities
+    -- Troll & Utilities
     ChatSpammer = false,
-    SpamMessage = "Zaka HUD Pure UI On Top!",
+    SpamMessage = "Zaka Pure UI On Top!",
     AntiFling = false,
-    BringAll = false,
-    InvisibleClient = false,
-
-    -- World Environment & Lighting
-    NoFog = false,
-    NeonNight = false,
-    GlowTrail = false,
-    CustomFOV = 70,
-    Fullbright = false,
-
-    -- Utilities & Misc
-    AntiAFK = true,
     TouchTP = false,
-    FPSCap = 60,
 }
 
 --==============================================================================--
---                            BIẾN TOÀN CỤC & KẾT NỐI                            --
+--                            LOGIC TÍNH NĂNG THẬT                              --
 --==============================================================================--
 local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn, AmmoConn, FastFireConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 local ChamsObjects = {}
 local OriginalFogEnd = Lighting.FogEnd
-local OriginalGravity = workspace.Gravity
 
 -- Anti-AFK
 LocalPlayer.Idled:Connect(function()
-    if Settings.AntiAFK then
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Jump Control
+-- Infinite Jump
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -119,11 +94,10 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Touch Teleport
+-- Touch TP
 local function SetTouchTP(state)
     Settings.TouchTP = state
     if TouchTPConn then TouchTPConn:Disconnect() TouchTPConn = nil end
-
     if state then
         TouchTPConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if not gameProcessed and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
@@ -138,7 +112,7 @@ local function SetTouchTP(state)
     end
 end
 
--- Water Walk (Jesus Mode)
+-- Water Walk
 local function SetWaterWalk(state)
     Settings.WaterWalk = state
     if WaterConn then WaterConn:Disconnect() WaterConn = nil end
@@ -222,7 +196,6 @@ local function SetTargetStrafe(state)
         StrafeConn = RunService.RenderStepped:Connect(function()
             local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if not myRoot then return end
-
             local target = nil
             local minDist = 9999
             for _, plr in ipairs(Players:GetPlayers()) do
@@ -234,7 +207,6 @@ local function SetTargetStrafe(state)
                     end
                 end
             end
-
             if target and minDist <= 40 then
                 angle = angle + math.rad(Settings.StrafeSpeed)
                 local offset = Vector3.new(math.cos(angle) * Settings.StrafeDistance, 0, math.sin(angle) * Settings.StrafeDistance)
@@ -249,19 +221,15 @@ local function SetGlowTrail(state)
     Settings.GlowTrail = state
     local char = LocalPlayer.Character
     if not char then return end
-
     if state then
         local root = char:FindFirstChild("HumanoidRootPart")
         if not root then return end
-
         local a0 = Instance.new("Attachment", root)
         a0.Name = "TrailA0"
         a0.Position = Vector3.new(0, -2.2, 0)
-
         local a1 = Instance.new("Attachment", root)
         a1.Name = "TrailA1"
         a1.Position = Vector3.new(0, -2.0, 0)
-
         local trail = Instance.new("Trail")
         trail.Name = "PlayerGlowTrail"
         trail.Attachment0 = a0
@@ -279,9 +247,7 @@ local function SetGlowTrail(state)
     end
 end
 
---==============================================================================--
---                           AIMBOT & SILENT AIM ENGINE                         --
---==============================================================================--
+-- Aimbot & Silent Aim Drawing
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -297,7 +263,6 @@ local function GetClosestPlayerHead()
     local closestHead = nil
     local shortestDist = Settings.AimbotFOV
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
             local head = plr.Character:FindFirstChild("Head")
@@ -316,41 +281,11 @@ local function GetClosestPlayerHead()
     return closestHead
 end
 
-local function GetClosestNPC()
-    local closest = nil
-    local shortest = Settings.NPCAimbotFOV
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") then
-            if Players:GetPlayerFromCharacter(obj) then continue end
-
-            local hum = obj:FindFirstChildOfClass("Humanoid")
-            local head = obj:FindFirstChild("Head") or obj:FindFirstChild("head")
-            
-            if hum and head and hum.Health > 0 then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                    if dist < shortest then
-                        shortest = dist
-                        closest = head
-                    end
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- Silent Aim Hook
 local oldIndex
 oldIndex = hookmetamethod(game, "__index", function(self, key)
     if not checkcaller() and Settings.SilentAim and self == Mouse and tostring(key) == "Hit" then
         local targetHead = GetClosestPlayerHead()
-        if targetHead then
-            return targetHead.CFrame
-        end
+        if targetHead then return targetHead.CFrame end
     end
     return oldIndex(self, key)
 end)
@@ -385,14 +320,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    if Settings.NPCAimbot then
-        local target = GetClosestNPC()
-        if target then
-            local goal = CFrame.new(Camera.CFrame.Position, target.Position)
-            Camera.CFrame = Camera.CFrame:Lerp(goal, Settings.NPCAimbotSmooth)
-        end
-    end
-
     if Settings.HitboxExpander then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
@@ -408,14 +335,10 @@ RunService.RenderStepped:Connect(function()
     if Settings.SpinBot and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(Settings.SpinSpeed), 0)
     end
-
-    Camera.FieldOfView = Settings.CustomFOV
 end)
 
---==============================================================================--
---                          CHAMS / WALLHACK & ESP SYSTEM                       --
---==============================================================================--
-local function UpdateChams()
+-- ESP & Chams Logic
+RunService.RenderStepped:Connect(function()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character then
             if Settings.Chams then
@@ -425,55 +348,14 @@ local function UpdateChams()
                     hl.FillColor = Settings.ChamsColor
                     hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                     hl.FillTransparency = 0.3
-                    hl.OutlineTransparency = 0
                     hl.Parent = plr.Character
                     ChamsObjects[plr] = hl
                 end
             else
-                if ChamsObjects[plr] then
-                    ChamsObjects[plr]:Destroy()
-                    ChamsObjects[plr] = nil
-                end
+                if ChamsObjects[plr] then ChamsObjects[plr]:Destroy() ChamsObjects[plr] = nil end
             end
         end
     end
-end
-
-local function CreateESP(plr)
-    if ESPObjects[plr] then return end
-    local t = {
-        Box = Drawing.new("Square"),
-        Name = Drawing.new("Text"),
-        Health = Drawing.new("Text"),
-        Distance = Drawing.new("Text"),
-        Tracer = Drawing.new("Line"),
-    }
-    t.Box.Thickness = 1
-    t.Box.Filled = false
-    t.Name.Size = 12
-    t.Name.Center = true
-    t.Name.Outline = true
-    t.Health.Size = 11
-    t.Health.Center = true
-    t.Health.Outline = true
-    t.Distance.Size = 11
-    t.Distance.Center = true
-    t.Distance.Outline = true
-    t.Distance.Color = Color3.fromRGB(200, 200, 200)
-    t.Tracer.Thickness = 1
-    t.Tracer.Color = Color3.fromRGB(0, 180, 255)
-    ESPObjects[plr] = t
-end
-
-Players.PlayerRemoving:Connect(function(plr)
-    if ESPObjects[plr] then
-        for _, d in pairs(ESPObjects[plr]) do pcall(function() d:Remove() end) end
-        ESPObjects[plr] = nil
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    UpdateChams()
 
     if not Settings.ESP then
         for _, drawings in pairs(ESPObjects) do
@@ -484,10 +366,27 @@ RunService.RenderStepped:Connect(function()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == LocalPlayer then continue end
-        CreateESP(plr)
+        if not ESPObjects[plr] then
+            ESPObjects[plr] = {
+                Box = Drawing.new("Square"),
+                Name = Drawing.new("Text"),
+                Health = Drawing.new("Text"),
+                Distance = Drawing.new("Text"),
+            }
+            ESPObjects[plr].Box.Filled = false
+            ESPObjects[plr].Name.Size = 12
+            ESPObjects[plr].Name.Center = true
+            ESPObjects[plr].Name.Outline = true
+            ESPObjects[plr].Health.Size = 11
+            ESPObjects[plr].Health.Center = true
+            ESPObjects[plr].Health.Outline = true
+            ESPObjects[plr].Distance.Size = 11
+            ESPObjects[plr].Distance.Center = true
+            ESPObjects[plr].Distance.Outline = true
+        end
+
         local drawings = ESPObjects[plr]
         local char = plr.Character
-
         if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then
             for _, d in pairs(drawings) do d.Visible = false end
             continue
@@ -503,115 +402,32 @@ RunService.RenderStepped:Connect(function()
             continue
         end
 
-        local mainColor = Color3.fromRGB(0, 180, 255)
         local size = Vector2.new(math.clamp(2000 / pos.Z, 8, 300), math.clamp(3000 / pos.Z, 12, 450))
-
         drawings.Box.Size = size
         drawings.Box.Position = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
-        drawings.Box.Color = mainColor
+        drawings.Box.Color = Color3.fromRGB(0, 180, 255)
         drawings.Box.Visible = Settings.ESPBox
 
         drawings.Name.Text = plr.Name
         drawings.Name.Position = Vector2.new(pos.X, pos.Y - size.Y / 2 - 14)
-        drawings.Name.Color = mainColor
+        drawings.Name.Color = Color3.fromRGB(240, 245, 255)
         drawings.Name.Visible = Settings.ESPName
 
         drawings.Health.Text = math.floor(hum.Health) .. " HP"
         drawings.Health.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 2)
-        drawings.Health.Color = Color3.fromRGB(255 - (hum.Health / hum.MaxHealth) * 255, (hum.Health / hum.MaxHealth) * 255, 0)
         drawings.Health.Visible = Settings.ESPHealth
 
         drawings.Distance.Text = math.floor(dist) .. "m"
         drawings.Distance.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 14)
         drawings.Distance.Visible = Settings.ESPDistance
-
-        if Settings.ESPTracers then
-            drawings.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-            drawings.Tracer.To = Vector2.new(pos.X, pos.Y)
-            drawings.Tracer.Visible = true
-        else
-            drawings.Tracer.Visible = false
-        end
     end
 end)
 
---==============================================================================--
---                          WEAPON & COMBAT EXTRAS                              --
---==============================================================================--
-local function SetInfiniteAmmo(state)
-    Settings.InfiniteAmmo = state
-    if AmmoConn then AmmoConn:Disconnect() AmmoConn = nil end
-
-    if state then
-        AmmoConn = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if not char then return end
-
-            local function ForceAmmo(tool)
-                if not tool or not tool:IsA("Tool") then return end
-                pcall(function()
-                    local names = {
-                        "Ammo", "Clip", "CurrentAmmo", "MaxAmmo", "Bullets",
-                        "AmmoCount", "Round", "Magazine", "AmmoValue", "GunAmmo",
-                        "BulletCount", "Shots", "AmmoLeft", "RemainingAmmo"
-                    }
-                    for _, name in ipairs(names) do
-                        local val = tool:FindFirstChild(name)
-                        if val then
-                            if val:IsA("IntValue") or val:IsA("NumberValue") then
-                                val.Value = 9999
-                            elseif val:IsA("StringValue") then
-                                val.Value = "9999"
-                            end
-                        end
-                    end
-                    pcall(function()
-                        tool:SetAttribute("Ammo", 9999)
-                        tool:SetAttribute("Clip", 9999)
-                        tool:SetAttribute("CurrentAmmo", 9999)
-                    end)
-                end)
-            end
-
-            for _, item in ipairs(char:GetChildren()) do ForceAmmo(item) end
-            local backpack = LocalPlayer:FindFirstChild("Backpack")
-            if backpack then
-                for _, item in ipairs(backpack:GetChildren()) do ForceAmmo(item) end
-            end
-        end)
-    end
-end
-
-local function SetFastFire(state)
-    Settings.FastFire = state
-    if FastFireConn then FastFireConn:Disconnect() FastFireConn = nil end
-
-    if state then
-        FastFireConn = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if not char then return end
-
-            for _, tool in ipairs(char:GetChildren()) do
-                if tool:IsA("Tool") then
-                    pcall(function()
-                        if tool:FindFirstChild("FireRate") then tool.FireRate.Value = 0.01 end
-                        if tool:FindFirstChild("Cooldown") then tool.Cooldown.Value = 0.01 end
-                        if tool:FindFirstChild("ShootCooldown") then tool.ShootCooldown.Value = 0.01 end
-                    end)
-                end
-            end
-        end)
-    end
-end
-
---==============================================================================--
---                          MOVEMENT & FLY CONTROL                              --
---==============================================================================--
+-- Fly & Speed & Noclip Control
 local function StartFly()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
-
     BodyGyro = Instance.new("BodyGyro")
     BodyGyro.P = 9e4
     BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -630,10 +446,8 @@ local function StartFly()
             if FlyConn then FlyConn:Disconnect() end
             return
         end
-
         local hum = char.Humanoid
         BodyGyro.cframe = Camera.CFrame
-
         local moveDir = hum.MoveDirection
         if moveDir.Magnitude > 0 then
             local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
@@ -697,7 +511,7 @@ ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = PlayerGui
 
--- Toggle Button
+-- ========== NÚT TOGGLE ==========
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 56, 0, 56)
 ToggleBtn.Position = UDim2.new(0, 16, 0.38, 0)
@@ -717,7 +531,7 @@ ToggleStroke.Thickness = 2
 ToggleStroke.Transparency = 0.35
 ToggleStroke.Parent = ToggleBtn
 
--- Main Frame
+-- ========== MAIN ==========
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 390, 0, 460)
 Main.Position = UDim2.new(0.5, -195, 0.5, -230)
@@ -746,7 +560,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -50, 1, 0)
 Title.Position = UDim2.new(0, 16, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "ZAKA HUD v1.2"
+Title.Text = "ZAKA PURE UI"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
 Title.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -765,7 +579,7 @@ CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
 
--- Search Bar
+-- ========== SEARCH BAR (ANIMATION ĐẸP) ==========
 local SearchFrame = Instance.new("Frame")
 SearchFrame.Size = UDim2.new(1, -118, 0, 34)
 SearchFrame.Position = UDim2.new(0, 108, 0, 54)
@@ -816,7 +630,7 @@ SearchBox.FocusLost:Connect(function()
     }):Play()
 end)
 
--- Tab Container (Vertical)
+-- ========== TAB DỌC ==========
 local TabContainer = Instance.new("Frame")
 TabContainer.Size = UDim2.new(0, 92, 1, -60)
 TabContainer.Position = UDim2.new(0, 10, 0, 54)
@@ -827,7 +641,7 @@ local TabList = Instance.new("UIListLayout")
 TabList.Padding = UDim.new(0, 7)
 TabList.Parent = TabContainer
 
--- Content Container
+-- Content
 local Content = Instance.new("Frame")
 Content.Size = UDim2.new(1, -118, 1, -100)
 Content.Position = UDim2.new(0, 108, 0, 96)
@@ -835,7 +649,7 @@ Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.Parent = Main
 
--- Tabs Definition
+-- ======================== DỮ LIỆU & TẠO CARD ========================
 local TabsData = {
     {Name = "Combat", Icon = "⚔"},
     {Name = "Visual", Icon = "✦"},
@@ -958,6 +772,7 @@ local function CreateActionCard(parent, text, callback)
     return card
 end
 
+-- Tạo tab + page + chức năng thật
 for i, data in ipairs(TabsData) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 36)
@@ -993,22 +808,18 @@ for i, data in ipairs(TabsData) do
         page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 10)
     end)
 
-    -- Populate Pages with Feature Toggles & Actions
     if i == 1 then
         CreateSmartCard(page, "Aimbot Lock Head", false, function(v) Settings.Aimbot = v end)
         CreateSmartCard(page, "Silent Aim Engine", false, function(v) Settings.SilentAim = v end)
         CreateSmartCard(page, "Auto Clicker / Fast Attack", false, function(v) SetAutoClicker(v) end)
         CreateSmartCard(page, "Target Strafe (Xoay Vòng)", false, function(v) SetTargetStrafe(v) end)
         CreateSmartCard(page, "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
-        CreateSmartCard(page, "Infinite Ammo (Vô Hạn Đạn)", false, function(v) SetInfiniteAmmo(v) end)
-        CreateSmartCard(page, "Fast Fire (Bắn Siêu Tốc)", false, function(v) SetFastFire(v) end)
     elseif i == 2 then
         CreateSmartCard(page, "ESP Box (Khung Người Chơi)", false, function(v) Settings.ESP = v end)
         CreateSmartCard(page, "Chams Wallhack Fill", false, function(v) Settings.Chams = v end)
         CreateSmartCard(page, "Custom Crosshair (Tâm Bắn)", false, function(v) Settings.CustomCrosshair = v end)
         CreateSmartCard(page, "Glow Trail (Vệt Sáng Chạy)", false, function(v) SetGlowTrail(v) end)
-        CreateSmartCard(page, "No Fog (Chống Sương Mù)", false, function(v) Settings.NoFog = v Lighting.FogEnd = v and 1e6 or OriginalFogEnd end)
-        CreateActionCard(page, "Fullbright (Nhìn Đêm)", function() Lighting.Brightness = 3 Lighting.ClockTime = 12 end)
+        CreateSmartCard(page, "No Fog (Chống Sương Mù)", false, function(v) Lighting.FogEnd = v and 1e6 or OriginalFogEnd end)
     elseif i == 3 then
         CreateSmartCard(page, "Speed Walk (Tăng Tốc Chạy)", false, function(v) Settings.Speed = v SetSpeed(v) end)
         CreateSmartCard(page, "Fly Mode (Bay Tự Do)", false, function(v) SetFly(v) end)
@@ -1032,8 +843,7 @@ for i, data in ipairs(TabsData) do
         end)
     elseif i == 5 then
         CreateSmartCard(page, "Spam Chat Hệ Thống", false, function(v) SetChatSpammer(v) end)
-        CreateSmartCard(page, "Anti-Fling (Chống Văng)", false, function(v) Settings.AntiFling = v end)
-        CreateActionCard(page, "Tải The Real Dropkick Script", function()
+        CreateActionCard(page, "Load Dropkick Script", function()
             pcall(function()
                 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
             end)
@@ -1044,12 +854,14 @@ for i, data in ipairs(TabsData) do
     Pages[i] = page
 end
 
+-- ======================== SWITCH TAB (ANIMATION THÔNG MINH) ========================
 local function SwitchTab(index)
     if CurrentTab == index then return end
 
     local old = TabButtons[CurrentTab]
     local new = TabButtons[index]
 
+    -- Thu nhỏ tab cũ
     TweenService:Create(old.Button, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundTransparency = 0.5,
@@ -1057,6 +869,7 @@ local function SwitchTab(index)
     }):Play()
     TweenService:Create(old.Stroke, TweenInfo.new(0.25), {Transparency = 1}):Play()
 
+    -- Phóng to tab mới
     TweenService:Create(new.Button, TweenInfo.new(0.35, Enum.EasingStyle.Back), {
         Size = UDim2.new(1, 0, 0, 48),
         BackgroundTransparency = 0.22,
@@ -1067,6 +880,8 @@ local function SwitchTab(index)
     Pages[CurrentTab].Visible = false
     Pages[index].Visible = true
     CurrentTab = index
+
+    -- Clear search khi đổi tab
     SearchBox.Text = ""
 end
 
@@ -1076,13 +891,14 @@ for i, data in ipairs(TabButtons) do
     end)
 end
 
+-- Mặc định Tab 1
 TabButtons[1].Button.Size = UDim2.new(1, 0, 0, 48)
 TabButtons[1].Button.BackgroundTransparency = 0.22
 TabButtons[1].Button.TextColor3 = Color3.new(1, 1, 1)
 TabButtons[1].Stroke.Transparency = 0.3
 Pages[1].Visible = true
 
--- Search Filter Animation
+-- ======================== SEARCH ANIMATION ========================
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local keyword = SearchBox.Text:lower()
 
@@ -1111,7 +927,7 @@ SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     end
 end)
 
--- Open / Close Menu Logic
+-- ======================== MỞ / ĐÓNG & DRAG ========================
 local isOpen = false
 
 local function OpenMenu()
@@ -1155,7 +971,6 @@ ToggleBtn.MouseLeave:Connect(function()
     TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 56, 0, 56)}):Play()
 end)
 
--- Draggable Toggle Button
 local dragging, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1177,4 +992,4 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 task.delay(0.5, OpenMenu)
-print("✅ Zaka HUD v1.2 (Pure UI + Smart Vertical & Search) Loaded Successfully!")
+print("✅ Zaka Pure UI Ultimate Loaded Successfully!")
