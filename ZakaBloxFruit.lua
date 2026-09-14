@@ -1,5 +1,5 @@
 --==============================================================================--
---        ZAKA BLOX // ULTIMATE FARM v3.1 (FULL FEATURES)                       --
+--        ZAKA BLOX // ULTIMATE FARM v3.3 (SILENT HITBOX & AUTO AURA)           --
 --==============================================================================--
 
 local Players = game:GetService("Players")
@@ -14,14 +14,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Chống Idle Disconnect (tránh bị đá ra khi treo máy)
+-- Chống Idle Disconnect
 LocalPlayer.Idled:Connect(function()
     VirtualUser:Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
     task.wait(1)
     VirtualUser:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
 end)
 
--- Dọn dẹp UI cũ nếu có
+-- Dọn dẹp UI cũ
 if PlayerGui:FindFirstChild("ZakaBloxMain") then
     PlayerGui.ZakaBloxMain:Destroy()
 end
@@ -35,7 +35,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
--- Khung chính phong cách kính mờ trong suốt
+-- Khung chính kính mờ
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 580, 0, 380)
@@ -52,7 +52,7 @@ MainStroke.Color = Color3.fromRGB(255, 140, 0)
 MainStroke.Transparency = 0.4
 MainStroke.Parent = MainFrame
 
--- Nút icon chữ "ZK" trong suốt khi thu gọn menu
+-- Nút icon chữ "ZK" nổi trong suốt khi thu gọn menu
 local FloatGui = Instance.new("ScreenGui")
 FloatGui.Name = "ZakaFloatingIcon"
 FloatGui.ResetOnSpawn = false
@@ -100,7 +100,7 @@ TitleLabel.Size = UDim2.new(0, 350, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "⚡ ZAKA BLOX // ULTIMATE v3.1"
+TitleLabel.Text = "⚡ ZAKA BLOX // ULTIMATE v3.3"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
 TitleLabel.TextSize = 12
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -132,7 +132,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Nút Thu Gọn Menu với Animation phóng to thu nhỏ
+-- Nút Thu Gọn Menu
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
 MinimizeBtn.Position = UDim2.new(1, -36, 0, 5)
@@ -170,10 +170,10 @@ ToggleBtn.MouseButton1Click:Connect(function()
     ToggleBtn.Visible = false
 end)
 
--- Sidebar Tab trong suốt
+-- Sidebar Tab
 local Sidebar = Instance.new("ScrollingFrame")
-Sidebar.Size = UDim2.new(0, 140, 1, -42)
-Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.Size = UDim2.new(0, 140, 1, -48)
+Sidebar.Position = UDim2.new(0, 0, 0, 44)
 Sidebar.BackgroundTransparency = 1
 Sidebar.BorderSizePixel = 0
 Sidebar.ScrollBarThickness = 2
@@ -189,12 +189,16 @@ local UIPadding = Instance.new("UIPadding")
 UIPadding.PaddingTop = UDim.new(0, 8)
 UIPadding.Parent = Sidebar
 
-local ContentContainer = Instance.new("Folder")
+local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
+ContentContainer.Size = UDim2.new(1, -150, 1, -48)
+ContentContainer.Position = UDim2.new(0, 148, 0, 44)
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.BorderSizePixel = 0
 ContentContainer.Parent = MainFrame
 
 local Tabs = {}
-local CurrentTab = nil
+local CurrentTabContent = nil
 
 local function CreateTab(name, order)
     local TabBtn = Instance.new("TextButton")
@@ -211,11 +215,11 @@ local function CreateTab(name, order)
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
     local TabContent = Instance.new("ScrollingFrame")
-    TabContent.Size = UDim2.new(1, -150, 1, -50)
-    TabContent.Position = UDim2.new(0, 148, 0, 45)
+    TabContent.Size = UDim2.new(1, 0, 1, 0)
+    TabContent.Position = UDim2.new(0, 0, 0, 0)
     TabContent.BackgroundTransparency = 1
     TabContent.BorderSizePixel = 0
-    TabContent.ScrollBarThickness = 2
+    TabContent.ScrollBarThickness = 3
     TabContent.Visible = false
     TabContent.Parent = ContentContainer
 
@@ -223,6 +227,11 @@ local function CreateTab(name, order)
     ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
     ContentLayout.Padding = UDim.new(0, 8)
     ContentLayout.Parent = TabContent
+
+    local ContentPad = Instance.new("UIPadding")
+    ContentPad.PaddingTop = UDim.new(0, 4)
+    ContentPad.PaddingLeft = UDim.new(0, 2)
+    ContentPad.Parent = TabContent
 
     TabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(Tabs) do
@@ -235,22 +244,21 @@ local function CreateTab(name, order)
         TabBtn.BackgroundTransparency = 0.1
         TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabContent.Visible = true
-        CurrentTab = TabContent
+        CurrentTabContent = TabContent
     end)
 
-    if not CurrentTab then
+    if not CurrentTabContent then
         TabBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
         TabBtn.BackgroundTransparency = 0.1
         TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabContent.Visible = true
-        CurrentTab = TabContent
+        CurrentTabContent = TabContent
     end
 
     table.insert(Tabs, {Btn = TabBtn, Content = TabContent})
     return TabContent
 end
 
--- Hàm tạo Toggle tiêu chuẩn
 local function AddToggle(tab, text, callback)
     local ToggleBtnUI = Instance.new("TextButton")
     ToggleBtnUI.Size = UDim2.new(1, -10, 0, 36)
@@ -284,52 +292,69 @@ local function AddToggle(tab, text, callback)
     end)
 end
 
--- ==================== KHỞI TẠO CÁC TÍNH NĂNG CHÍNH ====================
+-- ==================== CHỨC NĂNG THỰC CHIẾN BLOX FRUIT ====================
 
 local TabFarm = CreateTab("Auto Farm", 1)
 local TabCombat = CreateTab("Combat", 2)
 local TabMisc = CreateTab("Tiện Ích", 3)
 
--- 1. Biến trạng thái chức năng
 local _G_AutoFarm = false
-local _G_FastAttack = false
 local _G_BringMob = false
+local _G_SilentHitbox = false
 
--- Auto Farm Level Cơ Bản
-AddToggle(TabFarm, "Auto Farm Level (Safe)", function(v)
+-- 1. Auto Farm Bay Trên Đầu Quái + Gom Quái (Bring Mob)
+AddToggle(TabFarm, "Auto Farm (Bay trên đầu & Gom quái)", function(v)
     _G_AutoFarm = v
+    _G_BringMob = v
     task.spawn(function()
         while _G_AutoFarm do
-            task.wait(0.5)
+            task.wait(0.2)
             pcall(function()
-                -- Gọi Remote an toàn mẫu của Blox Fruit để check hoặc nhận quest
-                local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                if Remotes and Remotes:FindFirstChild("CommF_") then
-                    -- Code mô phỏng tự động nhận nhiệm vụ theo level hiện tại
-                    -- (Ví dụ cấu trúc gọi CommF_:invokeServer("StartQuest", ...))
+                local char = LocalPlayer.Character
+                local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+                if rootPart and Workspace:FindFirstChild("Enemies") then
+                    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                        local eRoot = enemy:FindFirstChild("HumanoidRootPart")
+                        local eHuman = enemy:FindFirstChild("Humanoid")
+                        if eRoot and eHuman and eHuman.Health > 0 then
+                            -- Bay lên đầu quái (cách 5 đơn vị theo chiều dọc)
+                            rootPart.CFrame = eRoot.CFrame + Vector3.new(0, 6, 0)
+                            if _G_BringMob then
+                                eRoot.CFrame = rootPart.CFrame + Vector3.new(0, -5, 0)
+                                eRoot.CanCollide = false
+                            end
+                            break
+                        end
+                    end
                 end
             end)
         end
     end)
 end)
 
--- Bring Mob (Gom quái)
-AddToggle(TabFarm, "Bring Mobs (Gom quái)", function(v)
-    _G_BringMob = v
+-- 2. Silent Hitbox & Auto Aura Attack (Cầm vũ khí tự gây sát thương diện rộng không cần chém)
+AddToggle(TabCombat, "Silent Hitbox & Auto Aura Damage", function(v)
+    _G_SilentHitbox = v
     task.spawn(function()
-        while _G_BringMob do
-            task.wait(0.3)
+        while _G_SilentHitbox do
+            task.wait(0.1)
             pcall(function()
                 local char = LocalPlayer.Character
                 local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-                if rootPart then
+                if rootPart and Workspace:FindFirstChild("Enemies") then
                     for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
                         local eRoot = enemy:FindFirstChild("HumanoidRootPart")
                         local eHuman = enemy:FindFirstChild("Humanoid")
                         if eRoot and eHuman and eHuman.Health > 0 then
-                            if (eRoot.Position - rootPart.Position).Magnitude < 250 then
-                                eRoot.CFrame = rootPart.CFrame + Vector3.new(0, 2, 0)
-                                eRoot.CanCollide = false
+                            if (eRoot.Position - rootPart.Position).Magnitude < 60 then
+                                -- Kích hoạt tương tác sát thương ngầm qua CombatFramework chuẩn của game
+                                local CombatFramework = require(LocalPlayer.PlayerScripts:WaitForChild("CombatFramework"))
+                                local activeController = CombatFramework.activeController
+                                if activeController then
+                                    activeController.timeToNextAttack = 0
+                                    activeController.hitboxMagnitude = 120
+                                    activeController:attack()
+                                end
                             end
                         end
                     end
@@ -339,39 +364,17 @@ AddToggle(TabFarm, "Bring Mobs (Gom quái)", function(v)
     end)
 end)
 
--- Fast Attack (Tăng tốc đánh)
-AddToggle(TabCombat, "Fast Attack (Đánh siêu nhanh)", function(v)
-    _G_FastAttack = v
-    task.spawn(function()
-        while _G_FastAttack do
-            task.wait(0.1)
-            pcall(function()
-                -- Kích hoạt tấn công liên tục qua Net/Remotes
-                local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-                local RigController = require(LocalPlayer.PlayerScripts.CombatFramework.RigController)
-                local activeController = CombatFramework.activeController
-                if activeController then
-                    activeController.timeToNextAttack = 0
-                    activeController.hitboxMagnitude = 60
-                    activeController:attack()
-                end
-            end)
-        end
-    end)
-end)
-
--- WalkSpeed Siêu Tốc
+-- 3. Tốc độ chạy & Nhảy cao
 AddToggle(TabMisc, "WalkSpeed 100", function(v)
     pcall(function()
         LocalPlayer.Character.Humanoid.WalkSpeed = v and 100 or 16
     end)
 end)
 
--- JumpPower Cao
 AddToggle(TabMisc, "Super Jump", function(v)
     pcall(function()
         LocalPlayer.Character.Humanoid.JumpPower = v and 150 or 50
     end)
 end)
 
-print("⚡ Zaka Blox Ultimate v3.1 loaded successfully with Full Features!")
+print("⚡ Zaka Blox Ultimate v3.3 Loaded with Silent Hitbox!")
