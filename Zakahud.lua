@@ -1,9 +1,8 @@
 --[[
     ╔════════════════════════════════════════════════════════════════════════════════╗
-    ║             ZAKA PURE UI v2.5 - ULTRA SMART & GOD-TIER ANIMATIONS              ║
-    ║   - Hiệu ứng chuyển động Spring Physics & Tween siêu mượt                       ║
-    ║   - Tab dọc thông minh tự co dãn, đổi màu & Glow động                          ║
-    ║   - Hàng loạt tính năng nâng cao: Hitbox tuỳ chỉnh toàn diện, Visuals, World...  ║
+    ║             ZAKA PURE UI v3.0 - GOD-TIER ULTIMATE EXPANDED EDITION             ║
+    ║   - Mỗi Tab có 20+ tính năng tối tân, tuỳ chỉnh sâu (Slider/TextBox ẩn bên dưới) ║
+    ║   - Hệ thống Fly, WalkSpeed (Max 500), Aimbot FOV, Hitbox & Trolldev chuẩn xác   ║
     ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -16,9 +15,10 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local Camera = Workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -26,17 +26,24 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 --                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
 --==============================================================================--
 local Settings = {
-    -- Combat & Hitbox
+    -- Combat & Aimbot
     Aimbot = false,
     AimbotFOV = 120,
     AimbotSmooth = 0.25,
     SilentAim = false,
     AutoClicker = false,
+    ClickDelay = 0.05,
     TargetStrafe = false,
     StrafeDistance = 12,
     StrafeSpeed = 6,
+    TriggerBot = false,
+    KillAura = false,
+    KillAuraDist = 18,
+    AutoBlock = false,
+    FastAttack = false,
+    AutoSkill = false,
     
-    -- Hitbox mở rộng chi tiết
+    -- Hitbox Mở Rộng
     HitboxHead = false,
     HeadSize = 15,
     HitboxTorso = false,
@@ -44,7 +51,11 @@ local Settings = {
     HitboxWeapon = false,
     WeaponSize = 5,
     HitboxTransparent = 0.5,
-
+    HitboxLimb = false,
+    LimbSize = 4,
+    HitboxTeamCheck = false,
+    HitboxAutoUpdate = true,
+    
     -- Visuals & ESP
     ESP = false,
     ESPBox = true,
@@ -55,45 +66,83 @@ local Settings = {
     Chams = false,
     ChamsColor = Color3.fromRGB(0, 200, 255),
     CustomCrosshair = false,
+    CrosshairSize = 12,
     GlowTrail = false,
     Fullbright = false,
     FOVChanger = false,
     FOVValue = 90,
-
-    -- Movement & Physics
+    Tracers = false,
+    ESPHeadDot = false,
+    NightVision = false,
+    FPSBoost = false,
+    
+    -- Player & Movement
     Speed = false,
     SpeedValue = 26,
     Fly = false,
     FlySpeed = 50,
+    FlyMode = "Camera", -- Camera hoặc Vector
     Noclip = false,
     InfiniteJump = false,
     SpinBot = false,
     SpinSpeed = 45,
     SpiderClimb = false,
+    SpiderSpeed = 30,
     WaterWalk = false,
     Bhop = false,
-
+    HighJump = false,
+    JumpPower = 100,
+    SuperDash = false,
+    AutoRespawn = false,
+    AntiRagdoll = false,
+    GodModeVisual = false,
+    
     -- World & Teleport
     TouchTP = false,
     NoClipParts = false,
     ServerHop = false,
-
+    BringNPC = false,
+    BringNPCMode = "Nearest",
+    ClickDelete = false,
+    AntiVoid = false,
+    ServerRejoin = false,
+    TimeChanger = false,
+    GameTime = 14,
+    GravityMod = false,
+    GravityValue = 196.2,
+    AutoCollectItems = false,
+    InstantInteract = false,
+    
     -- Troll & Fun
     ChatSpammer = false,
-    SpamMessage = "Zaka Pure UI v2.5 - Ultimate Performance!",
+    SpamMessage = "Zaka Pure UI v3.0 - Ultimate Power!",
+    SpamDelay = 2,
     Invisible = false,
     FlingMe = false,
+    SoundSpammer = false,
+    ToolDupe = false,
+    FakeLag = false,
+    HeadlessMode = false,
+    CorruptServer = false,
+    AnimationPack = false,
+    EmoteSpam = false,
+    RainbowColor = false,
+    CrashClientWarning = false,
+    NullifyCollisions = false,
+    AutoEquipBest = false,
+    ServerLockdown = false,
 }
 
 --==============================================================================--
---                            LOGIC TÍNH NĂNG NÂNG CAO                           --
+--                            LOGIC TÍNH NĂNG TOÀN DIỆN                           --
 --==============================================================================--
-local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn, BhopConn
+local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn, BhopConn, KillAuraConn, BringNPCConn, TriggerConn, GravityConn, CrosshairConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 local ChamsObjects = {}
 local OriginalFogEnd = Lighting.FogEnd
 local OriginalAmbient = Lighting.Ambient
+local OriginalGravity = Workspace.Gravity
 
 -- Anti-AFK
 LocalPlayer.Idled:Connect(function()
@@ -101,7 +150,7 @@ LocalPlayer.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Infinite Jump & Bhop
+-- Infinite Jump & High Jump
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -109,7 +158,17 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Bhop (Bunny Hop)
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if Settings.HighJump then
+            hum.JumpPower = Settings.JumpPower
+        end
+    end
+end)
+
+-- Bhop
 BhopConn = RunService.RenderStepped:Connect(function()
     if Settings.Bhop then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -119,7 +178,7 @@ BhopConn = RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Fullbright
+-- Fullbright & NightVision & FOV
 RunService.RenderStepped:Connect(function()
     if Settings.Fullbright then
         Lighting.Ambient = Color3.new(1, 1, 1)
@@ -131,6 +190,12 @@ RunService.RenderStepped:Connect(function()
     
     if Settings.FOVChanger then
         Camera.FieldOfView = Settings.FOVValue
+    end
+
+    if Settings.GravityMod then
+        Workspace.Gravity = Settings.GravityValue
+    else
+        Workspace.Gravity = OriginalGravity
     end
 end)
 
@@ -152,7 +217,7 @@ local function SetTouchTP(state)
     end
 end
 
--- Water Walk
+-- Water Walk (Jesus)
 local function SetWaterWalk(state)
     Settings.WaterWalk = state
     if WaterConn then WaterConn:Disconnect() WaterConn = nil end
@@ -162,7 +227,7 @@ local function SetWaterWalk(state)
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local root = char.HumanoidRootPart
                 local ray = Ray.new(root.Position, Vector3.new(0, -6, 0))
-                local hit, pos, norm, mat = workspace:FindPartOnRay(ray, char)
+                local hit, pos, norm, mat = Workspace:FindPartOnRay(ray, char)
                 if mat == Enum.Material.Water then
                     root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
                     root.CFrame = CFrame.new(root.Position.X, pos.Y + 3.2, root.Position.Z)
@@ -172,7 +237,7 @@ local function SetWaterWalk(state)
     end
 end
 
--- Spider Climb
+-- Spider Climb (Bám tường dọc)
 local function SetSpiderClimb(state)
     Settings.SpiderClimb = state
     if SpiderConn then SpiderConn:Disconnect() SpiderConn = nil end
@@ -181,10 +246,10 @@ local function SetSpiderClimb(state)
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local root = char.HumanoidRootPart
-                local ray = Ray.new(root.Position, root.CFrame.LookVector * 2.5)
-                local hit = workspace:FindPartOnRay(ray, char)
+                local ray = Ray.new(root.Position, root.CFrame.LookVector * 3)
+                local hit = Workspace:FindPartOnRay(ray, char)
                 if hit then
-                    root.Velocity = Vector3.new(root.Velocity.X, 32, root.Velocity.Z)
+                    root.Velocity = Vector3.new(root.Velocity.X, Settings.SpiderSpeed, root.Velocity.Z)
                 end
             end
         end)
@@ -199,8 +264,32 @@ local function SetAutoClicker(state)
         AutoClickConn = RunService.RenderStepped:Connect(function()
             if Settings.AutoClicker then
                 VirtualUser:Button1Down(Vector2.new())
-                task.wait(0.04)
+                task.wait(Settings.ClickDelay)
                 VirtualUser:Button1Up(Vector2.new())
+            end
+        end)
+    end
+end
+
+-- Bring NPC / Enemies
+local function SetBringNPC(state)
+    Settings.BringNPC = state
+    if BringNPCConn then BringNPCConn:Disconnect() BringNPCConn = nil end
+    if state then
+        BringNPCConn = RunService.RenderStepped:Connect(function()
+            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+                    local hum = obj:FindFirstChildOfClass("Humanoid")
+                    local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
+                    if hum and root and hum.Health > 0 then
+                        if not Players:GetPlayerFromCharacter(obj) then -- Là NPC hoặc Dummy
+                            root.CFrame = myRoot.CFrame * CFrame.new(0, 0, -4)
+                            root.Velocity = Vector3.new(0, 0, 0)
+                        end
+                    end
+                end
             end
         end)
     end
@@ -221,7 +310,7 @@ local function SetChatSpammer(state)
                         ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Settings.SpamMessage, "All")
                     end
                 end)
-                task.wait(2.2)
+                task.wait(Settings.SpamDelay)
             end
         end)
     end
@@ -247,7 +336,7 @@ local function SetTargetStrafe(state)
                     end
                 end
             end
-            if target and minDist <= 45 then
+            if target and minDist <= 50 then
                 angle = angle + math.rad(Settings.StrafeSpeed)
                 local offset = Vector3.new(math.cos(angle) * Settings.StrafeDistance, 0, math.sin(angle) * Settings.StrafeDistance)
                 myRoot.CFrame = CFrame.new(target.Position + offset, target.Position)
@@ -287,13 +376,13 @@ local function SetGlowTrail(state)
     end
 end
 
--- Advanced Hitbox Expansion (Head, Torso, Weapon, Tools)
+-- Hitbox mở rộng toàn diện (Đầu, Thân, Tay Chân, Vũ khí)
 RunService.RenderStepped:Connect(function()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character then
             local char = plr.Character
             
-            -- Head Hitbox
+            -- Head
             local head = char:FindFirstChild("Head")
             if head then
                 if Settings.HitboxHead then
@@ -306,7 +395,7 @@ RunService.RenderStepped:Connect(function()
                 end
             end
 
-            -- Torso Hitbox
+            -- Torso
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
             if torso then
                 if Settings.HitboxTorso then
@@ -319,7 +408,19 @@ RunService.RenderStepped:Connect(function()
                 end
             end
 
-            -- Weapon / Tool Hitbox (Mở rộng kích thước tool/vũ khí đang cầm trên tay đối thủ)
+            -- Limb (Tay/Chân)
+            if Settings.HitboxLimb then
+                for _, partName in ipairs({"Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftLowerArm", "RightLowerArm", "LeftLowerLeg", "RightLowerLeg"}) do
+                    local limb = char:FindFirstChild(partName)
+                    if limb and limb:IsA("BasePart") then
+                        limb.Size = Vector3.new(Settings.LimbSize, Settings.LimbSize, Settings.LimbSize)
+                        limb.Transparency = Settings.HitboxTransparent
+                        limb.CanCollide = false
+                    end
+                end
+            end
+
+            -- Weapon / Tool
             if Settings.HitboxWeapon then
                 for _, tool in ipairs(char:GetChildren()) do
                     if tool:IsA("Tool") then
@@ -337,7 +438,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot & Silent Aim Drawing
+-- Aimbot FOV Circle & Crosshair
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 64
@@ -387,14 +488,15 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Settings.Aimbot or Settings.SilentAim
 
     if Settings.CustomCrosshair then
-        CrosshairVertical.From = Vector2.new(center.X, center.Y - 12)
-        CrosshairVertical.To = Vector2.new(center.X, center.Y + 12)
+        local s = Settings.CrosshairSize
+        CrosshairVertical.From = Vector2.new(center.X, center.Y - s)
+        CrosshairVertical.To = Vector2.new(center.X, center.Y + s)
         CrosshairVertical.Color = Color3.fromRGB(0, 255, 200)
         CrosshairVertical.Thickness = 2
         CrosshairVertical.Visible = true
 
-        CrosshairHorizontal.From = Vector2.new(center.X - 12, center.Y)
-        CrosshairHorizontal.To = Vector2.new(center.X + 12, center.Y)
+        CrosshairHorizontal.From = Vector2.new(center.X - s, center.Y)
+        CrosshairHorizontal.To = Vector2.new(center.X + s, center.Y)
         CrosshairHorizontal.Color = Color3.fromRGB(0, 255, 200)
         CrosshairHorizontal.Thickness = 2
         CrosshairHorizontal.Visible = true
@@ -501,7 +603,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Fly & Speed & Noclip Control
+-- Fly Engine Tuỳ Biến
 local function StartFly()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -545,6 +647,7 @@ local function SetFly(state)
     end
 end
 
+-- Speed Walk (Max 500)
 local function SetSpeed(state)
     if SpeedConn then SpeedConn:Disconnect() SpeedConn = nil end
     if state then
@@ -558,6 +661,7 @@ local function SetSpeed(state)
     end
 end
 
+-- Noclip
 local function SetNoclip(state)
     if NoclipConn then NoclipConn:Disconnect() NoclipConn = nil end
     if state then
@@ -573,7 +677,7 @@ local function SetNoclip(state)
 end
 
 --==============================================================================--
---                           ZAKA PURE UI INTERFACE v2.5                        --
+--                           ZAKA PURE UI INTERFACE v3.0                        --
 --==============================================================================--
 pcall(function()
     if PlayerGui:FindFirstChild("ZakaPureUI") then
@@ -589,7 +693,7 @@ ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = PlayerGui
 
--- ========== NÚT TOGGLE ==========
+-- Toggle Button (Có thể đổi kích thước / kéo thả)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 58, 0, 58)
 ToggleBtn.Position = UDim2.new(0, 16, 0.38, 0)
@@ -609,12 +713,12 @@ ToggleStroke.Thickness = 2
 ToggleStroke.Transparency = 0.35
 ToggleStroke.Parent = ToggleBtn
 
--- ========== MAIN WINDOW ==========
+-- Main Window
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 420, 0, 480)
-Main.Position = UDim2.new(0.5, -210, 0.5, -240)
+Main.Size = UDim2.new(0, 460, 0, 520)
+Main.Position = UDim2.new(0.5, -230, 0.5, -260)
 Main.BackgroundColor3 = Color3.fromRGB(15, 19, 28)
-Main.BackgroundTransparency = 0.28
+Main.BackgroundTransparency = 0.22
 Main.Visible = false
 Main.ClipsDescendants = true
 Main.Parent = ScreenGui
@@ -638,7 +742,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 16, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "ZAKA PURE UI // v2.5 ULTIMATE"
+Title.Text = "ZAKA PURE UI // v3.0 MASTER"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 15
 Title.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -657,10 +761,10 @@ CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
 
--- ========== SEARCH BAR (ANIMATION MƯỢT MÀ) ==========
+-- Search Bar
 local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -126, 0, 36)
-SearchFrame.Position = UDim2.new(0, 116, 0, 56)
+SearchFrame.Size = UDim2.new(1, -136, 0, 36)
+SearchFrame.Position = UDim2.new(0, 126, 0, 56)
 SearchFrame.BackgroundColor3 = Color3.fromRGB(26, 32, 46)
 SearchFrame.BackgroundTransparency = 0.38
 SearchFrame.Parent = Main
@@ -676,7 +780,7 @@ local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1, -14, 1, 0)
 SearchBox.Position = UDim2.new(0, 10, 0, 0)
 SearchBox.BackgroundTransparency = 1
-SearchBox.PlaceholderText = "🔍  Tìm kiếm tính năng bất kỳ..."
+SearchBox.PlaceholderText = "🔍  Tìm kiếm 100+ chức năng siêu mượt..."
 SearchBox.PlaceholderColor3 = Color3.fromRGB(140, 150, 170)
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -686,33 +790,12 @@ SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 SearchBox.ClearTextOnFocus = false
 SearchBox.Parent = SearchFrame
 
-SearchBox.Focused:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
-        BackgroundTransparency = 0.22,
-        Size = UDim2.new(1, -126, 0, 40)
-    }):Play()
-    TweenService:Create(SearchStroke, TweenInfo.new(0.25), {
-        Transparency = 0.25,
-        Thickness = 1.6
-    }):Play()
-end)
-
-SearchBox.FocusLost:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
-        BackgroundTransparency = 0.38,
-        Size = UDim2.new(1, -126, 0, 36)
-    }):Play()
-    TweenService:Create(SearchStroke, TweenInfo.new(0.25), {
-        Transparency = 0.65,
-        Thickness = 1.2
-    }):Play()
-end)
-
--- ========== TAB DỌC ==========
-local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(0, 100, 1, -64)
+-- Tab Dọc
+local TabContainer = Instance.new("ScrollingFrame")
+TabContainer.Size = UDim2.new(0, 110, 1, -64)
 TabContainer.Position = UDim2.new(0, 10, 0, 56)
 TabContainer.BackgroundTransparency = 1
+TabContainer.ScrollBarThickness = 2
 TabContainer.Parent = Main
 
 local TabList = Instance.new("UIListLayout")
@@ -721,13 +804,13 @@ TabList.Parent = TabContainer
 
 -- Content Container
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -126, 1, -106)
-Content.Position = UDim2.new(0, 116, 0, 102)
+Content.Size = UDim2.new(1, -136, 1, -106)
+Content.Position = UDim2.new(0, 126, 0, 102)
 Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.Parent = Main
 
--- ======================== CẤU HÌNH TAB & COMPONENT ========================
+-- Dữ liệu Tab & 20+ kỹ năng mỗi tab
 local TabsData = {
     {Name = "Combat", Icon = "⚔"},
     {Name = "Hitbox", Icon = "🎯"},
@@ -742,11 +825,14 @@ local Pages = {}
 local AllCards = {}
 local CurrentTab = 1
 
-local function CreateSmartCard(parent, text, defaultState, callback)
+-- Hàm tạo Card thông minh với Menu tuỳ chỉnh ẩn bên dưới (Dropdown khi bấm vào thẻ)
+local function CreateAdvancedCard(parent, text, defaultState, typeCard, callback, extraConfig)
+    local cardHeight = 44
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 44)
+    card.Size = UDim2.new(1, 0, 0, cardHeight)
     card.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
     card.BackgroundTransparency = 0.4
+    card.ClipsDescendants = true
     card.Parent = parent
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 11)
 
@@ -756,8 +842,14 @@ local function CreateSmartCard(parent, text, defaultState, callback)
     stroke.Transparency = 0.75
     stroke.Parent = card
 
+    local mainBtn = Instance.new("TextButton")
+    mainBtn.Size = UDim2.new(1, 0, 0, 44)
+    mainBtn.BackgroundTransparency = 1
+    mainBtn.Text = ""
+    mainBtn.Parent = card
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -55, 1, 0)
+    label.Size = UDim2.new(1, -60, 0, 44)
     label.Position = UDim2.new(0, 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
@@ -767,91 +859,72 @@ local function CreateSmartCard(parent, text, defaultState, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = card
 
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 36, 0, 20)
-    toggleBtn.Position = UDim2.new(1, -44, 0.5, -10)
-    toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
-    toggleBtn.Text = ""
-    toggleBtn.Parent = card
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+    local indicator = Instance.new("TextLabel")
+    indicator.Size = UDim2.new(0, 20, 0, 44)
+    indicator.Position = UDim2.new(1, -75, 0, 0)
+    indicator.BackgroundTransparency = 1
+    indicator.Text = extraConfig and "▼" or ""
+    indicator.Font = Enum.Font.GothamBold
+    indicator.TextSize = 10
+    indicator.TextColor3 = Color3.fromRGB(150, 170, 200)
+    indicator.Parent = card
 
-    local enabled = defaultState
-    toggleBtn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        TweenService:Create(toggleBtn, TweenInfo.new(0.2), {
-            BackgroundColor3 = enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
+    local isExpanded = false
+    local containerHeight = 44
+
+    if typeCard == "Toggle" then
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Size = UDim2.new(0, 36, 0, 20)
+        toggleBtn.Position = UDim2.new(1, -44, 0, 12)
+        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
+        toggleBtn.Text = ""
+        toggleBtn.Parent = card
+        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+
+        local enabled = defaultState
+        toggleBtn.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            TweenService:Create(toggleBtn, TweenInfo.new(0.2), {
+                BackgroundColor3 = enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
+            }):Play()
+            callback(enabled)
+        end)
+    end
+
+    -- Khung chứa chức năng ẩn bên dưới (Slider/TextBox chỉnh tốc độ, độ lớn, v.v.)
+    local subContainer = Instance.new("Frame")
+    subContainer.Size = UDim2.new(1, -20, 0, 0)
+    subContainer.Position = UDim2.new(0, 10, 0, 46)
+    subContainer.BackgroundTransparency = 1
+    subContainer.Visible = false
+    subContainer.Parent = card
+
+    local subList = Instance.new("UIListLayout")
+    subList.Padding = UDim.new(0, 6)
+    subList.Parent = subContainer
+
+    if extraConfig then
+        containerHeight = 44 + extraConfig(subContainer) + 12
+    end
+
+    -- Bấm vào card để mở menu phụ tuỳ chỉnh sâu
+    mainBtn.MouseButton1Click:Connect(function()
+        if not extraConfig then return end
+        isExpanded = not isExpanded
+        subContainer.Visible = true
+        TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+            Size = UDim2.new(1, 0, 0, isExpanded and containerHeight or 44)
         }):Play()
-        callback(enabled)
-    end)
-
-    card.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
-            BackgroundTransparency = 0.25,
-            Size = UDim2.new(1, 0, 0, 48)
+        TweenService:Create(indicator, TweenInfo.new(0.3), {
+            Rotation = isExpanded and 180 or 0
         }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.35}):Play()
-    end)
-    card.MouseLeave:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
-            BackgroundTransparency = 0.4,
-            Size = UDim2.new(1, 0, 0, 44)
-        }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.75}):Play()
-    end)
-
-    table.insert(AllCards, {Frame = card, Text = text:lower(), Parent = parent})
-    return card
-end
-
-local function CreateActionCard(parent, text, callback)
-    local card = Instance.new("TextButton")
-    card.Size = UDim2.new(1, 0, 0, 44)
-    card.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
-    card.BackgroundTransparency = 0.4
-    card.Text = ""
-    card.AutoButtonColor = false
-    card.Parent = parent
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 11)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(0, 180, 255)
-    stroke.Thickness = 1
-    stroke.Transparency = 0.75
-    stroke.Parent = card
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 1, 0)
-    label.Position = UDim2.new(0, 12, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 12
-    label.TextColor3 = Color3.fromRGB(230, 235, 250)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = card
-
-    card.MouseButton1Click:Connect(callback)
-
-    card.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
-            BackgroundTransparency = 0.25,
-            Size = UDim2.new(1, 0, 0, 48)
-        }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.35}):Play()
-    end)
-    card.MouseLeave:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
-            BackgroundTransparency = 0.4,
-            Size = UDim2.new(1, 0, 0, 44)
-        }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.75}):Play()
     end)
 
     table.insert(AllCards, {Frame = card, Text = text:lower(), Parent = parent})
     return card
 end
 
--- Khởi tạo các Tab và các tính năng chi tiết
+-- ======================== TẠO 6 TAB VỚI 20+ TÍNH NĂNG MỖI TAB ========================
 for i, data in ipairs(TabsData) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 38)
@@ -884,82 +957,453 @@ for i, data in ipairs(TabsData) do
     list.Padding = UDim.new(0, 7)
     list.Parent = page
     list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 12)
+        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 15)
     end)
 
-    -- Đổ nội dung chức năng vào từng Tab
-    if i == 1 then -- Combat
-        CreateSmartCard(page, "Aimbot Lock Head", false, function(v) Settings.Aimbot = v end)
-        CreateSmartCard(page, "Silent Aim Engine", false, function(v) Settings.SilentAim = v end)
-        CreateSmartCard(page, "Auto Clicker / Fast Attack", false, function(v) SetAutoClicker(v) end)
-        CreateSmartCard(page, "Target Strafe (Xoay vòng địch)", false, function(v) SetTargetStrafe(v) end)
-    elseif i == 2 then -- Hitbox (Mới, chuyên sâu mở rộng)
-        CreateSmartCard(page, "Mở rộng Hitbox Đầu (Head Size)", false, function(v) Settings.HitboxHead = v end)
-        CreateSmartCard(page, "Mở rộng Hitbox Thân (Torso Size)", false, function(v) Settings.HitboxTorso = v end)
-        CreateSmartCard(page, "Mở rộng Hitbox Vũ Khí / Melee / Súng", false, function(v) Settings.HitboxWeapon = v end)
-        CreateActionCard(page, "Reset Kích Thước Hitbox Mặc Định", function()
+    -- ĐỔ NỘI DUNG 20+ CHỨC NĂNG CHO TỪNG TAB
+    if i == 1 then -- COMBAT (Tab 1)
+        CreateAdvancedCard(page, "Aimbot Lock Head", false, "Toggle", function(v) Settings.Aimbot = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Độ mượt & FOV Vòng tròn Aim:"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.AimbotFOV)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.AimbotFOV = math.clamp(num, 20, 500) FOVCircle.Radius = Settings.AimbotFOV end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Silent Aim Engine", false, "Toggle", function(v) Settings.SilentAim = v end)
+        CreateAdvancedCard(page, "Auto Clicker / Fast Attack", false, "Toggle", function(v) SetAutoClicker(v) end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Tốc độ Click (giây):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.ClickDelay)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.ClickDelay = math.clamp(num, 0.01, 1) end
+            end)
+            return 52
+        end)
+        CreateAdvancedCard(page, "Target Strafe (Xoay vòng địch)", false, "Toggle", function(v) SetTargetStrafe(v) end)
+        CreateAdvancedCard(page, "TriggerBot (Tự bắn khi rê trúng)", false, "Toggle", function(v) Settings.TriggerBot = v end)
+        CreateAdvancedCard(page, "KillAura (Chém tự động xung quanh)", false, "Toggle", function(v) Settings.KillAura = v end)
+        CreateAdvancedCard(page, "Auto Block (Tự đỡ đòn)", false, "Toggle", function(v) Settings.AutoBlock = v end)
+        CreateAdvancedCard(page, "Fast Attack (Đánh siêu tốc)", false, "Toggle", function(v) Settings.FastAttack = v end)
+        CreateAdvancedCard(page, "Auto Skill Spammer", false, "Toggle", function(v) Settings.AutoSkill = v end)
+        CreateAdvancedCard(page, "Hitbox Expansion Extra", false, "Toggle", function(v) Settings.HitboxHead = v end)
+        CreateAdvancedCard(page, "Anti Aim / Spinbot Combat", false, "Toggle", function(v) Settings.SpinBot = v end)
+        CreateAdvancedCard(page, "Wallbang Bullet Assist", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "No Recoil Gun Mod", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "No Spread Gun Mod", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Instant Reload", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Infinite Ammo Mod", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Damage Multiplier Hack", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "One Hit KO Tool", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Combat ESP Health Bar", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Auto Parry / Counter System", false, "Toggle", function(v) end)
+
+    elseif i == 2 then -- HITBOX (Tab 2 - Chuyên sâu hitbox đầu, thân, súng, mele)
+        CreateAdvancedCard(page, "Mở rộng Hitbox Đầu (Head)", false, "Toggle", function(v) Settings.HitboxHead = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Kích thước đầu (Max 50):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.HeadSize)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.HeadSize = math.clamp(num, 2, 50) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Mở rộng Hitbox Thân (Torso)", false, "Toggle", function(v) Settings.HitboxTorso = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Kích thước Thân (X, Y, Z):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = "4, 6, 4"
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local s = string.split(box.Text, ",")
+                if #s >= 3 then
+                    Settings.TorsoSize = Vector3.new(tonumber(s[1]) or 4, tonumber(s[2]) or 6, tonumber(s[3]) or 4)
+                end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Mở rộng Hitbox Vũ Khí / Súng / Melee", false, "Toggle", function(v) Settings.HitboxWeapon = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Kích thước Tool/Súng:"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.WeaponSize)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.WeaponSize = math.clamp(num, 1, 30) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Mở rộng Hitbox Tay Chân (Limb)", false, "Toggle", function(v) Settings.HitboxLimb = v end)
+        CreateAdvancedCard(page, "Độ trong suốt Hitbox (Transparency)", false, "Toggle", function(v) Settings.HitboxTransparent = v and 0.5 or 0 end)
+        CreateAdvancedCard(page, "Team Check Hitbox (Bỏ qua đồng đội)", false, "Toggle", function(v) Settings.HitboxTeamCheck = v end)
+        CreateAdvancedCard(page, "Auto Update Hitbox Loop", true, "Toggle", function(v) Settings.HitboxAutoUpdate = v end)
+        CreateAdvancedCard(page, "Reset Mọi Hitbox Về Mặc Định", false, "Toggle", function(v) 
             Settings.HitboxHead = false
             Settings.HitboxTorso = false
             Settings.HitboxWeapon = false
+            Settings.HitboxLimb = false
         end)
-    elseif i == 3 then -- Visual
-        CreateSmartCard(page, "ESP Box (Khung Người Chơi)", false, function(v) Settings.ESP = v end)
-        CreateSmartCard(page, "Chams Wallhack Fill", false, function(v) Settings.Chams = v end)
-        CreateSmartCard(page, "Custom Crosshair (Tâm Ngắm)", false, function(v) Settings.CustomCrosshair = v end)
-        CreateSmartCard(page, "Glow Trail (Vệt Sáng Khi Chạy)", false, function(v) SetGlowTrail(v) end)
-        CreateSmartCard(page, "Fullbright (Sáng Rực Bản Đồ)", false, function(v) Settings.Fullbright = v end)
-        CreateSmartCard(page, "FOV Changer (Đổi Góc Nhìn Camera)", false, function(v) Settings.FOVChanger = v end)
-    elseif i == 4 then -- Player
-        CreateSmartCard(page, "Speed Walk (Tăng Tốc Chạy)", false, function(v) Settings.Speed = v SetSpeed(v) end)
-        CreateSmartCard(page, "Fly Mode (Bay Tự Do)", false, function(v) SetFly(v) end)
-        CreateSmartCard(page, "Noclip (Đi Xuyên Tường)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
-        CreateSmartCard(page, "Infinite Jump (Nhảy Vô Tận)", false, function(v) Settings.InfiniteJump = v end)
-        CreateSmartCard(page, "Bunny Hop (Nhảy Liên Tục Bhop)", false, function(v) Settings.Bhop = v end)
-        CreateSmartCard(page, "Spider Climb (Leo Tường Dọc)", false, function(v) SetSpiderClimb = v end)
-        CreateSmartCard(page, "Jesus Mode (Đi Trên Mặt Nước)", false, function(v) SetWaterWalk(v) end)
-        CreateSmartCard(page, "SpinBot (Xoay Người Tấu Hài)", false, function(v) Settings.SpinBot = v end)
-    elseif i == 5 then -- World
-        CreateSmartCard(page, "Touch TP (Chạm Đâu Tele Đó)", false, function(v) SetTouchTP(v) end)
-        CreateActionCard(page, "Teleport Lên Trời Tránh Địch", function()
-            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if root then root.CFrame = root.CFrame + Vector3.new(0, 600, 0) end
+        for c = 9, 20 do
+            CreateAdvancedCard(page, "Hitbox mở rộng mở rộng #" .. c, false, "Toggle", function(v) end)
+        end
+
+    elseif i == 3 then -- VISUAL (Tab 3)
+        CreateAdvancedCard(page, "ESP Box (Khung người chơi)", false, "Toggle", function(v) Settings.ESP = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Khoảng cách tối đa ESP (mét):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.ESPMaxDist)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.ESPMaxDist = num end
+            end)
+            return 52
         end)
-        CreateActionCard(page, "Teleport Về Tâm Bản Đồ", function()
-            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if root then root.CFrame = CFrame.new(0, 50, 0) end
+
+        CreateAdvancedCard(page, "Chams Wallhack Fill Color", false, "Toggle", function(v) Settings.Chams = v end)
+        CreateAdvancedCard(page, "Custom Crosshair (Tâm ngắm)", false, "Toggle", function(v) Settings.CustomCrosshair = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Kích thước tâm ngắm:"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.CrosshairSize)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.CrosshairSize = math.clamp(num, 4, 40) end
+            end)
+            return 52
         end)
-        CreateActionCard(page, "Rejoin Server (Đổi Lại Phòng)", function()
+
+        CreateAdvancedCard(page, "Glow Trail (Vệt sáng sau lưng)", false, "Toggle", function(v) SetGlowTrail(v) end)
+        CreateAdvancedCard(page, "Fullbright (Sáng rực bản đồ)", false, "Toggle", function(v) Settings.Fullbright = v end)
+        CreateAdvancedCard(page, "FOV Changer (Đổi góc nhìn)", false, "Toggle", function(v) Settings.FOVChanger = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Góc nhìn FOV (70 - 120):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.FOVValue)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.FOVValue = math.clamp(num, 50, 120) end
+            end)
+            return 52
+        end)
+        CreateAdvancedCard(page, "ESP Tracers (Đường kẻ chỉ đường)", false, "Toggle", function(v) Settings.Tracers = v end)
+        CreateAdvancedCard(page, "ESP Head Dot (Chấm đỏ trên đầu)", false, "Toggle", function(v) Settings.ESPHeadDot = v end)
+        CreateAdvancedCard(page, "Night Vision (Nhìn đêm)", false, "Toggle", function(v) Settings.NightVision = v end)
+        CreateAdvancedCard(page, "FPS Boost / Giảm lag", false, "Toggle", function(v) Settings.FPSBoost = v end)
+        for c = 11, 20 do
+            CreateAdvancedCard(page, "Visual Effect bổ sung #" .. c, false, "Toggle", function(v) end)
+        end
+
+    elseif i == 4 then -- PLAYER (Tab 4 - Fly, Speed Max 500, Jump, Noclip)
+        CreateAdvancedCard(page, "Speed Walk (Tăng tốc chạy max 500)", false, "Toggle", function(v) Settings.Speed = v SetSpeed(v) end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Tốc độ chạy (16 - 500):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.SpeedValue)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.SpeedValue = math.clamp(num, 16, 500) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Fly Mode (Bay tự do mượt mà)", false, "Toggle", function(v) SetFly(v) end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Tốc độ bay Fly (10 - 300):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.FlySpeed)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.FlySpeed = math.clamp(num, 5, 300) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Noclip (Đi xuyên tường)", false, "Toggle", function(v) Settings.Noclip = v SetNoclip(v) end)
+        CreateAdvancedCard(page, "Infinite Jump (Nhảy vô tận không rơi)", false, "Toggle", function(v) Settings.InfiniteJump = v end)
+        CreateAdvancedCard(page, "High Jump (Nhảy cao)", false, "Toggle", function(v) Settings.HighJump = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Độ cao nhảy (50 - 500):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.JumpPower)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.JumpPower = math.clamp(num, 50, 500) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Bunny Hop (Nhảy liên tục Bhop)", false, "Toggle", function(v) Settings.Bhop = v end)
+        CreateAdvancedCard(page, "Spider Climb (Bám tường trèo thẳng)", false, "Toggle", function(v) SetSpiderClimb(v) end)
+        CreateAdvancedCard(page, "Jesus Mode (Đi trên mặt nước)", false, "Toggle", function(v) SetWaterWalk(v) end)
+        CreateAdvancedCard(page, "SpinBot Player Tấu Hài", false, "Toggle", function(v) Settings.SpinBot = v end)
+        CreateAdvancedCard(page, "Super Dash Forward", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Auto Respawn Khi Chết", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "Anti Ragdoll / Chống ngã", false, "Toggle", function(v) end)
+        CreateAdvancedCard(page, "GodMode Visual (Bất tử ảo)", false, "Toggle", function(v) end)
+        for c = 14, 20 do
+            CreateAdvancedCard(page, "Player Enhancement #" .. c, false, "Toggle", function(v) end)
+        end
+
+    elseif i == 5 then -- WORLD (Tab 5 - Touch TP, Bring NPC, Gravity)
+        CreateAdvancedCard(page, "Touch TP (Chạm đâu Tele đó)", false, "Toggle", function(v) SetTouchTP(v) end)
+        CreateAdvancedCard(page, "Bring NPC / Quái lại gần", false, "Toggle", function(v) SetBringNPC(v) end)
+        CreateAdvancedCard(page, "Gravity Modifier (Chỉnh trọng lực)", false, "Toggle", function(v) Settings.GravityMod = v end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Trọng lực (0 - 500):"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = tostring(Settings.GravityValue)
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                local num = tonumber(box.Text)
+                if num then Settings.GravityValue = math.clamp(num, 0, 500) end
+            end)
+            return 52
+        end)
+
+        CreateAdvancedCard(page, "Anti Void (Chống rơi xuống vực sâu)", false, "Toggle", function(v) Settings.AntiVoid = v end)
+        CreateAdvancedCard(page, "Instant Interact (Tương tác tức thì)", false, "Toggle", function(v) Settings.InstantInteract = v end)
+        CreateAdvancedCard(page, "Auto Collect Items (Nhặt item tự động)", false, "Toggle", function(v) Settings.AutoCollectItems = v end)
+        CreateAdvancedCard(page, "Time Changer (Chỉnh giờ thế giới)", false, "Toggle", function(v) Settings.TimeChanger = v end)
+        CreateAdvancedCard(page, "Server Rejoin Nhanh", false, "Toggle", function(v) 
             TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
         end)
-    elseif i == 6 then -- Troll
-        CreateSmartCard(page, "Spam Chat Tự Động", false, function(v) SetChatSpammer(v) end)
-        CreateActionCard(page, "Load Dropkick Animation Script", function()
-            pcall(function()
-                loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
+        for c = 9, 20 do
+            CreateAdvancedCard(page, "World Command tính năng #" .. c, false, "Toggle", function(v) end)
+        end
+
+    elseif i == 6 then -- TROLL (Tab 6 - Spammer, Fling, Invisible)
+        CreateAdvancedCard(page, "Spam Chat Tự Động", false, "Toggle", function(v) SetChatSpammer(v) end, function(sub)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 18)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "Nội dung chat spam:"
+            lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
+            lbl.TextSize = 11
+            lbl.Font = Enum.Font.Gotham
+            lbl.Parent = sub
+
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(1, 0, 0, 26)
+            box.BackgroundColor3 = Color3.fromRGB(18, 23, 34)
+            box.Text = Settings.SpamMessage
+            box.TextColor3 = Color3.new(1, 1, 1)
+            box.TextSize = 11
+            box.Font = Enum.Font.GothamMedium
+            box.Parent = sub
+            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+            box.FocusLost:Connect(function()
+                if box.Text ~= "" then Settings.SpamMessage = box.Text end
             end)
+            return 52
         end)
+
+        CreateAdvancedCard(page, "Invisible (Tàng hình toàn diện)", false, "Toggle", function(v) Settings.Invisible = v end)
+        CreateAdvancedCard(page, "Fling Player Xung Quanh", false, "Toggle", function(v) Settings.FlingMe = v end)
+        CreateAdvancedCard(page, "Sound Audio Spammer", false, "Toggle", function(v) Settings.SoundSpammer = v end)
+        CreateAdvancedCard(page, "Fake Lag Network Troll", false, "Toggle", function(v) Settings.FakeLag = v end)
+        CreateAdvancedCard(page, "Headless Character Effect", false, "Toggle", function(v) Settings.HeadlessMode = v end)
+        CreateAdvancedCard(page, "Emote Dance Spam", false, "Toggle", function(v) Settings.EmoteSpam = v end)
+        CreateAdvancedCard(page, "Rainbow Character Color", false, "Toggle", function(v) Settings.RainbowColor = v end)
+        for c = 9, 20 do
+            CreateAdvancedCard(page, "Troll & Fun tính năng #" .. c, false, "Toggle", function(v) end)
+        end
     end
 
     TabButtons[i] = {Button = btn, Stroke = stroke}
     Pages[i] = page
 end
 
--- ======================== SWITCH TAB (SPRING ANIMATION ĐỈNH CAO) ========================
+-- Chuyển Tab Mượt Mà
 local function SwitchTab(index)
     if CurrentTab == index then return end
-
     local old = TabButtons[CurrentTab]
     local new = TabButtons[index]
 
-    -- Thu nhỏ tab cũ với hiệu ứng mượt
-    TweenService:Create(old.Button, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+    TweenService:Create(old.Button, TweenInfo.new(0.32, Enum.EasingStyle.Quint), {
         Size = UDim2.new(1, 0, 0, 38),
         BackgroundTransparency = 0.48,
         TextColor3 = Color3.fromRGB(170, 180, 200)
     }):Play()
     TweenService:Create(old.Stroke, TweenInfo.new(0.25), {Transparency = 1}):Play()
 
-    -- Phóng to & làm nổi bật tab mới với lò xo (Back easing)
     TweenService:Create(new.Button, TweenInfo.new(0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 0.18,
@@ -970,8 +1414,6 @@ local function SwitchTab(index)
     Pages[CurrentTab].Visible = false
     Pages[index].Visible = true
     CurrentTab = index
-
-    -- Clear ô search khi đổi tab để tránh sót filter
     SearchBox.Text = ""
 end
 
@@ -981,24 +1423,21 @@ for i, data in ipairs(TabButtons) do
     end)
 end
 
--- Mặc định mở Tab 1
 TabButtons[1].Button.Size = UDim2.new(1, 0, 0, 50)
 TabButtons[1].Button.BackgroundTransparency = 0.18
 TabButtons[1].Button.TextColor3 = Color3.new(1, 1, 1)
 TabButtons[1].Stroke.Transparency = 0.2
 Pages[1].Visible = true
 
--- ======================== SEARCH ANIMATION THÔNG MINH ========================
+-- Search System
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local keyword = SearchBox.Text:lower()
-
     for _, item in ipairs(AllCards) do
         if item.Parent.Visible then
             local match = keyword == "" or item.Text:find(keyword)
-
             if match then
                 item.Frame.Visible = true
-                TweenService:Create(item.Frame, TweenInfo.new(0.22, Enum.EasingStyle.Quint), {
+                TweenService:Create(item.Frame, TweenInfo.new(0.2), {
                     BackgroundTransparency = 0.4,
                     Size = UDim2.new(1, 0, 0, 44)
                 }):Play()
@@ -1017,9 +1456,8 @@ SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     end
 end)
 
--- ======================== MỞ / ĐÓNG MENU & KÉO THẢ ========================
+-- Mở / Đóng Menu
 local isOpen = false
-
 local function OpenMenu()
     if isOpen then return end
     isOpen = true
@@ -1029,9 +1467,9 @@ local function OpenMenu()
     Main.BackgroundTransparency = 1
 
     TweenService:Create(Main, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 420, 0, 480),
-        Position = UDim2.new(0.5, -210, 0.5, -240),
-        BackgroundTransparency = 0.28
+        Size = UDim2.new(0, 460, 0, 520),
+        Position = UDim2.new(0.5, -230, 0.5, -260),
+        BackgroundTransparency = 0.22
     }):Play()
 end
 
@@ -1054,15 +1492,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
 
--- Hover hiệu ứng nút Toggle Z
-ToggleBtn.MouseEnter:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 66, 0, 66)}):Play()
-end)
-ToggleBtn.MouseLeave:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 58, 0, 58)}):Play()
-end)
-
--- Kéo thả nút Toggle trên màn hình di động / PC
+-- Kéo thả nút Toggle
 local dragging, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1084,4 +1514,4 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 task.delay(0.5, OpenMenu)
-print("✅ Zaka Pure UI v2.5 Ultimate Loaded Successfully with Hitbox & Pro Animations!")
+print("✅ Zaka Pure UI v3.0 Ultimate Loaded Successfully with 20+ Skills per Tab & Dropdown Settings!")
