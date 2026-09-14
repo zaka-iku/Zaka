@@ -1,8 +1,9 @@
 --[[
     ╔════════════════════════════════════════════════════════════════════════════════╗
-    ║               ZAKA PURE UI - ULTIMATE SMART VERTICAL & ANIMATION               ║
-    ║   - Giữ nguyên toàn bộ khung UI mượt mà, trong suốt, Tab dọc phóng to/thu nhỏ   ║
-    ║   - Tích hợp đầy đủ tính năng thật: Combat, ESP, Movement, World, Troll        ║
+    ║             ZAKA PURE UI v2.5 - ULTRA SMART & GOD-TIER ANIMATIONS              ║
+    ║   - Hiệu ứng chuyển động Spring Physics & Tween siêu mượt                       ║
+    ║   - Tab dọc thông minh tự co dãn, đổi màu & Glow động                          ║
+    ║   - Hàng loạt tính năng nâng cao: Hitbox tuỳ chỉnh toàn diện, Visuals, World...  ║
     ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -25,19 +26,24 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 --                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
 --==============================================================================--
 local Settings = {
-    -- Combat
+    -- Combat & Hitbox
     Aimbot = false,
     AimbotFOV = 120,
-    AimbotSmooth = 0.2,
+    AimbotSmooth = 0.25,
     SilentAim = false,
     AutoClicker = false,
     TargetStrafe = false,
-    StrafeDistance = 10,
-    StrafeSpeed = 5,
-    HitboxExpander = false,
-    HitboxSize = 20,
-    InfiniteAmmo = false,
-    FastFire = false,
+    StrafeDistance = 12,
+    StrafeSpeed = 6,
+    
+    -- Hitbox mở rộng chi tiết
+    HitboxHead = false,
+    HeadSize = 15,
+    HitboxTorso = false,
+    TorsoSize = Vector3.new(4, 6, 4),
+    HitboxWeapon = false,
+    WeaponSize = 5,
+    HitboxTransparent = 0.5,
 
     -- Visuals & ESP
     ESP = false,
@@ -45,40 +51,49 @@ local Settings = {
     ESPName = true,
     ESPHealth = true,
     ESPDistance = true,
-    ESPTracers = false,
-    ESPMaxDist = 3000,
+    ESPMaxDist = 3500,
     Chams = false,
-    ChamsColor = Color3.fromRGB(0, 180, 255),
+    ChamsColor = Color3.fromRGB(0, 200, 255),
     CustomCrosshair = false,
     GlowTrail = false,
+    Fullbright = false,
+    FOVChanger = false,
+    FOVValue = 90,
 
     -- Movement & Physics
     Speed = false,
-    SpeedValue = 28,
+    SpeedValue = 26,
     Fly = false,
     FlySpeed = 50,
     Noclip = false,
     InfiniteJump = false,
     SpinBot = false,
-    SpinSpeed = 40,
+    SpinSpeed = 45,
     SpiderClimb = false,
     WaterWalk = false,
+    Bhop = false,
 
-    -- Troll & Utilities
-    ChatSpammer = false,
-    SpamMessage = "Zaka Pure UI On Top!",
-    AntiFling = false,
+    -- World & Teleport
     TouchTP = false,
+    NoClipParts = false,
+    ServerHop = false,
+
+    -- Troll & Fun
+    ChatSpammer = false,
+    SpamMessage = "Zaka Pure UI v2.5 - Ultimate Performance!",
+    Invisible = false,
+    FlingMe = false,
 }
 
 --==============================================================================--
---                            LOGIC TÍNH NĂNG THẬT                              --
+--                            LOGIC TÍNH NĂNG NÂNG CAO                           --
 --==============================================================================--
-local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn, AmmoConn, FastFireConn
+local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn, BhopConn
 local BodyGyro, BodyVelocity
 local ESPObjects = {}
 local ChamsObjects = {}
 local OriginalFogEnd = Lighting.FogEnd
+local OriginalAmbient = Lighting.Ambient
 
 -- Anti-AFK
 LocalPlayer.Idled:Connect(function()
@@ -86,11 +101,36 @@ LocalPlayer.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Infinite Jump
+-- Infinite Jump & Bhop
 UserInputService.JumpRequest:Connect(function()
     if Settings.InfiniteJump then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- Bhop (Bunny Hop)
+BhopConn = RunService.RenderStepped:Connect(function()
+    if Settings.Bhop then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum and hum.FloorMaterial ~= Enum.Material.Air then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Fullbright
+RunService.RenderStepped:Connect(function()
+    if Settings.Fullbright then
+        Lighting.Ambient = Color3.new(1, 1, 1)
+        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+        Lighting.Brightness = 2
+    else
+        Lighting.Ambient = OriginalAmbient
+    end
+    
+    if Settings.FOVChanger then
+        Camera.FieldOfView = Settings.FOVValue
     end
 end)
 
@@ -121,7 +161,7 @@ local function SetWaterWalk(state)
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local root = char.HumanoidRootPart
-                local ray = Ray.new(root.Position, Vector3.new(0, -5, 0))
+                local ray = Ray.new(root.Position, Vector3.new(0, -6, 0))
                 local hit, pos, norm, mat = workspace:FindPartOnRay(ray, char)
                 if mat == Enum.Material.Water then
                     root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
@@ -144,7 +184,7 @@ local function SetSpiderClimb(state)
                 local ray = Ray.new(root.Position, root.CFrame.LookVector * 2.5)
                 local hit = workspace:FindPartOnRay(ray, char)
                 if hit then
-                    root.Velocity = Vector3.new(root.Velocity.X, 30, root.Velocity.Z)
+                    root.Velocity = Vector3.new(root.Velocity.X, 32, root.Velocity.Z)
                 end
             end
         end)
@@ -159,7 +199,7 @@ local function SetAutoClicker(state)
         AutoClickConn = RunService.RenderStepped:Connect(function()
             if Settings.AutoClicker then
                 VirtualUser:Button1Down(Vector2.new())
-                task.wait(0.05)
+                task.wait(0.04)
                 VirtualUser:Button1Up(Vector2.new())
             end
         end)
@@ -181,7 +221,7 @@ local function SetChatSpammer(state)
                         ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Settings.SpamMessage, "All")
                     end
                 end)
-                task.wait(2.5)
+                task.wait(2.2)
             end
         end)
     end
@@ -207,7 +247,7 @@ local function SetTargetStrafe(state)
                     end
                 end
             end
-            if target and minDist <= 40 then
+            if target and minDist <= 45 then
                 angle = angle + math.rad(Settings.StrafeSpeed)
                 local offset = Vector3.new(math.cos(angle) * Settings.StrafeDistance, 0, math.sin(angle) * Settings.StrafeDistance)
                 myRoot.CFrame = CFrame.new(target.Position + offset, target.Position)
@@ -234,9 +274,9 @@ local function SetGlowTrail(state)
         trail.Name = "PlayerGlowTrail"
         trail.Attachment0 = a0
         trail.Attachment1 = a1
-        trail.Lifetime = 0.9
-        trail.Color = ColorSequence.new(Color3.fromRGB(0, 180, 255), Color3.fromRGB(220, 0, 255))
-        trail.Transparency = NumberSequence.new(0.15, 1)
+        trail.Lifetime = 0.8
+        trail.Color = ColorSequence.new(Color3.fromRGB(0, 180, 255), Color3.fromRGB(255, 0, 220))
+        trail.Transparency = NumberSequence.new(0.1, 1)
         trail.Parent = char
     else
         if char:FindFirstChild("PlayerGlowTrail") then char.PlayerGlowTrail:Destroy() end
@@ -246,6 +286,56 @@ local function SetGlowTrail(state)
         end
     end
 end
+
+-- Advanced Hitbox Expansion (Head, Torso, Weapon, Tools)
+RunService.RenderStepped:Connect(function()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local char = plr.Character
+            
+            -- Head Hitbox
+            local head = char:FindFirstChild("Head")
+            if head then
+                if Settings.HitboxHead then
+                    head.Size = Vector3.new(Settings.HeadSize, Settings.HeadSize, Settings.HeadSize)
+                    head.Transparency = Settings.HitboxTransparent
+                    head.CanCollide = false
+                else
+                    head.Size = Vector3.new(2, 1, 1)
+                    head.Transparency = 0
+                end
+            end
+
+            -- Torso Hitbox
+            local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+            if torso then
+                if Settings.HitboxTorso then
+                    torso.Size = Settings.TorsoSize
+                    torso.Transparency = Settings.HitboxTransparent
+                    torso.CanCollide = false
+                else
+                    torso.Size = Vector3.new(2, 2, 1)
+                    torso.Transparency = 0
+                end
+            end
+
+            -- Weapon / Tool Hitbox (Mở rộng kích thước tool/vũ khí đang cầm trên tay đối thủ)
+            if Settings.HitboxWeapon then
+                for _, tool in ipairs(char:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        for _, part in ipairs(tool:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.Size = Vector3.new(Settings.WeaponSize, Settings.WeaponSize, Settings.WeaponSize)
+                                part.Transparency = Settings.HitboxTransparent
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
 
 -- Aimbot & Silent Aim Drawing
 local FOVCircle = Drawing.new("Circle")
@@ -297,15 +387,15 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Settings.Aimbot or Settings.SilentAim
 
     if Settings.CustomCrosshair then
-        CrosshairVertical.From = Vector2.new(center.X, center.Y - 10)
-        CrosshairVertical.To = Vector2.new(center.X, center.Y + 10)
-        CrosshairVertical.Color = Color3.fromRGB(0, 255, 180)
+        CrosshairVertical.From = Vector2.new(center.X, center.Y - 12)
+        CrosshairVertical.To = Vector2.new(center.X, center.Y + 12)
+        CrosshairVertical.Color = Color3.fromRGB(0, 255, 200)
         CrosshairVertical.Thickness = 2
         CrosshairVertical.Visible = true
 
-        CrosshairHorizontal.From = Vector2.new(center.X - 10, center.Y)
-        CrosshairHorizontal.To = Vector2.new(center.X + 10, center.Y)
-        CrosshairHorizontal.Color = Color3.fromRGB(0, 255, 180)
+        CrosshairHorizontal.From = Vector2.new(center.X - 12, center.Y)
+        CrosshairHorizontal.To = Vector2.new(center.X + 12, center.Y)
+        CrosshairHorizontal.Color = Color3.fromRGB(0, 255, 200)
         CrosshairHorizontal.Thickness = 2
         CrosshairHorizontal.Visible = true
     else
@@ -317,18 +407,6 @@ RunService.RenderStepped:Connect(function()
         local targetHead = GetClosestPlayerHead()
         if targetHead then
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetHead.Position), Settings.AimbotSmooth)
-        end
-    end
-
-    if Settings.HitboxExpander then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
-                pcall(function()
-                    plr.Character.Head.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
-                    plr.Character.Head.Transparency = 0.6
-                    plr.Character.Head.CanCollide = false
-                end)
-            end
         end
     end
 
@@ -347,7 +425,7 @@ RunService.RenderStepped:Connect(function()
                     hl.Name = "ZakaChams"
                     hl.FillColor = Settings.ChamsColor
                     hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.FillTransparency = 0.3
+                    hl.FillTransparency = 0.35
                     hl.Parent = plr.Character
                     ChamsObjects[plr] = hl
                 end
@@ -495,7 +573,7 @@ local function SetNoclip(state)
 end
 
 --==============================================================================--
---                           ZAKA PURE UI INTERFACE                             --
+--                           ZAKA PURE UI INTERFACE v2.5                        --
 --==============================================================================--
 pcall(function()
     if PlayerGui:FindFirstChild("ZakaPureUI") then
@@ -513,7 +591,7 @@ ScreenGui.Parent = PlayerGui
 
 -- ========== NÚT TOGGLE ==========
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 56, 0, 56)
+ToggleBtn.Size = UDim2.new(0, 58, 0, 58)
 ToggleBtn.Position = UDim2.new(0, 16, 0.38, 0)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 ToggleBtn.BackgroundTransparency = 0.1
@@ -531,12 +609,12 @@ ToggleStroke.Thickness = 2
 ToggleStroke.Transparency = 0.35
 ToggleStroke.Parent = ToggleBtn
 
--- ========== MAIN ==========
+-- ========== MAIN WINDOW ==========
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 390, 0, 460)
-Main.Position = UDim2.new(0.5, -195, 0.5, -230)
-Main.BackgroundColor3 = Color3.fromRGB(18, 22, 32)
-Main.BackgroundTransparency = 0.32
+Main.Size = UDim2.new(0, 420, 0, 480)
+Main.Position = UDim2.new(0.5, -210, 0.5, -240)
+Main.BackgroundColor3 = Color3.fromRGB(15, 19, 28)
+Main.BackgroundTransparency = 0.28
 Main.Visible = false
 Main.ClipsDescendants = true
 Main.Parent = ScreenGui
@@ -544,32 +622,32 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = Color3.fromRGB(0, 180, 255)
-MainStroke.Thickness = 1.4
-MainStroke.Transparency = 0.45
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.4
 MainStroke.Parent = Main
 
 -- Header
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 46)
-Header.BackgroundColor3 = Color3.fromRGB(12, 15, 24)
-Header.BackgroundTransparency = 0.35
+Header.Size = UDim2.new(1, 0, 0, 48)
+Header.BackgroundColor3 = Color3.fromRGB(10, 13, 20)
+Header.BackgroundTransparency = 0.3
 Header.Parent = Main
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 18)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -50, 1, 0)
+Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 16, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "ZAKA PURE UI"
+Title.Text = "ZAKA PURE UI // v2.5 ULTIMATE"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 15
 Title.TextColor3 = Color3.fromRGB(240, 245, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -42, 0.5, -16)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
 CloseBtn.BackgroundTransparency = 0.35
 CloseBtn.Text = "×"
@@ -579,26 +657,26 @@ CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
 
--- ========== SEARCH BAR (ANIMATION ĐẸP) ==========
+-- ========== SEARCH BAR (ANIMATION MƯỢT MÀ) ==========
 local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -118, 0, 34)
-SearchFrame.Position = UDim2.new(0, 108, 0, 54)
-SearchFrame.BackgroundColor3 = Color3.fromRGB(30, 36, 50)
-SearchFrame.BackgroundTransparency = 0.4
+SearchFrame.Size = UDim2.new(1, -126, 0, 36)
+SearchFrame.Position = UDim2.new(0, 116, 0, 56)
+SearchFrame.BackgroundColor3 = Color3.fromRGB(26, 32, 46)
+SearchFrame.BackgroundTransparency = 0.38
 SearchFrame.Parent = Main
 Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 10)
 
 local SearchStroke = Instance.new("UIStroke")
 SearchStroke.Color = Color3.fromRGB(0, 180, 255)
 SearchStroke.Thickness = 1.2
-SearchStroke.Transparency = 0.7
+SearchStroke.Transparency = 0.65
 SearchStroke.Parent = SearchFrame
 
 local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1, -14, 1, 0)
 SearchBox.Position = UDim2.new(0, 10, 0, 0)
 SearchBox.BackgroundTransparency = 1
-SearchBox.PlaceholderText = "🔍  Tìm kiếm tính năng..."
+SearchBox.PlaceholderText = "🔍  Tìm kiếm tính năng bất kỳ..."
 SearchBox.PlaceholderColor3 = Color3.fromRGB(140, 150, 170)
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -609,31 +687,31 @@ SearchBox.ClearTextOnFocus = false
 SearchBox.Parent = SearchFrame
 
 SearchBox.Focused:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25), {
-        BackgroundTransparency = 0.25,
-        Size = UDim2.new(1, -118, 0, 38)
+    TweenService:Create(SearchFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+        BackgroundTransparency = 0.22,
+        Size = UDim2.new(1, -126, 0, 40)
     }):Play()
     TweenService:Create(SearchStroke, TweenInfo.new(0.25), {
-        Transparency = 0.3,
+        Transparency = 0.25,
         Thickness = 1.6
     }):Play()
 end)
 
 SearchBox.FocusLost:Connect(function()
-    TweenService:Create(SearchFrame, TweenInfo.new(0.25), {
-        BackgroundTransparency = 0.4,
-        Size = UDim2.new(1, -118, 0, 34)
+    TweenService:Create(SearchFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+        BackgroundTransparency = 0.38,
+        Size = UDim2.new(1, -126, 0, 36)
     }):Play()
     TweenService:Create(SearchStroke, TweenInfo.new(0.25), {
-        Transparency = 0.7,
+        Transparency = 0.65,
         Thickness = 1.2
     }):Play()
 end)
 
 -- ========== TAB DỌC ==========
 local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(0, 92, 1, -60)
-TabContainer.Position = UDim2.new(0, 10, 0, 54)
+TabContainer.Size = UDim2.new(0, 100, 1, -64)
+TabContainer.Position = UDim2.new(0, 10, 0, 56)
 TabContainer.BackgroundTransparency = 1
 TabContainer.Parent = Main
 
@@ -641,17 +719,18 @@ local TabList = Instance.new("UIListLayout")
 TabList.Padding = UDim.new(0, 7)
 TabList.Parent = TabContainer
 
--- Content
+-- Content Container
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -118, 1, -100)
-Content.Position = UDim2.new(0, 108, 0, 96)
+Content.Size = UDim2.new(1, -126, 1, -106)
+Content.Position = UDim2.new(0, 116, 0, 102)
 Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.Parent = Main
 
--- ======================== DỮ LIỆU & TẠO CARD ========================
+-- ======================== CẤU HÌNH TAB & COMPONENT ========================
 local TabsData = {
     {Name = "Combat", Icon = "⚔"},
+    {Name = "Hitbox", Icon = "🎯"},
     {Name = "Visual", Icon = "✦"},
     {Name = "Player", Icon = "◉"},
     {Name = "World",  Icon = "◈"},
@@ -666,8 +745,8 @@ local CurrentTab = 1
 local function CreateSmartCard(parent, text, defaultState, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, 0, 0, 44)
-    card.BackgroundColor3 = Color3.fromRGB(28, 34, 48)
-    card.BackgroundTransparency = 0.42
+    card.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
+    card.BackgroundTransparency = 0.4
     card.Parent = parent
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 11)
 
@@ -691,7 +770,7 @@ local function CreateSmartCard(parent, text, defaultState, callback)
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Size = UDim2.new(0, 36, 0, 20)
     toggleBtn.Position = UDim2.new(1, -44, 0.5, -10)
-    toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(45, 52, 68)
+    toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
     toggleBtn.Text = ""
     toggleBtn.Parent = card
     Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
@@ -700,21 +779,21 @@ local function CreateSmartCard(parent, text, defaultState, callback)
     toggleBtn.MouseButton1Click:Connect(function()
         enabled = not enabled
         TweenService:Create(toggleBtn, TweenInfo.new(0.2), {
-            BackgroundColor3 = enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(45, 52, 68)
+            BackgroundColor3 = enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(42, 48, 64)
         }):Play()
         callback(enabled)
     end)
 
     card.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {
-            BackgroundTransparency = 0.28,
+        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 0.25,
             Size = UDim2.new(1, 0, 0, 48)
         }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.4}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.35}):Play()
     end)
     card.MouseLeave:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {
-            BackgroundTransparency = 0.42,
+        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 0.4,
             Size = UDim2.new(1, 0, 0, 44)
         }):Play()
         TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.75}):Play()
@@ -727,8 +806,8 @@ end
 local function CreateActionCard(parent, text, callback)
     local card = Instance.new("TextButton")
     card.Size = UDim2.new(1, 0, 0, 44)
-    card.BackgroundColor3 = Color3.fromRGB(28, 34, 48)
-    card.BackgroundTransparency = 0.42
+    card.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
+    card.BackgroundTransparency = 0.4
     card.Text = ""
     card.AutoButtonColor = false
     card.Parent = parent
@@ -754,15 +833,15 @@ local function CreateActionCard(parent, text, callback)
     card.MouseButton1Click:Connect(callback)
 
     card.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {
-            BackgroundTransparency = 0.28,
+        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 0.25,
             Size = UDim2.new(1, 0, 0, 48)
         }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.4}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.35}):Play()
     end)
     card.MouseLeave:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.18), {
-            BackgroundTransparency = 0.42,
+        TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 0.4,
             Size = UDim2.new(1, 0, 0, 44)
         }):Play()
         TweenService:Create(stroke, TweenInfo.new(0.18), {Transparency = 0.75}):Play()
@@ -772,12 +851,12 @@ local function CreateActionCard(parent, text, callback)
     return card
 end
 
--- Tạo tab + page + chức năng thật
+-- Khởi tạo các Tab và các tính năng chi tiết
 for i, data in ipairs(TabsData) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 36)
-    btn.BackgroundColor3 = Color3.fromRGB(32, 38, 55)
-    btn.BackgroundTransparency = 0.5
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(28, 35, 50)
+    btn.BackgroundTransparency = 0.48
     btn.Text = data.Icon .. "  " .. data.Name
     btn.Font = Enum.Font.GothamMedium
     btn.TextSize = 12
@@ -805,45 +884,56 @@ for i, data in ipairs(TabsData) do
     list.Padding = UDim.new(0, 7)
     list.Parent = page
     list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 10)
+        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 12)
     end)
 
-    if i == 1 then
+    -- Đổ nội dung chức năng vào từng Tab
+    if i == 1 then -- Combat
         CreateSmartCard(page, "Aimbot Lock Head", false, function(v) Settings.Aimbot = v end)
         CreateSmartCard(page, "Silent Aim Engine", false, function(v) Settings.SilentAim = v end)
         CreateSmartCard(page, "Auto Clicker / Fast Attack", false, function(v) SetAutoClicker(v) end)
-        CreateSmartCard(page, "Target Strafe (Xoay Vòng)", false, function(v) SetTargetStrafe(v) end)
-        CreateSmartCard(page, "Hitbox Expander (Đầu To)", false, function(v) Settings.HitboxExpander = v end)
-    elseif i == 2 then
+        CreateSmartCard(page, "Target Strafe (Xoay vòng địch)", false, function(v) SetTargetStrafe(v) end)
+    elseif i == 2 then -- Hitbox (Mới, chuyên sâu mở rộng)
+        CreateSmartCard(page, "Mở rộng Hitbox Đầu (Head Size)", false, function(v) Settings.HitboxHead = v end)
+        CreateSmartCard(page, "Mở rộng Hitbox Thân (Torso Size)", false, function(v) Settings.HitboxTorso = v end)
+        CreateSmartCard(page, "Mở rộng Hitbox Vũ Khí / Melee / Súng", false, function(v) Settings.HitboxWeapon = v end)
+        CreateActionCard(page, "Reset Kích Thước Hitbox Mặc Định", function()
+            Settings.HitboxHead = false
+            Settings.HitboxTorso = false
+            Settings.HitboxWeapon = false
+        end)
+    elseif i == 3 then -- Visual
         CreateSmartCard(page, "ESP Box (Khung Người Chơi)", false, function(v) Settings.ESP = v end)
         CreateSmartCard(page, "Chams Wallhack Fill", false, function(v) Settings.Chams = v end)
-        CreateSmartCard(page, "Custom Crosshair (Tâm Bắn)", false, function(v) Settings.CustomCrosshair = v end)
-        CreateSmartCard(page, "Glow Trail (Vệt Sáng Chạy)", false, function(v) SetGlowTrail(v) end)
-        CreateSmartCard(page, "No Fog (Chống Sương Mù)", false, function(v) Lighting.FogEnd = v and 1e6 or OriginalFogEnd end)
-    elseif i == 3 then
+        CreateSmartCard(page, "Custom Crosshair (Tâm Ngắm)", false, function(v) Settings.CustomCrosshair = v end)
+        CreateSmartCard(page, "Glow Trail (Vệt Sáng Khi Chạy)", false, function(v) SetGlowTrail(v) end)
+        CreateSmartCard(page, "Fullbright (Sáng Rực Bản Đồ)", false, function(v) Settings.Fullbright = v end)
+        CreateSmartCard(page, "FOV Changer (Đổi Góc Nhìn Camera)", false, function(v) Settings.FOVChanger = v end)
+    elseif i == 4 then -- Player
         CreateSmartCard(page, "Speed Walk (Tăng Tốc Chạy)", false, function(v) Settings.Speed = v SetSpeed(v) end)
         CreateSmartCard(page, "Fly Mode (Bay Tự Do)", false, function(v) SetFly(v) end)
         CreateSmartCard(page, "Noclip (Đi Xuyên Tường)", false, function(v) Settings.Noclip = v SetNoclip(v) end)
         CreateSmartCard(page, "Infinite Jump (Nhảy Vô Tận)", false, function(v) Settings.InfiniteJump = v end)
-        CreateSmartCard(page, "Spider Climb (Leo Tường)", false, function(v) SetSpiderClimb(v) end)
-        CreateSmartCard(page, "Jesus Mode (Đi Trên Nước)", false, function(v) SetWaterWalk(v) end)
-        CreateSmartCard(page, "SpinBot (Xoay Người)", false, function(v) Settings.SpinBot = v end)
-    elseif i == 4 then
+        CreateSmartCard(page, "Bunny Hop (Nhảy Liên Tục Bhop)", false, function(v) Settings.Bhop = v end)
+        CreateSmartCard(page, "Spider Climb (Leo Tường Dọc)", false, function(v) SetSpiderClimb = v end)
+        CreateSmartCard(page, "Jesus Mode (Đi Trên Mặt Nước)", false, function(v) SetWaterWalk(v) end)
+        CreateSmartCard(page, "SpinBot (Xoay Người Tấu Hài)", false, function(v) Settings.SpinBot = v end)
+    elseif i == 5 then -- World
         CreateSmartCard(page, "Touch TP (Chạm Đâu Tele Đó)", false, function(v) SetTouchTP(v) end)
-        CreateActionCard(page, "Teleport Lên Trời (Safe Sky)", function()
+        CreateActionCard(page, "Teleport Lên Trời Tránh Địch", function()
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if root then root.CFrame = root.CFrame + Vector3.new(0, 500, 0) end
+            if root then root.CFrame = root.CFrame + Vector3.new(0, 600, 0) end
         end)
-        CreateActionCard(page, "Teleport Về Tâm Map", function()
+        CreateActionCard(page, "Teleport Về Tâm Bản Đồ", function()
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if root then root.CFrame = CFrame.new(0, 50, 0) end
         end)
-        CreateActionCard(page, "Rejoin Server Hiện Tại", function()
+        CreateActionCard(page, "Rejoin Server (Đổi Lại Phòng)", function()
             TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
         end)
-    elseif i == 5 then
-        CreateSmartCard(page, "Spam Chat Hệ Thống", false, function(v) SetChatSpammer(v) end)
-        CreateActionCard(page, "Load Dropkick Script", function()
+    elseif i == 6 then -- Troll
+        CreateSmartCard(page, "Spam Chat Tự Động", false, function(v) SetChatSpammer(v) end)
+        CreateActionCard(page, "Load Dropkick Animation Script", function()
             pcall(function()
                 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
             end)
@@ -854,34 +944,34 @@ for i, data in ipairs(TabsData) do
     Pages[i] = page
 end
 
--- ======================== SWITCH TAB (ANIMATION THÔNG MINH) ========================
+-- ======================== SWITCH TAB (SPRING ANIMATION ĐỈNH CAO) ========================
 local function SwitchTab(index)
     if CurrentTab == index then return end
 
     local old = TabButtons[CurrentTab]
     local new = TabButtons[index]
 
-    -- Thu nhỏ tab cũ
-    TweenService:Create(old.Button, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-        Size = UDim2.new(1, 0, 0, 36),
-        BackgroundTransparency = 0.5,
+    -- Thu nhỏ tab cũ với hiệu ứng mượt
+    TweenService:Create(old.Button, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Size = UDim2.new(1, 0, 0, 38),
+        BackgroundTransparency = 0.48,
         TextColor3 = Color3.fromRGB(170, 180, 200)
     }):Play()
     TweenService:Create(old.Stroke, TweenInfo.new(0.25), {Transparency = 1}):Play()
 
-    -- Phóng to tab mới
-    TweenService:Create(new.Button, TweenInfo.new(0.35, Enum.EasingStyle.Back), {
-        Size = UDim2.new(1, 0, 0, 48),
-        BackgroundTransparency = 0.22,
+    -- Phóng to & làm nổi bật tab mới với lò xo (Back easing)
+    TweenService:Create(new.Button, TweenInfo.new(0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 0.18,
         TextColor3 = Color3.new(1, 1, 1)
     }):Play()
-    TweenService:Create(new.Stroke, TweenInfo.new(0.3), {Transparency = 0.3}):Play()
+    TweenService:Create(new.Stroke, TweenInfo.new(0.3), {Transparency = 0.2}):Play()
 
     Pages[CurrentTab].Visible = false
     Pages[index].Visible = true
     CurrentTab = index
 
-    -- Clear search khi đổi tab
+    -- Clear ô search khi đổi tab để tránh sót filter
     SearchBox.Text = ""
 end
 
@@ -891,14 +981,14 @@ for i, data in ipairs(TabButtons) do
     end)
 end
 
--- Mặc định Tab 1
-TabButtons[1].Button.Size = UDim2.new(1, 0, 0, 48)
-TabButtons[1].Button.BackgroundTransparency = 0.22
+-- Mặc định mở Tab 1
+TabButtons[1].Button.Size = UDim2.new(1, 0, 0, 50)
+TabButtons[1].Button.BackgroundTransparency = 0.18
 TabButtons[1].Button.TextColor3 = Color3.new(1, 1, 1)
-TabButtons[1].Stroke.Transparency = 0.3
+TabButtons[1].Stroke.Transparency = 0.2
 Pages[1].Visible = true
 
--- ======================== SEARCH ANIMATION ========================
+-- ======================== SEARCH ANIMATION THÔNG MINH ========================
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local keyword = SearchBox.Text:lower()
 
@@ -908,8 +998,8 @@ SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 
             if match then
                 item.Frame.Visible = true
-                TweenService:Create(item.Frame, TweenInfo.new(0.22), {
-                    BackgroundTransparency = 0.42,
+                TweenService:Create(item.Frame, TweenInfo.new(0.22, Enum.EasingStyle.Quint), {
+                    BackgroundTransparency = 0.4,
                     Size = UDim2.new(1, 0, 0, 44)
                 }):Play()
             else
@@ -927,7 +1017,7 @@ SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     end
 end)
 
--- ======================== MỞ / ĐÓNG & DRAG ========================
+-- ======================== MỞ / ĐÓNG MENU & KÉO THẢ ========================
 local isOpen = false
 
 local function OpenMenu()
@@ -938,17 +1028,17 @@ local function OpenMenu()
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
     Main.BackgroundTransparency = 1
 
-    TweenService:Create(Main, TweenInfo.new(0.45, Enum.EasingStyle.Back), {
-        Size = UDim2.new(0, 390, 0, 460),
-        Position = UDim2.new(0.5, -195, 0.5, -230),
-        BackgroundTransparency = 0.32
+    TweenService:Create(Main, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 420, 0, 480),
+        Position = UDim2.new(0.5, -210, 0.5, -240),
+        BackgroundTransparency = 0.28
     }):Play()
 end
 
 local function CloseMenu()
     if not isOpen then return end
     isOpen = false
-    local tw = TweenService:Create(Main, TweenInfo.new(0.28), {
+    local tw = TweenService:Create(Main, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundTransparency = 1
@@ -964,13 +1054,15 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
 
+-- Hover hiệu ứng nút Toggle Z
 ToggleBtn.MouseEnter:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 62, 0, 62)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 66, 0, 66)}):Play()
 end)
 ToggleBtn.MouseLeave:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 56, 0, 56)}):Play()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 58, 0, 58)}):Play()
 end)
 
+-- Kéo thả nút Toggle trên màn hình di động / PC
 local dragging, dragStart, startPos
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -992,4 +1084,4 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 task.delay(0.5, OpenMenu)
-print("✅ Zaka Pure UI Ultimate Loaded Successfully!")
+print("✅ Zaka Pure UI v2.5 Ultimate Loaded Successfully with Hitbox & Pro Animations!")
