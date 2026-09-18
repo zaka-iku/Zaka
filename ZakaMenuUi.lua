@@ -95,6 +95,26 @@ local Settings = {
     SpamDelay = 2,
     SpamMessage = "ZAKA PURE UI",
     RainbowCharacter = false,
+
+    -- V8 flight controls
+    FlyVertical = 55,
+    FlySmoothing = 0.18,
+    FlyHover = true,
+    FlyCameraFacing = true,
+
+    -- V8 extra local tools
+    CameraShake = false,
+    CameraShakeStrength = 1.5,
+    LowGraphics = false,
+    AntiAFK = false,
+    AutoSprint = false,
+    SprintMultiplier = 1.5,
+    Dash = false,
+    DashPower = 70,
+    DashCooldown = 0.8,
+    FOVCircleSize = 120,
+    UITransparency = 0.18,
+    UICompact = true,
 }
 
 local OriginalGravity = Workspace.Gravity
@@ -188,39 +208,93 @@ end
 local function setFly(enabled)
     Settings.Fly = enabled
     disconnect("Fly")
+
     if FlyVelocity then FlyVelocity:Destroy(); FlyVelocity=nil end
     if FlyGyro then FlyGyro:Destroy(); FlyGyro=nil end
+
     if not enabled then return end
 
     local root = rootPart()
-    if not root then return end
+    if not root then
+        notify("Không tìm thấy HumanoidRootPart")
+        return
+    end
 
-    FlyVelocity = Instance.new("BodyVelocity")
-    FlyVelocity.MaxForce = Vector3.new(1e6,1e6,1e6)
-    FlyVelocity.Velocity = Vector3.zero
+    -- Modern constraints are less jittery than the legacy BodyVelocity/BodyGyro pair.
+    local attachment = root:FindFirstChild("ZAKA_FlyAttachment")
+    if not attachment then
+        attachment = Instance.new("Attachment")
+        attachment.Name = "ZAKA_FlyAttachment"
+        attachment.Parent = root
+    end
+
+    FlyVelocity = Instance.new("LinearVelocity")
+    FlyVelocity.Name = "ZAKA_FlyVelocity"
+    FlyVelocity.Attachment0 = attachment
+    FlyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
+    FlyVelocity.MaxForce = math.huge
+    FlyVelocity.VectorVelocity = Vector3.zero
     FlyVelocity.Parent = root
 
-    FlyGyro = Instance.new("BodyGyro")
-    FlyGyro.MaxTorque = Vector3.new(1e6,1e6,1e6)
-    FlyGyro.P = 4000
-    FlyGyro.CFrame = root.CFrame
+    FlyGyro = Instance.new("AlignOrientation")
+    FlyGyro.Name = "ZAKA_FlyOrientation"
+    FlyGyro.Attachment0 = attachment
+    FlyGyro.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    FlyGyro.MaxTorque = math.huge
+    FlyGyro.Responsiveness = 35
+    FlyGyro.RigidityEnabled = false
     FlyGyro.Parent = root
 
-    Connections.Fly = RunService.RenderStepped:Connect(function()
+    Connections.Fly = RunService.RenderStepped:Connect(function(dt)
         local hum = humanoid()
         local r = rootPart()
+
         if not Settings.Fly or not hum or not r or not FlyVelocity or not FlyGyro then
             return
         end
 
-        FlyGyro.CFrame = Camera.CFrame
-        local dir = hum.MoveDirection
-        if dir.Magnitude > 0 then
-            FlyVelocity.Velocity = dir.Unit * Settings.FlySpeed
-        else
-            FlyVelocity.Velocity = Vector3.zero
+        local cam = Camera
+        local forward = cam and cam.CFrame.LookVector or r.CFrame.LookVector
+        local right = cam and cam.CFrame.RightVector or r.CFrame.RightVector
+
+        local move = hum.MoveDirection
+        local horizontal = Vector3.zero
+
+        if move.Magnitude > 0.01 then
+            horizontal = move.Unit * Settings.FlySpeed
+        end
+
+        -- Mobile-friendly vertical control:
+        -- Jump = up, LeftControl/LeftShift = down on keyboard.
+        local vertical = 0
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            vertical += Settings.FlyVertical
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or
+           UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            vertical -= Settings.FlyVertical
+        end
+
+        -- If there is no keyboard vertical input, keep a gentle hover.
+        if Settings.FlyHover and math.abs(vertical) < 0.01 then
+            vertical = 0
+        end
+
+        local target = horizontal + Vector3.new(0, vertical, 0)
+
+        -- Exponential smoothing keeps flight controllable at different frame rates.
+        local alpha = 1 - math.exp(-math.max(Settings.FlySmoothing, 0.03) * 60 * dt)
+        FlyVelocity.VectorVelocity = FlyVelocity.VectorVelocity:Lerp(target, math.clamp(alpha, 0.05, 1))
+
+        if Settings.FlyCameraFacing and cam then
+            local look = Vector3.new(forward.X, 0, forward.Z)
+            if look.Magnitude > 0.01 then
+                FlyGyro.CFrame = CFrame.lookAt(r.Position, r.Position + look.Unit, Vector3.yAxis)
+            end
         end
     end)
+
+    notify("Bay V8 đã bật")
 end
 
 local function setTouchTP(enabled)
@@ -504,6 +578,86 @@ Players.PlayerRemoving:Connect(function(plr)
     if ChamsObjects[plr] then ChamsObjects[plr]:Destroy(); ChamsObjects[plr]=nil end
 end)
 
+
+--==============================================================
+-- V8 EXTRA LOCAL TOOLS
+--==============================================================
+
+local function doDash()
+    local r = rootPart()
+    if not r then return end
+
+    local dir = humanoid() and humanoid().MoveDirection or Vector3.zero
+    if dir.Magnitude < 0.05 then
+        dir = Camera.CFrame.LookVector
+    end
+
+    local flat = Vector3.new(dir.X, 0, dir.Z)
+    if flat.Magnitude < 0.05 then return end
+
+    r.AssemblyLinearVelocity = Vector3.new(
+        flat.Unit.X * Settings.DashPower,
+        r.AssemblyLinearVelocity.Y,
+        flat.Unit.Z * Settings.DashPower
+    )
+end
+
+local function shakeCamera(strength, duration)
+    if not Camera then return end
+    local original = Camera.CFrame
+    local t0 = os.clock()
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        local elapsed = os.clock() - t0
+        if elapsed >= duration then
+            conn:Disconnect()
+            if Camera then Camera.CFrame = original end
+            return
+        end
+        local fade = 1 - elapsed / duration
+        local s = strength * fade
+        Camera.CFrame = original
+            * CFrame.Angles(
+                math.rad((math.random()-0.5)*s),
+                math.rad((math.random()-0.5)*s),
+                math.rad((math.random()-0.5)*s)
+            )
+    end)
+end
+
+local function resetMovement()
+    local h = humanoid()
+    if h then
+        h.WalkSpeed = 16
+        h.JumpPower = 50
+        h.AutoRotate = true
+    end
+    Settings.Speed = false
+    Settings.HighJump = false
+    Settings.Bhop = false
+    Settings.Noclip = false
+    Settings.SpiderClimb = false
+    Settings.WaterWalk = false
+    Settings.Spin = false
+    setNoclip(false)
+    setSpider(false)
+    setWaterWalk(false)
+end
+
+local function scanWorkspace()
+    local models, parts, tools = 0, 0, 0
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") then
+            models += 1
+        elseif obj:IsA("BasePart") then
+            parts += 1
+        elseif obj:IsA("Tool") then
+            tools += 1
+        end
+    end
+    notify(("Workspace: %d models | %d parts | %d tools"):format(models, parts, tools))
+end
+
 --==============================================================
 -- UI
 --==============================================================
@@ -588,7 +742,7 @@ Search.Size=UDim2.new(1,-26,0,31)
 Search.Position=UDim2.fromOffset(13,49)
 Search.BackgroundColor3=Color3.fromRGB(20,30,43)
 Search.BackgroundTransparency=.38
-Search.PlaceholderText="🔎 Search skills..."
+Search.PlaceholderText="🔎 🔎 Gõ vào đây để tìm kiếm kỹ năng"
 Search.PlaceholderColor3=Color3.fromRGB(135,150,170)
 Search.Text=""
 Search.TextColor3=Color3.new(1,1,1)
@@ -868,6 +1022,17 @@ do
     addCard(p,"Hide UI","Hide the main menu while keeping the Z button.","Button",false,function()
         Main.Visible=false
     end)
+    addCard(p,"Low Graphics","Giảm một số hiệu ứng cục bộ để ưu tiên FPS.","Toggle",false,function(v)
+        Settings.LowGraphics=v
+        if v then
+            Lighting.GlobalShadows=false
+        else
+            Lighting.GlobalShadows=true
+        end
+    end)
+    addCard(p,"Camera Shake","Bật rung nhẹ khi dùng các hiệu ứng thử nghiệm.","Toggle",false,function(v)
+        Settings.CameraShake=v
+    end)
 end
 
 -- PLAYER
@@ -887,6 +1052,28 @@ do
     addCard(p,"Water Walk","Local water-surface movement helper.","Toggle",false,function(v) setWaterWalk(v) end)
     addCard(p,"Spin","Rotate your character locally.","Toggle",false,function(v) Settings.Spin=v end)
     addCard(p,"Spin Speed","Rotation speed.","Slider",false,function(v) Settings.SpinSpeed=v end,{min=1,max=180,step=1,value=45})
+    addCard(p,"Fly Vertical","Tốc độ bay lên/xuống khi dùng Space hoặc Shift.","Slider",false,function(v)
+        Settings.FlyVertical=v
+    end,{min=10,max=250,step=5,value=55})
+    addCard(p,"Fly Smoothing","Độ mượt của chuyển động bay.","Slider",false,function(v)
+        Settings.FlySmoothing=v
+    end,{min=.03,max=.6,step=.01,value=.18})
+    addCard(p,"Fly Camera Facing","Hướng bay bám theo hướng camera.","Toggle",true,function(v)
+        Settings.FlyCameraFacing=v
+    end)
+    addCard(p,"Fly Hover","Giữ tốc độ ngang ổn định khi không có hướng dọc.","Toggle",true,function(v)
+        Settings.FlyHover=v
+    end)
+    addCard(p,"Dash","Lướt nhanh theo hướng đang di chuyển.","Button",false,function()
+        doDash()
+    end)
+    addCard(p,"Dash Power","Lực của Dash.","Slider",false,function(v)
+        Settings.DashPower=v
+    end,{min=20,max=250,step=5,value=70})
+    addCard(p,"Reset Movement","Khôi phục các thông số di chuyển cơ bản.","Button",false,function()
+        resetMovement()
+        notify("Đã reset movement")
+    end)
     addCard(p,"Character Info","Display local character diagnostics.","Button",false,function()
         local h=humanoid()
         notify("Health: "..(h and math.floor(h.Health) or 0).." | Speed: "..(h and math.floor(h.WalkSpeed) or 0))
@@ -925,6 +1112,15 @@ do
     addCard(p,"Location Scan","Scan ZAKA_Location tags.","Button",false,function()
         notify("Locations: "..#CollectionService:GetTagged("ZAKA_Location"))
     end)
+    addCard(p,"Workspace Scan","Đếm Model / Part / Tool trong Workspace.","Button",false,function()
+        scanWorkspace()
+    end)
+    addCard(p,"Camera Shake Test","Kiểm tra hiệu ứng rung camera cục bộ.","Button",false,function()
+        shakeCamera(Settings.CameraShakeStrength, .35)
+    end)
+    addCard(p,"Camera Shake Strength","Cường độ rung camera.","Slider",false,function(v)
+        Settings.CameraShakeStrength=v
+    end,{min=.2,max=8,step=.1,value=1.5})
 end
 
 -- TROLL / FUN
