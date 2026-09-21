@@ -1,101 +1,128 @@
-local R, S, P, C, G = 130, 0.15, game.Players, workspace.CurrentCamera, Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui) 
-G.ResetOnSpawn, G.IgnoreGuiInset = false, true; 
-local F, M = Instance.new("Frame", G), Instance.new("Frame", G) 
-local Active = true 
-F.AnchorPoint, F.Size, F.BackgroundTransparency, Instance.new("UIStroke", F).Color, Instance.new("UICorner", F).CornerRadius = Vector2.new(0.5,0.5), UDim2.new(0, R*2, 0, R*2), 1, Color3.new(0,1,0), UDim.new(1,0) 
-M.Size, M.Position, M.BackgroundColor3, Instance.new("UICorner", M).CornerRadius = UDim2.new(0, 110, 0, 45), UDim2.new(0.05, 0, 0.4, 0), Color3.fromRGB(30,30,30), UDim.new(0,6) 
-local D = Instance.new("TextButton", M) 
-D.Size, D.BackgroundColor3, D.BackgroundTransparency, D.Text, D.TextColor3, D.Font, D.TextSize = UDim2.new(1, 0, 0, 15), Color3.fromRGB(80,80,80), 0, "MOVE", Color3.new(1,1,1), Enum.Font.SourceSansBold, 10; 
-Instance.new("UICorner", D).CornerRadius = UDim.new(0,4) 
-local B = Instance.new("TextButton", M) 
-B.Size, B.Position, B.BackgroundTransparency, B.Text, B.TextColor3, B.Font, B.TextSize = UDim2.new(1,0,0,30), UDim2.new(0,0,0,15), 1, "AIM: ON", Color3.new(0,1,0), Enum.Font.SourceSansBold, 15 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 
-local drag, start, startPos 
-D.MouseButton1Down:Connect(function() 
-    drag, start, startPos = true, game:GetService("UserInputService"):GetMouseLocation(), M.Position 
-end) 
+-- Tạo giao diện chính cho Mobile
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 
-game:GetService("UserInputService").InputChanged:Connect(function(input) 
-    if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then 
-        local delta = game:GetService("UserInputService"):GetMouseLocation() - start 
-        M.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) 
-    end 
-end) 
+-- Khung Menu
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 140, 0, 75)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 6)
 
-game:GetService("UserInputService").InputEnded:Connect(function(input) 
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
-        drag = false 
-    end 
-end) 
+-- Nút di chuyển menu (Hỗ trợ cảm ứng vuốt trên điện thoại)
+local MoveBtn = Instance.new("TextButton", MainFrame)
+MoveBtn.Size = UDim2.new(1, 0, 0, 22)
+MoveBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+MoveBtn.Text = "MOVE MENU"
+MoveBtn.TextColor3 = Color3.new(1, 1, 1)
+MoveBtn.Font = Enum.Font.SourceSansBold
+MoveBtn.TextSize = 10
+Instance.new("UICorner", MoveBtn).CornerRadius = UDim.new(0, 4)
 
-B.MouseButton1Click:Connect(function() 
-    if not drag then 
-        Active = not Active 
-        B.Text, B.TextColor3 = Active and "AIM: ON" or "AIM: OFF", Active and Color3.new(0,1,0) or Color3.new(1,0,0) 
-    end 
+-- Nút Bật/Tắt ESP
+local EspBtn = Instance.new("TextButton", MainFrame)
+EspBtn.Size = UDim2.new(1, 0, 0, 45)
+EspBtn.Position = UDim2.new(0, 0, 0, 25)
+EspBtn.BackgroundTransparency = 1
+EspBtn.Text = "ESP: OFF"
+EspBtn.TextColor3 = Color3.new(1, 0, 0)
+EspBtn.Font = Enum.Font.SourceSansBold
+EspBtn.TextSize = 16
+
+-- Nút thu gọn/mở rộng menu nhỏ gọn góc trên
+local ToggleMenuBtn = Instance.new("TextButton", ScreenGui)
+ToggleMenuBtn.Size = UDim2.new(0, 30, 0, 30)
+ToggleMenuBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
+ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleMenuBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleMenuBtn.Text = "-"
+ToggleMenuBtn.Font = Enum.Font.SourceSansBold
+ToggleMenuBtn.TextSize = 16
+Instance.new("UICorner", ToggleMenuBtn).CornerRadius = UDim.new(0, 6)
+
+-- Logic kéo thả menu trên màn hình cảm ứng điện thoại
+local drag, start, startPos
+MoveBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = true
+        start = input.Position
+        startPos = MainFrame.Position
+    end
 end)
 
--- Nút menu đóng/mở gọn gàng như bạn yêu cầu ở trước
-local ToggleBtn = Instance.new("TextButton", G)
-ToggleBtn.Size = UDim2.new(0, 30, 0, 30)
-ToggleBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
-ToggleBtn.Text = "-"
-ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.TextSize = 16
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
-
-local MenuOpen = true
-ToggleBtn.MouseButton1Click:Connect(function()
-    MenuOpen = not MenuOpen
-    B.Visible = MenuOpen
-    D.Visible = MenuOpen
-    ToggleBtn.Text = MenuOpen and "-" or "+"
-    M.Size = MenuOpen and UDim2.new(0, 110, 0, 45) or UDim2.new(0, 110, 0, 15)
+UserInputService.InputChanged:Connect(function(input)
+    if drag and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - start
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
 end)
 
--- ==================== LOGIC AIMBOT GẮN CHẶT VÀO ĐẦU ====================
-local LocalPlayer = P.LocalPlayer
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = false
+    end
+end)
 
-local function GetClosestTargetHead()
-    local target = nil
-    local shortestDist = R 
-    local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+-- Logic Thu gọn Menu
+local menuOpen = true
+ToggleMenuBtn.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    MoveBtn.Visible = menuOpen
+    EspBtn.Visible = menuOpen
+    ToggleMenuBtn.Text = menuOpen and "-" or "+"
+    MainFrame.Size = menuOpen and UDim2.new(0, 140, 0, 75) or UDim2.new(0, 140, 0, 22)
+end)
 
-    for _, player in ipairs(P:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            -- Ép đổi sang tìm bộ phận "Head" (Đầu) thay vì RootPart để ghim chuẩn xác
-            local head = player.Character:FindFirstChild("Head")
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            
-            if head and humanoid and humanoid.Health > 0 then
-                if player.Team ~= LocalPlayer.Team or not LocalPlayer.Team then
-                    local screenPoint, onScreen = C:WorldToViewportPoint(head.Position)
-                    
-                    if onScreen then
-                        local screenDist = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                        if screenDist < shortestDist then
-                            shortestDist = screenDist
-                            target = head
-                        end
-                    end
+-- Logic ESP (Tô màu nhân vật, nhìn rõ kẻ địch trên mobile)
+local ESPEnabled = false
+
+local function ApplyESPToCharacter(character)
+    if not character:FindFirstChild("ESPHighlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESPHighlight"
+        highlight.Adornee = character
+        highlight.FillColor = Color3.fromRGB(255, 50, 50) -- Màu đỏ nổi bật cho địch
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.4
+        highlight.OutlineTransparency = 0
+        highlight.Parent = character
+    end
+end
+
+local function ToggleESP(state)
+    ESPEnabled = state
+    EspBtn.Text = ESPEnabled and "ESP: ON" or "ESP: OFF"
+    EspBtn.TextColor3 = ESPEnabled and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+    
+    if ESPEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                if player.Character then
+                    ApplyESPToCharacter(player.Character)
                 end
+                player.CharacterAdded:Connect(function(char)
+                    if ESPEnabled then
+                        ApplyESPToCharacter(char)
+                    end
+                end)
+            end
+        end
+    else
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("ESPHighlight") then
+                player.Character.ESPHighlight:Destroy()
             end
         end
     end
-    return target
 end
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    local mouseLoc = game:GetService("UserInputService"):GetMouseLocation()
-    F.Position = UDim2.new(0, mouseLoc.X, 0, mouseLoc.Y)
-    
-    if Active then
-        local targetHead = GetClosestTargetHead()
-        if targetHead then
-            -- Ghi đè trực tiếp góc nhìn camera hướng thẳng vào Head của địch, bỏ qua Lerp để tránh bị anti-cheat/lag làm lệch tâm
-            C.CFrame = CFrame.new(C.CFrame.Position, targetHead.Position)
-        end
+EspBtn.MouseButton1Click:Connect(function()
+    if not drag then
+        ToggleESP(not ESPEnabled)
     end
 end)
