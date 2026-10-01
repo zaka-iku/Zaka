@@ -1,16 +1,15 @@
 --[[
-    ZAKA NARUTO UI - RASENGAN EDITION
-    - Nút Rasengan động + đổi mắt
-    - Naruto & Sasuke bay 2 bên
-    - Naruto → Cửu Vĩ khi mở lâu
-    - Tab dọc chủ đề Naruto
+    ZAKA × NARUTO UI
+    - Nút Z cầu vồng → Rasengan Eye (12 kiểu)
+    - Naruto & Sasuke chi tiết (code)
+    - Animation mở/đóng mượt
+    - Tab: Combat | ESP | Player | Teleport | Server | Ultra
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -29,338 +28,535 @@ Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = PlayerGui
 
 --==============================================================
--- MÀU SẮC CHỦ ĐỀ
+-- MÀU SẮC
 --==============================================================
 local Colors = {
-    Orange = Color3.fromRGB(255, 140, 30),
-    Blue = Color3.fromRGB(40, 120, 255),
-    Purple = Color3.fromRGB(140, 60, 255),
-    Red = Color3.fromRGB(220, 40, 40),
-    Yellow = Color3.fromRGB(255, 210, 50),
-    Dark = Color3.fromRGB(12, 10, 18),
-    Kurama = Color3.fromRGB(255, 160, 20),
+    Orange = Color3.fromRGB(255, 145, 40),
+    Blue = Color3.fromRGB(50, 130, 255),
+    Purple = Color3.fromRGB(150, 70, 255),
+    Red = Color3.fromRGB(230, 50, 50),
+    Yellow = Color3.fromRGB(255, 210, 60),
+    Dark = Color3.fromRGB(10, 8, 16),
 }
 
 --==============================================================
--- NÚT RASENGAN (TOGGLE)
+-- NÚT Z / RASENGAN
 --==============================================================
 local Toggle = Instance.new("TextButton")
-Toggle.Name = "RasenganBtn"
-Toggle.Size = UDim2.fromOffset(72, 72)
-Toggle.Position = UDim2.new(0, 20, 0.42, 0)
+Toggle.Name = "ToggleBtn"
+Toggle.Size = UDim2.fromOffset(68, 68)
+Toggle.Position = UDim2.new(0, 18, 0.42, 0)
 Toggle.AnchorPoint = Vector2.new(0, 0.5)
-Toggle.BackgroundColor3 = Color3.fromRGB(15, 12, 25)
-Toggle.BackgroundTransparency = 0.1
+Toggle.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+Toggle.BackgroundTransparency = 0.05
 Toggle.Text = ""
 Toggle.AutoButtonColor = false
-Toggle.ZIndex = 100
+Toggle.ZIndex = 120
 Toggle.Parent = Gui
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
 
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Thickness = 2.5
-ToggleStroke.Color = Colors.Orange
-ToggleStroke.Transparency = 0.2
-ToggleStroke.Parent = Toggle
+local RainbowStroke = Instance.new("UIStroke")
+RainbowStroke.Thickness = 2.8
+RainbowStroke.Color = Color3.fromRGB(255, 100, 50)
+RainbowStroke.Parent = Toggle
 
--- Rasengan Core
-local Rasengan = Instance.new("Frame")
-Rasengan.Name = "Rasengan"
-Rasengan.AnchorPoint = Vector2.new(0.5, 0.5)
-Rasengan.Position = UDim2.fromScale(0.5, 0.5)
-Rasengan.Size = UDim2.fromScale(0.78, 0.78)
-Rasengan.BackgroundColor3 = Colors.Blue
-Rasengan.BorderSizePixel = 0
-Rasengan.ZIndex = 101
-Rasengan.Parent = Toggle
-Instance.new("UICorner", Rasengan).CornerRadius = UDim.new(1, 0)
+local ZLabel = Instance.new("TextLabel")
+ZLabel.Name = "ZLabel"
+ZLabel.Size = UDim2.fromScale(1, 1)
+ZLabel.BackgroundTransparency = 1
+ZLabel.Text = "Z"
+ZLabel.TextColor3 = Color3.new(1, 1, 1)
+ZLabel.TextSize = 34
+ZLabel.Font = Enum.Font.GothamBlack
+ZLabel.ZIndex = 122
+ZLabel.Parent = Toggle
 
-local RasenganStroke = Instance.new("UIStroke")
-RasenganStroke.Thickness = 2
-RasenganStroke.Color = Color3.fromRGB(180, 230, 255)
-RasenganStroke.Parent = Rasengan
+-- Rasengan Eye
+local Eye = Instance.new("Frame")
+Eye.Name = "RasenganEye"
+Eye.AnchorPoint = Vector2.new(0.5, 0.5)
+Eye.Position = UDim2.fromScale(0.5, 0.5)
+Eye.Size = UDim2.fromScale(0.82, 0.82)
+Eye.BackgroundTransparency = 1
+Eye.Visible = false
+Eye.ZIndex = 121
+Eye.Parent = Toggle
 
--- Vòng điện xoay
-local Ring1 = Instance.new("Frame")
-Ring1.AnchorPoint = Vector2.new(0.5, 0.5)
-Ring1.Position = UDim2.fromScale(0.5, 0.5)
-Ring1.Size = UDim2.fromScale(1.15, 1.15)
-Ring1.BackgroundTransparency = 1
-Ring1.ZIndex = 102
-Ring1.Parent = Toggle
-Instance.new("UICorner", Ring1).CornerRadius = UDim.new(1, 0)
-local Ring1Stroke = Instance.new("UIStroke")
-Ring1Stroke.Thickness = 1.5
-Ring1Stroke.Color = Colors.Orange
-Ring1Stroke.Transparency = 0.3
-Ring1Stroke.Parent = Ring1
-
-local Ring2 = Ring1:Clone()
-Ring2.Size = UDim2.fromScale(1.35, 1.35)
-Ring2.Parent = Toggle
-Ring2:FindFirstChildOfClass("UIStroke").Color = Colors.Blue
-
--- Core sáng
-local Core = Instance.new("Frame")
-Core.AnchorPoint = Vector2.new(0.5, 0.5)
-Core.Position = UDim2.fromScale(0.5, 0.5)
-Core.Size = UDim2.fromScale(0.35, 0.35)
-Core.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Core.BorderSizePixel = 0
-Core.ZIndex = 103
-Core.Parent = Rasengan
-Instance.new("UICorner", Core).CornerRadius = UDim.new(1, 0)
-
---==============================================================
--- HỆ THỐNG ĐỔI MẮT RASENGAN
---==============================================================
-local EyeStyles = {
-    {Name = "Rasengan", Color = Color3.fromRGB(80, 180, 255), Accent = Color3.fromRGB(200, 240, 255)},
-    {Name = "Sharingan", Color = Color3.fromRGB(220, 30, 30), Accent = Color3.fromRGB(255, 100, 100)},
-    {Name = "Rinnegan", Color = Color3.fromRGB(160, 80, 255), Accent = Color3.fromRGB(220, 180, 255)},
-    {Name = "Byakugan", Color = Color3.fromRGB(230, 230, 255), Accent = Color3.fromRGB(180, 200, 255)},
-    {Name = "Tenseigan", Color = Color3.fromRGB(80, 200, 255), Accent = Color3.fromRGB(150, 230, 255)},
-    {Name = "Ketsuryugan", Color = Color3.fromRGB(180, 20, 40), Accent = Color3.fromRGB(255, 80, 80)},
-    {Name = "Jogan", Color = Color3.fromRGB(40, 120, 255), Accent = Color3.fromRGB(100, 180, 255)},
-    {Name = "Kurama", Color = Color3.fromRGB(255, 160, 20), Accent = Color3.fromRGB(255, 220, 100)},
-}
-
-local CurrentEye = 1
-local UsedEyes = {}
-
-local function ChangeEyeStyle()
-    local available = {}
-    for i = 1, #EyeStyles do
-        if not UsedEyes[i] then
-            table.insert(available, i)
-        end
-    end
-    if #available == 0 then
-        UsedEyes = {}
-        available = {1,2,3,4,5,6,7,8}
-    end
-
-    local next = available[math.random(1, #available)]
-    UsedEyes[next] = true
-    CurrentEye = next
-
-    local style = EyeStyles[next]
-    TweenService:Create(Rasengan, TweenInfo.new(0.8, Enum.EasingStyle.Sine), {
-        BackgroundColor3 = style.Color
-    }):Play()
-    TweenService:Create(RasenganStroke, TweenInfo.new(0.8), {Color = style.Accent}):Play()
-    TweenService:Create(ToggleStroke, TweenInfo.new(0.8), {Color = style.Color}):Play()
-    TweenService:Create(Ring1Stroke, TweenInfo.new(0.8), {Color = style.Color}):Play()
+local function MakeCircle(size, color, transparency, z)
+    local f = Instance.new("Frame")
+    f.AnchorPoint = Vector2.new(0.5, 0.5)
+    f.Position = UDim2.fromScale(0.5, 0.5)
+    f.Size = UDim2.fromScale(size, size)
+    f.BackgroundColor3 = color
+    f.BackgroundTransparency = transparency or 0
+    f.BorderSizePixel = 0
+    f.ZIndex = z or 121
+    f.Parent = Eye
+    Instance.new("UICorner", f).CornerRadius = UDim.new(1, 0)
+    return f
 end
 
--- Xoay Rasengan liên tục
+local Glow = MakeCircle(1.35, Color3.fromRGB(255, 80, 40), 0.82, 121)
+local Outer = MakeCircle(1.05, Color3.fromRGB(20, 10, 15), 0, 122)
+local OuterStroke = Instance.new("UIStroke")
+OuterStroke.Thickness = 2.2
+OuterStroke.Color = Color3.fromRGB(255, 90, 50)
+OuterStroke.Parent = Outer
+
+local Mid = MakeCircle(0.72, Color3.fromRGB(180, 40, 40), 0, 123)
+local MidStroke = Instance.new("UIStroke")
+MidStroke.Thickness = 1.8
+MidStroke.Color = Color3.fromRGB(255, 120, 80)
+MidStroke.Parent = Mid
+
+local Iris = MakeCircle(0.42, Color3.fromRGB(220, 50, 40), 0, 124)
+local IrisStroke = Instance.new("UIStroke")
+IrisStroke.Thickness = 1.5
+IrisStroke.Color = Color3.fromRGB(255, 180, 120)
+IrisStroke.Parent = Iris
+
+local Pupil = MakeCircle(0.18, Color3.fromRGB(0, 0, 0), 0, 125)
+local Core = MakeCircle(0.06, Color3.fromRGB(255, 255, 255), 0, 126)
+
+local Symbol = Instance.new("Frame")
+Symbol.AnchorPoint = Vector2.new(0.5, 0.5)
+Symbol.Position = UDim2.fromScale(0.5, 0.5)
+Symbol.Size = UDim2.fromScale(0.85, 0.85)
+Symbol.BackgroundTransparency = 1
+Symbol.ZIndex = 127
+Symbol.Parent = Eye
+
+local SymbolObjects = {}
+local function ClearSymbol()
+    for _, obj in ipairs(SymbolObjects) do
+        if obj and obj.Parent then obj:Destroy() end
+    end
+    table.clear(SymbolObjects)
+end
+
+local function AddLine(angle, length, width, color)
+    local l = Instance.new("Frame")
+    l.AnchorPoint = Vector2.new(0.5, 0.5)
+    l.Position = UDim2.fromScale(0.5, 0.5)
+    l.Size = UDim2.new(0, length, 0, width)
+    l.Rotation = angle
+    l.BackgroundColor3 = color
+    l.BorderSizePixel = 0
+    l.ZIndex = 128
+    l.Parent = Symbol
+    table.insert(SymbolObjects, l)
+    return l
+end
+
+local function AddDot(x, y, size, color)
+    local d = Instance.new("Frame")
+    d.AnchorPoint = Vector2.new(0.5, 0.5)
+    d.Position = UDim2.fromScale(x, y)
+    d.Size = UDim2.fromOffset(size, size)
+    d.BackgroundColor3 = color
+    d.BorderSizePixel = 0
+    d.ZIndex = 129
+    d.Parent = Symbol
+    Instance.new("UICorner", d).CornerRadius = UDim.new(1, 0)
+    table.insert(SymbolObjects, d)
+    return d
+end
+
+local EyeTypes = {
+    {Name="Sharingan", Color=Color3.fromRGB(230,35,40), Accent=Color3.fromRGB(20,0,0), Type="TOMOE"},
+    {Name="Mangekyo", Color=Color3.fromRGB(210,25,35), Accent=Color3.fromRGB(10,0,0), Type="STAR"},
+    {Name="Rinnegan", Color=Color3.fromRGB(160,90,255), Accent=Color3.fromRGB(40,15,80), Type="RINGS"},
+    {Name="Byakugan", Color=Color3.fromRGB(230,230,255), Accent=Color3.fromRGB(180,190,255), Type="VOID"},
+    {Name="Tenseigan", Color=Color3.fromRGB(70,190,255), Accent=Color3.fromRGB(30,80,160), Type="COSMIC"},
+    {Name="Jogan", Color=Color3.fromRGB(40,120,255), Accent=Color3.fromRGB(20,50,140), Type="HEX"},
+    {Name="Ketsuryugan", Color=Color3.fromRGB(180,20,40), Accent=Color3.fromRGB(60,0,10), Type="TRI"},
+    {Name="Kurama", Color=Color3.fromRGB(255,160,30), Accent=Color3.fromRGB(80,30,0), Type="STAR6"},
+    {Name="Rasengan", Color=Color3.fromRGB(60,160,255), Accent=Color3.fromRGB(20,60,140), Type="SPIRAL"},
+    {Name="BlackStar", Color=Color3.fromRGB(220,40,50), Accent=Color3.fromRGB(0,0,0), Type="BLACKSTAR"},
+    {Name="Triple", Color=Color3.fromRGB(200,40,50), Accent=Color3.fromRGB(30,0,0), Type="TRIPLE"},
+    {Name="Crimson", Color=Color3.fromRGB(255,40,50), Accent=Color3.fromRGB(40,0,0), Type="STAR"},
+}
+
+local function BuildSymbol(data)
+    ClearSymbol()
+    local C, A = data.Color, data.Accent
+
+    if data.Type == "TOMOE" then
+        for i = 1, 3 do
+            local ang = (i-1)*120
+            AddDot(0.5 + math.cos(math.rad(ang))*0.26, 0.5 + math.sin(math.rad(ang))*0.26, 9, A)
+            local l = AddLine((i-1)*120, 20, 5, A)
+            l.Position = UDim2.fromScale(0.5 + math.cos(math.rad(ang))*0.13, 0.5 + math.sin(math.rad(ang))*0.13)
+        end
+    elseif data.Type == "RINGS" then
+        for i = 1, 4 do
+            local r = Instance.new("Frame")
+            r.AnchorPoint = Vector2.new(0.5,0.5)
+            r.Position = UDim2.fromScale(0.5,0.5)
+            r.Size = UDim2.fromScale(0.18 + i*0.14, 0.18 + i*0.14)
+            r.BackgroundTransparency = 1
+            r.ZIndex = 128
+            r.Parent = Symbol
+            local s = Instance.new("UIStroke")
+            s.Thickness = 1.6
+            s.Color = A
+            s.Parent = r
+            Instance.new("UICorner", r).CornerRadius = UDim.new(1,0)
+            table.insert(SymbolObjects, r)
+        end
+    elseif data.Type == "STAR" then
+        for i = 1, 6 do AddLine((i-1)*60, 46, 6, A) end
+    elseif data.Type == "TRI" then
+        for i = 1, 3 do AddLine((i-1)*120, 42, 7, A) end
+    elseif data.Type == "HEX" then
+        for i = 1, 6 do AddLine((i-1)*60, 44, 5, A) end
+        for i = 1, 6 do
+            local ang = math.rad((i-1)*60)
+            AddDot(0.5 + math.cos(ang)*0.24, 0.5 + math.sin(ang)*0.24, 6, C)
+        end
+    elseif data.Type == "SPIRAL" then
+        for i = 1, 5 do
+            local l = AddLine(i*30, 28 + i*3, 4, A)
+            l.Position = UDim2.fromScale(0.5 + math.cos(math.rad(i*65))*0.07, 0.5 + math.sin(math.rad(i*65))*0.07)
+        end
+    elseif data.Type == "STAR6" then
+        for i = 1, 6 do AddLine((i-1)*60, 50, 8, A) end
+    elseif data.Type == "VOID" then
+        for i = 1, 8 do AddLine((i-1)*45, 40, 3, C) end
+    elseif data.Type == "TRIPLE" then
+        for i = 1, 3 do
+            local ang = math.rad((i-1)*120)
+            AddDot(0.5 + math.cos(ang)*0.19, 0.5 + math.sin(ang)*0.19, 13, A)
+            AddLine((i-1)*120, 28, 6, A)
+        end
+    elseif data.Type == "COSMIC" then
+        for i = 1, 8 do
+            local ang = math.rad((i-1)*45)
+            AddDot(0.5 + math.cos(ang)*0.28, 0.5 + math.sin(ang)*0.28, 5, C)
+            AddLine((i-1)*45, 40, 2, A)
+        end
+    elseif data.Type == "BLACKSTAR" then
+        for i = 1, 5 do AddLine((i-1)*36, 48, 8, A) end
+        for i = 1, 5 do
+            local ang = math.rad((i-1)*72)
+            AddDot(0.5 + math.cos(ang)*0.23, 0.5 + math.sin(ang)*0.23, 7, C)
+        end
+    end
+end
+
+local CurrentEye = 1
+local Morphing = false
+local EyeOpen = false
+
+local function ChangeEyeColor(data)
+    local t = 1.4
+    TweenService:Create(Outer, TweenInfo.new(t), {BackgroundColor3 = data.Accent}):Play()
+    TweenService:Create(Mid, TweenInfo.new(t), {BackgroundColor3 = data.Color}):Play()
+    TweenService:Create(Iris, TweenInfo.new(t), {BackgroundColor3 = data.Color}):Play()
+    TweenService:Create(Glow, TweenInfo.new(t), {BackgroundColor3 = data.Color}):Play()
+    TweenService:Create(OuterStroke, TweenInfo.new(t), {Color = data.Color}):Play()
+    TweenService:Create(MidStroke, TweenInfo.new(t), {Color = data.Color}):Play()
+    TweenService:Create(IrisStroke, TweenInfo.new(t), {Color = data.Color}):Play()
+    TweenService:Create(RainbowStroke, TweenInfo.new(t), {Color = data.Color}):Play()
+end
+
+local function MorphTo(index)
+    if Morphing then return end
+    Morphing = true
+    local data = EyeTypes[index]
+
+    TweenService:Create(Eye, TweenInfo.new(0.4), {Size = UDim2.fromScale(0.68, 0.68)}):Play()
+    TweenService:Create(Symbol, TweenInfo.new(0.7, Enum.EasingStyle.Quint), {Rotation = Symbol.Rotation + 180}):Play()
+    ChangeEyeColor(data)
+    task.wait(0.3)
+
+    for _, obj in ipairs(SymbolObjects) do
+        if obj:IsA("Frame") then
+            TweenService:Create(obj, TweenInfo.new(0.45), {BackgroundTransparency = 1}):Play()
+        end
+    end
+    task.wait(0.3)
+    BuildSymbol(data)
+
+    for _, obj in ipairs(SymbolObjects) do
+        if obj:IsA("Frame") then
+            obj.BackgroundTransparency = 1
+            TweenService:Create(obj, TweenInfo.new(0.55), {BackgroundTransparency = 0}):Play()
+        end
+    end
+
+    TweenService:Create(Eye, TweenInfo.new(0.55, Enum.EasingStyle.Back), {Size = UDim2.fromScale(0.82, 0.82)}):Play()
+    CurrentEye = index
+    task.wait(0.6)
+    Morphing = false
+end
+
+local MorphThread
+local function StartAutoMorph()
+    if MorphThread then return end
+    MorphThread = task.spawn(function()
+        while EyeOpen do
+            task.wait(5)
+            if not EyeOpen then break end
+            local next
+            repeat next = math.random(1, #EyeTypes) until next \~= CurrentEye
+            MorphTo(next)
+        end
+        MorphThread = nil
+    end)
+end
+
 RunService.RenderStepped:Connect(function()
-    Rasengan.Rotation = Rasengan.Rotation + 2.2
-    Ring1.Rotation = Ring1.Rotation - 1.4
-    Ring2.Rotation = Ring2.Rotation + 1.8
+    if EyeOpen then
+        Symbol.Rotation = Symbol.Rotation + 1.8
+        Glow.Rotation = Glow.Rotation - 0.9
+    end
+end)
+
+local hue = 0
+RunService.RenderStepped:Connect(function()
+    if not EyeOpen then
+        hue = (hue + 0.6) % 360
+        RainbowStroke.Color = Color3.fromHSV(hue/360, 0.85, 1)
+    end
 end)
 
 --==============================================================
--- NARUTO & SASUKE BAY 2 BÊN
+-- NARUTO & SASUKE CHI TIẾT
 --==============================================================
-local function CreateFloatingChar(name, side, color)
-    local frame = Instance.new("Frame")
-    frame.Name = name
-    frame.Size = UDim2.fromOffset(90, 140)
-    frame.Position = side == "Left" and UDim2.new(0, 15, 0.5, -70) or UDim2.new(1, -105, 0.5, -70)
-    frame.BackgroundTransparency = 1
-    frame.ZIndex = 50
-    frame.Parent = Gui
+local function CreateCharacter(name, side, mainColor, accentColor)
+    local holder = Instance.new("Frame")
+    holder.Name = name
+    holder.Size = UDim2.fromOffset(108, 185)
+    holder.Position = side == "Left" and UDim2.new(0, 10, 0.5, -92) or UDim2.new(1, -118, 0.5, -92)
+    holder.BackgroundTransparency = 1
+    holder.Visible = false
+    holder.ZIndex = 40
+    holder.Parent = Gui
+
+    local shadow = Instance.new("Frame")
+    shadow.Size = UDim2.fromOffset(64, 16)
+    shadow.Position = UDim2.fromOffset(22, 165)
+    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.BackgroundTransparency = 0.65
+    shadow.BorderSizePixel = 0
+    shadow.ZIndex = 39
+    shadow.Parent = holder
+    Instance.new("UICorner", shadow).CornerRadius = UDim.new(1, 0)
 
     local body = Instance.new("Frame")
-    body.Size = UDim2.fromOffset(70, 100)
-    body.Position = UDim2.fromOffset(10, 20)
-    body.BackgroundColor3 = color
-    body.BackgroundTransparency = 0.15
+    body.Name = "Body"
+    body.Size = UDim2.fromOffset(66, 92)
+    body.Position = UDim2.fromOffset(21, 50)
+    body.BackgroundColor3 = mainColor
     body.BorderSizePixel = 0
-    body.Parent = frame
-    Instance.new("UICorner", body).CornerRadius = UDim.new(0, 16)
+    body.ZIndex = 41
+    body.Parent = holder
+    Instance.new("UICorner", body).CornerRadius = UDim.new(0, 13)
+
+    local inner = Instance.new("Frame")
+    inner.Size = UDim2.fromOffset(50, 68)
+    inner.Position = UDim2.fromOffset(8, 10)
+    inner.BackgroundColor3 = accentColor
+    inner.BackgroundTransparency = 0.35
+    inner.BorderSizePixel = 0
+    inner.Parent = body
+    Instance.new("UICorner", inner).CornerRadius = UDim.new(0, 9)
+
+    local pants = Instance.new("Frame")
+    pants.Size = UDim2.fromOffset(58, 38)
+    pants.Position = UDim2.fromOffset(4, 78)
+    pants.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    pants.BorderSizePixel = 0
+    pants.Parent = body
+    Instance.new("UICorner", pants).CornerRadius = UDim.new(0, 8)
 
     local head = Instance.new("Frame")
-    head.Size = UDim2.fromOffset(42, 42)
-    head.Position = UDim2.fromOffset(24, -5)
-    head.BackgroundColor3 = Color3.fromRGB(255, 210, 170)
+    head.Name = "Head"
+    head.Size = UDim2.fromOffset(46, 46)
+    head.Position = UDim2.fromOffset(31, 10)
+    head.BackgroundColor3 = Color3.fromRGB(255, 208, 170)
     head.BorderSizePixel = 0
-    head.Parent = frame
+    head.ZIndex = 42
+    head.Parent = holder
     Instance.new("UICorner", head).CornerRadius = UDim.new(1, 0)
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.fromOffset(0, 125)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = color
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
-    label.Parent = frame
+    local hair = Instance.new("Frame")
+    hair.Size = UDim2.fromOffset(52, 26)
+    hair.Position = UDim2.fromOffset(-3, -7)
+    hair.BackgroundColor3 = name == "NARUTO" and Color3.fromRGB(255, 165, 40) or Color3.fromRGB(20, 18, 28)
+    hair.BorderSizePixel = 0
+    hair.ZIndex = 43
+    hair.Parent = head
+    Instance.new("UICorner", hair).CornerRadius = UDim.new(0.45, 0)
 
-    -- Bay lên xuống
-    local baseY = frame.Position.Y.Offset
+    local eyeL = Instance.new("Frame")
+    eyeL.Size = UDim2.fromOffset(7, 7)
+    eyeL.Position = UDim2.fromOffset(11, 17)
+    eyeL.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    eyeL.BorderSizePixel = 0
+    eyeL.Parent = head
+    Instance.new("UICorner", eyeL).CornerRadius = UDim.new(1, 0)
+
+    local eyeR = eyeL:Clone()
+    eyeR.Position = UDim2.fromOffset(28, 17)
+    eyeR.Parent = head
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0, 20)
+    nameLabel.Position = UDim2.fromOffset(0, 162)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = name
+    nameLabel.TextColor3 = mainColor
+    nameLabel.TextSize = 14
+    nameLabel.Font = Enum.Font.GothamBlack
+    nameLabel.Parent = holder
+
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.fromOffset(88, 88)
+    glow.Position = UDim2.fromOffset(10, 35)
+    glow.BackgroundColor3 = mainColor
+    glow.BackgroundTransparency = 0.87
+    glow.BorderSizePixel = 0
+    glow.ZIndex = 38
+    glow.Parent = holder
+    Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
+
+    local baseY = holder.Position.Y.Offset
     task.spawn(function()
-        local t = 0
-        while frame.Parent do
-            t = t + 0.03
-            local offset = math.sin(t) * 12
-            frame.Position = UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, 0.5, baseY + offset)
+        local t = math.random() * 6
+        while holder and holder.Parent do
+            t = t + 0.032
+            local yOffset = math.sin(t) * 7
+            local rot = math.sin(t * 0.55) * 2.2
+
+            holder.Position = UDim2.new(
+                holder.Position.X.Scale,
+                holder.Position.X.Offset,
+                0.5,
+                baseY + yOffset
+            )
+            body.Rotation = rot
+            head.Rotation = rot * 0.5
+            glow.BackgroundTransparency = 0.87 + math.sin(t * 1.4) * 0.035
+
             task.wait()
         end
     end)
 
-    return frame, body
+    return holder, body
 end
 
-local NarutoFrame, NarutoBody = CreateFloatingChar("NARUTO", "Left", Colors.Orange)
-local SasukeFrame, SasukeBody = CreateFloatingChar("SASUKE", "Right", Colors.Blue)
+local NarutoHolder, NarutoBody = CreateCharacter(
+    "NARUTO",
+    "Left",
+    Color3.fromRGB(255, 145, 40),
+    Color3.fromRGB(255, 90, 30)
+)
+
+local SasukeHolder, SasukeBody = CreateCharacter(
+    "SASUKE",
+    "Right",
+    Color3.fromRGB(45, 110, 220),
+    Color3.fromRGB(25, 45, 110)
+)
 
 --==============================================================
 -- MAIN MENU
 --==============================================================
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.fromOffset(480, 540)
+Main.Size = UDim2.fromOffset(460, 520)
 Main.Position = UDim2.fromScale(0.5, 0.5)
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = Colors.Dark
-Main.BackgroundTransparency = 0.08
+Main.BackgroundTransparency = 0.06
 Main.Visible = false
 Main.ClipsDescendants = true
-Main.ZIndex = 20
+Main.ZIndex = 30
 Main.Parent = Gui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Thickness = 1.8
+MainStroke.Thickness = 1.6
 MainStroke.Color = Colors.Orange
-MainStroke.Transparency = 0.25
+MainStroke.Transparency = 0.3
 MainStroke.Parent = Main
 
--- Header
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 70)
-Header.BackgroundColor3 = Color3.fromRGB(18, 14, 28)
-Header.BackgroundTransparency = 0.3
+Header.Size = UDim2.new(1, 0, 0, 62)
+Header.BackgroundColor3 = Color3.fromRGB(16, 12, 24)
+Header.BackgroundTransparency = 0.25
 Header.Parent = Main
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 20)
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 18)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 0, 30)
-Title.Position = UDim2.fromOffset(20, 12)
+Title.Size = UDim2.new(1, -70, 0, 28)
+Title.Position = UDim2.fromOffset(18, 10)
 Title.BackgroundTransparency = 1
 Title.Text = "ZAKA × NARUTO"
 Title.TextColor3 = Color3.new(1,1,1)
-Title.TextSize = 22
+Title.TextSize = 20
 Title.Font = Enum.Font.GothamBlack
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Size = UDim2.new(1, -80, 0, 20)
-SubTitle.Position = UDim2.fromOffset(20, 42)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "RASENGAN EDITION • EYE MORPH"
-SubTitle.TextColor3 = Color3.fromRGB(180, 150, 100)
-SubTitle.TextSize = 11
-SubTitle.Font = Enum.Font.GothamBold
-SubTitle.TextXAlignment = Enum.TextXAlignment.Left
-SubTitle.Parent = Header
+local Sub = Instance.new("TextLabel")
+Sub.Size = UDim2.new(1, -70, 0, 18)
+Sub.Position = UDim2.fromOffset(18, 36)
+Sub.BackgroundTransparency = 1
+Sub.Text = "RASENGAN EYE • 12 STYLES"
+Sub.TextColor3 = Color3.fromRGB(200, 150, 90)
+Sub.TextSize = 11
+Sub.Font = Enum.Font.GothamBold
+Sub.TextXAlignment = Enum.TextXAlignment.Left
+Sub.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.fromOffset(38, 38)
-CloseBtn.Position = UDim2.new(1, -52, 0, 16)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(50, 30, 40)
+CloseBtn.Size = UDim2.fromOffset(36, 36)
+CloseBtn.Position = UDim2.new(1, -48, 0, 13)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(45, 30, 40)
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.new(1,1,1)
-CloseBtn.TextSize = 24
+CloseBtn.TextSize = 22
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 10)
 
--- Tab dọc
-local TabContainer = Instance.new("ScrollingFrame")
-TabContainer.Size = UDim2.new(0, 130, 1, -90)
-TabContainer.Position = UDim2.fromOffset(12, 80)
-TabContainer.BackgroundTransparency = 1
-TabContainer.ScrollBarThickness = 2
-TabContainer.Parent = Main
+local TabFrame = Instance.new("ScrollingFrame")
+TabFrame.Size = UDim2.new(0, 118, 1, -80)
+TabFrame.Position = UDim2.fromOffset(12, 72)
+TabFrame.BackgroundTransparency = 1
+TabFrame.ScrollBarThickness = 2
+TabFrame.Parent = Main
 
-local TabList = Instance.new("UIListLayout")
-TabList.Padding = UDim.new(0, 8)
-TabList.Parent = TabContainer
+local TabLayout = Instance.new("UIListLayout")
+TabLayout.Padding = UDim.new(0, 7)
+TabLayout.Parent = TabFrame
 
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -160, 1, -90)
-Content.Position = UDim2.fromOffset(150, 80)
+Content.Size = UDim2.new(1, -145, 1, -80)
+Content.Position = UDim2.fromOffset(138, 72)
 Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.Parent = Main
 
--- Dữ liệu Tab (chủ đề Naruto)
-local TabsData = {
-    {Name = "RASENGAN", Icon = "🌀", Theme = "Kỹ thuật Rasengan & Chakra"},
-    {Name = "SHARINGAN", Icon = "👁", Theme = "Dojutsu & Ảo thuật"},
-    {Name = "NINJUTSU", Icon = "⚡", Theme = "Thuật nhẫn giả tấn công"},
-    {Name = "TAIJUTSU", Icon = "🥋", Theme = "Võ thuật thể chất"},
-    {Name = "GENJUTSU", Icon = "🌙", Theme = "Ảo thuật tâm trí"},
-    {Name = "BIJUU", Icon = "🦊", Theme = "Vĩ thú & Cửu Vĩ"},
-}
-
+local TabNames = {"Combat", "ESP", "Player", "Teleport", "Server", "Ultra"}
+local TabIcons = {"⚔", "👁", "◉", "⇪", "🌐", "✦"}
 local TabButtons = {}
 local Pages = {}
-local CurrentTab = 1
 
-local function CreateCard(parent, title, desc)
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 58)
-    card.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
-    card.BorderSizePixel = 0
-    card.Parent = parent
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Colors.Orange
-    stroke.Thickness = 1
-    stroke.Transparency = 0.7
-    stroke.Parent = card
-
-    local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, -20, 0, 24)
-    t.Position = UDim2.fromOffset(14, 8)
-    t.BackgroundTransparency = 1
-    t.Text = title
-    t.TextColor3 = Color3.new(1,1,1)
-    t.TextSize = 14
-    t.Font = Enum.Font.GothamBold
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.Parent = card
-
-    local d = Instance.new("TextLabel")
-    d.Size = UDim2.new(1, -20, 0, 18)
-    d.Position = UDim2.fromOffset(14, 32)
-    d.BackgroundTransparency = 1
-    d.Text = desc
-    d.TextColor3 = Color3.fromRGB(160, 140, 120)
-    d.TextSize = 11
-    d.Font = Enum.Font.Gotham
-    d.TextXAlignment = Enum.TextXAlignment.Left
-    d.Parent = card
-end
-
-for i, data in ipairs(TabsData) do
+for i, name in ipairs(TabNames) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 42)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
-    btn.BackgroundTransparency = 0.3
-    btn.Text = data.Icon .. "  " .. data.Name
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
+    btn.BackgroundTransparency = 0.25
+    btn.Text = TabIcons[i] .. "  " .. name
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextColor3 = Color3.fromRGB(180, 160, 140)
+    btn.TextSize = 13
+    btn.TextColor3 = Color3.fromRGB(170, 150, 140)
     btn.AutoButtonColor = false
-    btn.Parent = TabContainer
+    btn.Parent = TabFrame
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
     local page = Instance.new("ScrollingFrame")
@@ -376,43 +572,26 @@ for i, data in ipairs(TabsData) do
     list.Padding = UDim.new(0, 8)
     list.Parent = page
     list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 15)
+        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 12)
     end)
 
-    -- Nội dung theo chủ đề
-    if i == 1 then -- Rasengan
-        CreateCard(page, "Rasengan Thường", "Chakra xoáy hình cầu cơ bản")
-        CreateCard(page, "Odama Rasengan", "Rasengan khổng lồ")
-        CreateCard(page, "Rasenshuriken", "Rasengan biến thành shuriken gió")
-        CreateCard(page, "Senpo: Rasengan", "Rasengan tiên thuật")
-        CreateCard(page, "Chakra Nature Rasengan", "Kết hợp hệ chakra")
-    elseif i == 2 then -- Sharingan
-        CreateCard(page, "Sharingan 1 Tomoe", "Cấp độ cơ bản")
-        CreateCard(page, "Mangekyo Sharingan", "Ảo thuật vĩnh cửu")
-        CreateCard(page, "Rinnegan", "Mắt luân hồi")
-        CreateCard(page, "Izanagi / Izanami", "Thuật định mệnh")
-        CreateCard(page, "Susanoo", "Hộ thể khổng lồ")
-    elseif i == 3 then -- Ninjutsu
-        CreateCard(page, "Kage Bunshin", "Phân thân bóng")
-        CreateCard(page, "Rasengan Series", "Chuỗi kỹ thuật Rasengan")
-        CreateCard(page, "Chidori", "Sấm chớp xuyên phá")
-        CreateCard(page, "Amaterasu", "Hắc hỏa")
-        CreateCard(page, "Shinra Tensei", "Thần la thiên sinh")
-    elseif i == 4 then -- Taijutsu
-        CreateCard(page, "Konoha Taijutsu", "Võ thuật làng Lá")
-        CreateCard(page, "Gentle Fist", "Quyền nhu Byakugan")
-        CreateCard(page, "Primary Lotus", "Liên hoa sơ cấp")
-        CreateCard(page, "Shadow of the Dancing Leaf", "Bóng lá nhảy múa")
-    elseif i == 5 then -- Genjutsu
-        CreateCard(page, "Tsukuyomi", "Ảo thuật mặt trăng")
-        CreateCard(page, "Kotoamatsukami", "Điều khiển ý chí")
-        CreateCard(page, "Ephemeral", "Ảo ảnh phù du")
-    elseif i == 6 then -- Bijuu
-        CreateCard(page, "Cửu Vĩ Chakra Mode", "Áo choàng Cửu Vĩ")
-        CreateCard(page, "Kurama Mode", "Hợp thể với Cửu Vĩ")
-        CreateCard(page, "Bijuudama", "Đạn vĩ thú")
-        CreateCard(page, "Tailed Beast Bomb", "Bom vĩ thú")
-    end
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, 0, 0, 70)
+    card.BackgroundColor3 = Color3.fromRGB(20, 16, 28)
+    card.BorderSizePixel = 0
+    card.Parent = page
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 1, 0)
+    label.Position = UDim2.fromOffset(12, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name .. " Tab\n(Chưa gắn chức năng)"
+    label.TextColor3 = Color3.fromRGB(180, 160, 140)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = card
 
     TabButtons[i] = btn
     Pages[i] = page
@@ -420,14 +599,13 @@ end
 
 local function SwitchTab(index)
     for i, btn in ipairs(TabButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
-        btn.TextColor3 = Color3.fromRGB(180, 160, 140)
+        btn.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
+        btn.TextColor3 = Color3.fromRGB(170, 150, 140)
         Pages[i].Visible = false
     end
     TabButtons[index].BackgroundColor3 = Colors.Orange
     TabButtons[index].TextColor3 = Color3.new(1,1,1)
     Pages[index].Visible = true
-    CurrentTab = index
 end
 
 for i, btn in ipairs(TabButtons) do
@@ -438,68 +616,98 @@ end
 SwitchTab(1)
 
 --==============================================================
--- MỞ / ĐÓNG MENU + BIẾN THÀNH CỬU VĨ
+-- MỞ / ĐÓNG
 --==============================================================
 local MenuOpen = false
-local OpenTime = 0
-local IsKurama = false
+
+local function OpenEye()
+    EyeOpen = true
+    ZLabel.Visible = false
+    Eye.Visible = true
+    Eye.Size = UDim2.fromScale(0.05, 0.05)
+    BuildSymbol(EyeTypes[CurrentEye])
+    ChangeEyeColor(EyeTypes[CurrentEye])
+
+    TweenService:Create(Eye, TweenInfo.new(0.7, Enum.EasingStyle.Back), {
+        Size = UDim2.fromScale(0.82, 0.82)
+    }):Play()
+    StartAutoMorph()
+end
+
+local function CloseEye()
+    EyeOpen = false
+    TweenService:Create(Eye, TweenInfo.new(0.55, Enum.EasingStyle.Quint), {
+        Size = UDim2.fromScale(0.05, 0.05)
+    }):Play()
+    task.wait(0.5)
+    Eye.Visible = false
+    ZLabel.Visible = true
+    ZLabel.TextTransparency = 1
+    TweenService:Create(ZLabel, TweenInfo.new(0.35), {TextTransparency = 0}):Play()
+end
 
 local function OpenMenu()
     if MenuOpen then return end
     MenuOpen = true
-    OpenTime = tick()
-    Main.Visible = true
-    Main.Size = UDim2.fromOffset(30, 30)
-    Main.BackgroundTransparency = 1
 
-    TweenService:Create(Main, TweenInfo.new(0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.fromOffset(480, 540),
-        BackgroundTransparency = 0.08
+    NarutoHolder.Visible = true
+    SasukeHolder.Visible = true
+    NarutoHolder.Position = UDim2.new(0, -130, 0.5, -92)
+    SasukeHolder.Position = UDim2.new(1, 30, 0.5, -92)
+
+    TweenService:Create(NarutoHolder, TweenInfo.new(0.6, Enum.EasingStyle.Back), {
+        Position = UDim2.new(0, 10, 0.5, -92)
+    }):Play()
+    TweenService:Create(SasukeHolder, TweenInfo.new(0.6, Enum.EasingStyle.Back), {
+        Position = UDim2.new(1, -118, 0.5, -92)
     }):Play()
 
-    -- Đổi mắt mỗi lần mở
-    ChangeEyeStyle()
+    Main.Visible = true
+    Main.Size = UDim2.fromOffset(20, 20)
+    Main.BackgroundTransparency = 1
+
+    OpenEye()
+
+    TweenService:Create(Main, TweenInfo.new(0.55, Enum.EasingStyle.Back), {
+        Size = UDim2.fromOffset(460, 520),
+        BackgroundTransparency = 0.06
+    }):Play()
 end
 
 local function CloseMenu()
     if not MenuOpen then return end
     MenuOpen = false
-    IsKurama = false
 
-    -- Trả về màu thường
-    TweenService:Create(NarutoBody, TweenInfo.new(0.6), {BackgroundColor3 = Colors.Orange}):Play()
-    TweenService:Create(MainStroke, TweenInfo.new(0.6), {Color = Colors.Orange}):Play()
+    TweenService:Create(NarutoHolder, TweenInfo.new(0.4), {
+        Position = UDim2.new(0, -130, 0.5, -92)
+    }):Play()
+    TweenService:Create(SasukeHolder, TweenInfo.new(0.4), {
+        Position = UDim2.new(1, 30, 0.5, -92)
+    }):Play()
+    task.delay(0.45, function()
+        if not MenuOpen then
+            NarutoHolder.Visible = false
+            SasukeHolder.Visible = false
+        end
+    end)
 
-    TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-        Size = UDim2.fromOffset(30, 30),
+    CloseEye()
+
+    TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+        Size = UDim2.fromOffset(20, 20),
         BackgroundTransparency = 1
     }):Play()
-
     task.delay(0.4, function()
         if not MenuOpen then Main.Visible = false end
     end)
 end
-
--- Biến thành Cửu Vĩ khi mở lâu
-RunService.Heartbeat:Connect(function()
-    if MenuOpen and not IsKurama then
-        if tick() - OpenTime > 12 then -- sau 12 giây
-            IsKurama = true
-            TweenService:Create(NarutoBody, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                BackgroundColor3 = Colors.Kurama
-            }):Play()
-            TweenService:Create(MainStroke, TweenInfo.new(1.2), {Color = Colors.Kurama}):Play()
-            TweenService:Create(ToggleStroke, TweenInfo.new(1.2), {Color = Colors.Kurama}):Play()
-        end
-    end
-end)
 
 Toggle.MouseButton1Click:Connect(function()
     if MenuOpen then CloseMenu() else OpenMenu() end
 end)
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
 
--- Kéo nút Rasengan
+-- Kéo nút
 local dragging, dragStart, startPos
 Toggle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -522,8 +730,10 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Tự mở
-task.wait(0.5)
+task.wait(0.4)
 OpenMenu()
 
-print("✅ ZAKA NARUTO UI - RASENGAN EDITION LOADED")
+print("✅ ZAKA × NARUTO UI LOADED")
+print("• Nút Z cầu vồng → Rasengan Eye 12 kiểu")
+print("• Naruto & Sasuke chi tiết")
+print("• Tab: Combat | ESP | Player | Teleport | Server | Ultra")
