@@ -1,7 +1,7 @@
---========================================================--
+--==============================================================--
 -- ZAKA PURE UI V1
--- UI REBUILD - MENU + ANIME EYE
---========================================================--
+-- EYE MORPH EDITION
+--==============================================================--
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -11,15 +11,19 @@ local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- XÓA BẢN CŨ NẾU ĐANG CHẠY
+--==============================================================
+-- CLEAN OLD VERSION
+--==============================================================
+
 local Old = PlayerGui:FindFirstChild("ZakaPureUI")
+
 if Old then
     Old:Destroy()
 end
 
---========================================================--
--- SCREEN GUI
---========================================================--
+--==============================================================
+-- GUI
+--==============================================================
 
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "ZakaPureUI"
@@ -28,24 +32,24 @@ Gui.IgnoreGuiInset = true
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = PlayerGui
 
---========================================================--
--- TOGGLE BUTTON
---========================================================--
+--==============================================================
+-- TOGGLE
+--==============================================================
 
 local Toggle = Instance.new("TextButton")
 Toggle.Name = "ToggleButton"
 Toggle.Size = UDim2.fromOffset(64,64)
 Toggle.Position = UDim2.new(0,18,0.42,0)
 Toggle.AnchorPoint = Vector2.new(0,0.5)
-Toggle.BackgroundColor3 = Color3.fromRGB(10,10,18)
-Toggle.BackgroundTransparency = 0.08
+Toggle.BackgroundColor3 = Color3.fromRGB(9,9,15)
+Toggle.BackgroundTransparency = 0.05
 Toggle.BorderSizePixel = 0
 Toggle.Text = "Z"
-Toggle.TextColor3 = Color3.fromRGB(255,255,255)
+Toggle.TextColor3 = Color3.new(1,1,1)
 Toggle.TextSize = 30
 Toggle.Font = Enum.Font.GothamBlack
 Toggle.AutoButtonColor = false
-Toggle.ZIndex = 50
+Toggle.ZIndex = 100
 Toggle.Parent = Gui
 
 local ToggleCorner = Instance.new("UICorner")
@@ -54,24 +58,24 @@ ToggleCorner.Parent = Toggle
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Thickness = 2
-ToggleStroke.Color = Color3.fromRGB(100,80,255)
-ToggleStroke.Transparency = 0.1
+ToggleStroke.Color = Color3.fromRGB(120,80,255)
+ToggleStroke.Transparency = 0.15
 ToggleStroke.Parent = Toggle
 
---========================================================--
--- MAIN MENU
---========================================================--
+--==============================================================
+-- MAIN
+--==============================================================
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.AnchorPoint = Vector2.new(0.5,0.5)
-Main.Position = UDim2.new(0.5,0,0.5,0)
+Main.AnchorPoint = Vector2.new(.5,.5)
+Main.Position = UDim2.fromScale(.5,.5)
 Main.Size = UDim2.fromOffset(0,0)
-Main.BackgroundColor3 = Color3.fromRGB(9,9,16)
-Main.BackgroundTransparency = 0.08
+Main.BackgroundColor3 = Color3.fromRGB(8,8,14)
+Main.BackgroundTransparency = 1
 Main.BorderSizePixel = 0
 Main.Visible = false
-Main.ZIndex = 10
+Main.ZIndex = 20
 Main.Parent = Gui
 
 local MainCorner = Instance.new("UICorner")
@@ -80,49 +84,48 @@ MainCorner.Parent = Main
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Thickness = 1.5
-MainStroke.Color = Color3.fromRGB(100,80,255)
-MainStroke.Transparency = 0.25
+MainStroke.Color = Color3.fromRGB(105,75,255)
+MainStroke.Transparency = .2
 MainStroke.Parent = Main
 
---========================================================--
+--==============================================================
 -- HEADER
---========================================================--
+--==============================================================
 
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1,0,0,62)
+Header.Size = UDim2.new(1,0,0,65)
 Header.BackgroundTransparency = 1
 Header.Parent = Main
 
 local Title = Instance.new("TextLabel")
 Title.BackgroundTransparency = 1
 Title.Position = UDim2.fromOffset(20,8)
-Title.Size = UDim2.new(1,-80,0,28)
+Title.Size = UDim2.new(1,-80,0,27)
 Title.Text = "ZAKA PURE UI"
-Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.TextColor3 = Color3.new(1,1,1)
 Title.TextSize = 21
 Title.Font = Enum.Font.GothamBlack
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
-local Sub = Instance.new("TextLabel")
-Sub.BackgroundTransparency = 1
-Sub.Position = UDim2.fromOffset(21,35)
-Sub.Size = UDim2.new(1,-80,0,20)
-Sub.Text = "V1 • MOBILE EDITION"
-Sub.TextColor3 = Color3.fromRGB(145,135,210)
-Sub.TextSize = 10
-Sub.Font = Enum.Font.GothamBold
-Sub.TextXAlignment = Enum.TextXAlignment.Left
-Sub.Parent = Header
+local Subtitle = Instance.new("TextLabel")
+Subtitle.BackgroundTransparency = 1
+Subtitle.Position = UDim2.fromOffset(21,36)
+Subtitle.Size = UDim2.new(1,-80,0,18)
+Subtitle.Text = "V1 • EYE MORPH EDITION"
+Subtitle.TextColor3 = Color3.fromRGB(140,130,190)
+Subtitle.TextSize = 9
+Subtitle.Font = Enum.Font.GothamBold
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = Header
 
 local Close = Instance.new("TextButton")
 Close.Size = UDim2.fromOffset(38,38)
 Close.Position = UDim2.new(1,-48,0,12)
 Close.BackgroundColor3 = Color3.fromRGB(35,25,45)
-Close.BackgroundTransparency = 0.1
 Close.BorderSizePixel = 0
 Close.Text = "×"
-Close.TextColor3 = Color3.fromRGB(255,255,255)
+Close.TextColor3 = Color3.new(1,1,1)
 Close.TextSize = 25
 Close.Font = Enum.Font.GothamBold
 Close.AutoButtonColor = false
@@ -132,489 +135,1182 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0,10)
 CloseCorner.Parent = Close
 
---========================================================--
+--==============================================================
 -- CONTENT
---========================================================--
+--==============================================================
 
 local Content = Instance.new("Frame")
-Content.Position = UDim2.fromOffset(14,72)
-Content.Size = UDim2.new(1,-28,1,-86)
+Content.Position = UDim2.fromOffset(14,75)
+Content.Size = UDim2.new(1,-28,1,-88)
 Content.BackgroundTransparency = 1
 Content.Parent = Main
 
-local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1,0,0,55)
-Info.BackgroundColor3 = Color3.fromRGB(20,18,32)
-Info.BackgroundTransparency = 0.15
-Info.BorderSizePixel = 0
-Info.Text = "  ZAKA MENU\n  UI REBUILD V1"
-Info.TextColor3 = Color3.fromRGB(225,220,255)
-Info.TextSize = 15
-Info.Font = Enum.Font.GothamBold
-Info.TextXAlignment = Enum.TextXAlignment.Left
-Info.Parent = Content
+local Banner = Instance.new("Frame")
+Banner.Size = UDim2.new(1,0,0,60)
+Banner.BackgroundColor3 = Color3.fromRGB(19,17,30)
+Banner.BorderSizePixel = 0
+Banner.Parent = Content
 
-local InfoCorner = Instance.new("UICorner")
-InfoCorner.CornerRadius = UDim.new(0,12)
-InfoCorner.Parent = Info
+local BannerCorner = Instance.new("UICorner")
+BannerCorner.CornerRadius = UDim.new(0,12)
+BannerCorner.Parent = Banner
 
---========================================================--
+local BannerText = Instance.new("TextLabel")
+BannerText.BackgroundTransparency = 1
+BannerText.Position = UDim2.fromOffset(15,7)
+BannerText.Size = UDim2.new(1,-30,0,22)
+BannerText.Text = "EYE SYSTEM"
+BannerText.TextColor3 = Color3.new(1,1,1)
+BannerText.TextSize = 14
+BannerText.Font = Enum.Font.GothamBlack
+BannerText.TextXAlignment = Enum.TextXAlignment.Left
+BannerText.Parent = Banner
+
+local BannerSub = Instance.new("TextLabel")
+BannerSub.BackgroundTransparency = 1
+BannerSub.Position = UDim2.fromOffset(15,30)
+BannerSub.Size = UDim2.new(1,-30,0,20)
+BannerSub.Text = "Morphing • Color transition • Rotation"
+BannerSub.TextColor3 = Color3.fromRGB(135,125,160)
+BannerSub.TextSize = 9
+BannerSub.Font = Enum.Font.Gotham
+BannerSub.TextXAlignment = Enum.TextXAlignment.Left
+BannerSub.Parent = Banner
+
+--==============================================================
 -- TABS
---========================================================--
+--==============================================================
 
-local Tabs = {
+local TabFrame = Instance.new("Frame")
+TabFrame.Position = UDim2.fromOffset(0,70)
+TabFrame.Size = UDim2.new(1,0,0,40)
+TabFrame.BackgroundTransparency = 1
+TabFrame.Parent = Content
+
+local TabLayout = Instance.new("UIListLayout")
+TabLayout.FillDirection = Enum.FillDirection.Horizontal
+TabLayout.Padding = UDim.new(0,5)
+TabLayout.Parent = TabFrame
+
+for _,Name in ipairs({
     "COMBAT",
     "VISUAL",
     "PLAYER",
     "WORLD",
     "TROLL"
-}
+}) do
 
-local TabContainer = Instance.new("Frame")
-TabContainer.Position = UDim2.fromOffset(0,68)
-TabContainer.Size = UDim2.new(1,0,0,42)
-TabContainer.BackgroundTransparency = 1
-TabContainer.Parent = Content
-
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.Padding = UDim.new(0,5)
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-TabLayout.Parent = TabContainer
-
-for _,Name in ipairs(Tabs) do
-
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.fromOffset(76,38)
-    Button.BackgroundColor3 = Color3.fromRGB(22,20,34)
-    Button.BorderSizePixel = 0
-    Button.Text = Name
-    Button.TextColor3 = Color3.fromRGB(185,180,210)
-    Button.TextSize = 10
-    Button.Font = Enum.Font.GothamBold
-    Button.AutoButtonColor = false
-    Button.Parent = TabContainer
+    local B = Instance.new("TextButton")
+    B.Size = UDim2.fromOffset(76,38)
+    B.BackgroundColor3 = Color3.fromRGB(20,18,30)
+    B.BorderSizePixel = 0
+    B.Text = Name
+    B.TextColor3 = Color3.fromRGB(180,175,205)
+    B.TextSize = 9
+    B.Font = Enum.Font.GothamBold
+    B.AutoButtonColor = false
+    B.Parent = TabFrame
 
     local C = Instance.new("UICorner")
     C.CornerRadius = UDim.new(0,9)
-    C.Parent = Button
+    C.Parent = B
 
-    Button.MouseButton1Click:Connect(function()
+    B.MouseButton1Click:Connect(function()
 
-        for _,Obj in ipairs(TabContainer:GetChildren()) do
-            if Obj:IsA("TextButton") then
-                Obj.BackgroundColor3 = Color3.fromRGB(22,20,34)
-                Obj.TextColor3 = Color3.fromRGB(185,180,210)
+        for _,X in ipairs(TabFrame:GetChildren()) do
+
+            if X:IsA("TextButton") then
+
+                X.BackgroundColor3 =
+                    Color3.fromRGB(20,18,30)
+
+                X.TextColor3 =
+                    Color3.fromRGB(180,175,205)
+
             end
         end
 
-        Button.BackgroundColor3 = Color3.fromRGB(75,55,145)
-        Button.TextColor3 = Color3.fromRGB(255,255,255)
+        B.BackgroundColor3 =
+            Color3.fromRGB(72,50,145)
+
+        B.TextColor3 =
+            Color3.new(1,1,1)
+
     end)
 end
 
---========================================================--
--- FEATURE CARDS
---========================================================--
+--==============================================================
+-- CARDS
+--==============================================================
 
-local FeatureContainer = Instance.new("Frame")
-FeatureContainer.Position = UDim2.fromOffset(0,120)
-FeatureContainer.Size = UDim2.new(1,0,1,-120)
-FeatureContainer.BackgroundTransparency = 1
-FeatureContainer.Parent = Content
+local CardFrame = Instance.new("Frame")
+CardFrame.Position = UDim2.fromOffset(0,120)
+CardFrame.Size = UDim2.new(1,0,1,-120)
+CardFrame.BackgroundTransparency = 1
+CardFrame.Parent = Content
 
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0,8)
-Layout.Parent = FeatureContainer
+local CardLayout = Instance.new("UIListLayout")
+CardLayout.Padding = UDim.new(0,8)
+CardLayout.Parent = CardFrame
 
-local Features = {
-    {"AIM SYSTEM","Combat interface"},
+for _,Data in ipairs({
+    {"AIM SYSTEM","Targeting interface"},
     {"ESP SYSTEM","Visual interface"},
-    {"MOVEMENT","Player controls"},
-    {"WORLD","World controls"},
+    {"MOVEMENT","Movement controls"},
+    {"WORLD","World settings"},
     {"SETTINGS","UI configuration"},
-}
-
-for _,Data in ipairs(Features) do
+}) do
 
     local Card = Instance.new("Frame")
-    Card.Size = UDim2.new(1,0,0,52)
-    Card.BackgroundColor3 = Color3.fromRGB(18,17,28)
-    Card.BackgroundTransparency = 0.05
+    Card.Size = UDim2.new(1,0,0,50)
+    Card.BackgroundColor3 = Color3.fromRGB(17,16,27)
     Card.BorderSizePixel = 0
-    Card.Parent = FeatureContainer
+    Card.Parent = CardFrame
 
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0,12)
-    Corner.Parent = Card
+    local C = Instance.new("UICorner")
+    C.CornerRadius = UDim.new(0,11)
+    C.Parent = Card
 
-    local Name = Instance.new("TextLabel")
-    Name.BackgroundTransparency = 1
-    Name.Position = UDim2.fromOffset(15,6)
-    Name.Size = UDim2.new(1,-80,0,20)
-    Name.Text = Data[1]
-    Name.TextColor3 = Color3.fromRGB(240,240,255)
-    Name.TextSize = 13
-    Name.Font = Enum.Font.GothamBold
-    Name.TextXAlignment = Enum.TextXAlignment.Left
-    Name.Parent = Card
+    local T = Instance.new("TextLabel")
+    T.BackgroundTransparency = 1
+    T.Position = UDim2.fromOffset(14,6)
+    T.Size = UDim2.new(1,-60,0,20)
+    T.Text = Data[1]
+    T.TextColor3 = Color3.new(1,1,1)
+    T.TextSize = 12
+    T.Font = Enum.Font.GothamBold
+    T.TextXAlignment = Enum.TextXAlignment.Left
+    T.Parent = Card
 
-    local Desc = Instance.new("TextLabel")
-    Desc.BackgroundTransparency = 1
-    Desc.Position = UDim2.fromOffset(15,27)
-    Desc.Size = UDim2.new(1,-80,0,18)
-    Desc.Text = Data[2]
-    Desc.TextColor3 = Color3.fromRGB(125,120,150)
-    Desc.TextSize = 9
-    Desc.Font = Enum.Font.Gotham
-    Desc.TextXAlignment = Enum.TextXAlignment.Left
-    Desc.Parent = Card
+    local S = Instance.new("TextLabel")
+    S.BackgroundTransparency = 1
+    S.Position = UDim2.fromOffset(14,27)
+    S.Size = UDim2.new(1,-60,0,16)
+    S.Text = Data[2]
+    S.TextColor3 = Color3.fromRGB(115,110,140)
+    S.TextSize = 8
+    S.Font = Enum.Font.Gotham
+    S.TextXAlignment = Enum.TextXAlignment.Left
+    S.Parent = Card
 
     local Arrow = Instance.new("TextLabel")
     Arrow.BackgroundTransparency = 1
-    Arrow.Position = UDim2.new(1,-42,0,10)
-    Arrow.Size = UDim2.fromOffset(30,30)
+    Arrow.Position = UDim2.new(1,-38,0,10)
+    Arrow.Size = UDim2.fromOffset(25,25)
     Arrow.Text = "›"
-    Arrow.TextColor3 = Color3.fromRGB(130,110,255)
-    Arrow.TextSize = 25
+    Arrow.TextColor3 = Color3.fromRGB(130,105,255)
+    Arrow.TextSize = 24
     Arrow.Font = Enum.Font.GothamBold
     Arrow.Parent = Card
 end
 
---========================================================--
--- ANIME EYE
---========================================================--
+--==============================================================
+-- EYE SYSTEM
+--==============================================================
 
 local Eye = Instance.new("Frame")
 Eye.Name = "ZakaEye"
-Eye.AnchorPoint = Vector2.new(0.5,0.5)
-Eye.Position = UDim2.fromScale(0.5,0.5)
-Eye.Size = UDim2.fromScale(0.82,0.82)
+Eye.AnchorPoint = Vector2.new(.5,.5)
+Eye.Position = UDim2.fromScale(.5,.5)
+Eye.Size = UDim2.fromScale(.82,.82)
 Eye.BackgroundTransparency = 1
 Eye.Visible = false
-Eye.ZIndex = 100
+Eye.ZIndex = 150
 Eye.Parent = Toggle
 
-local function Circle(Name,Size,Color,Transparency,Z)
+--==============================================================
+-- EYE LAYERS
+--==============================================================
+
+local function MakeCircle(Name,Size,Color,Transparency,Z)
 
     local F = Instance.new("Frame")
+
     F.Name = Name
-    F.AnchorPoint = Vector2.new(0.5,0.5)
-    F.Position = UDim2.fromScale(0.5,0.5)
+    F.AnchorPoint = Vector2.new(.5,.5)
+    F.Position = UDim2.fromScale(.5,.5)
+
     F.Size = UDim2.fromScale(Size,Size)
+
     F.BackgroundColor3 = Color
     F.BackgroundTransparency = Transparency or 0
+
     F.BorderSizePixel = 0
-    F.ZIndex = Z or 100
+    F.ZIndex = Z or 150
+
     F.Parent = Eye
 
-    local C = Instance.new("UICorner")
-    C.CornerRadius = UDim.new(1,0)
-    C.Parent = F
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(1,0)
+    Corner.Parent = F
 
     return F
 end
 
--- glow
-local Glow1 = Circle(
+-- Glow
+
+local GlowOuter = MakeCircle(
     "GlowOuter",
-    1.35,
-    Color3.fromRGB(80,40,255),
-    0.88,
-    100
+    1.40,
+    Color3.fromRGB(255,30,50),
+    .90,
+    150
 )
 
-local Glow2 = Circle(
-    "Glow",
-    1.12,
-    Color3.fromRGB(100,60,255),
-    0.76,
-    101
+local GlowMiddle = MakeCircle(
+    "GlowMiddle",
+    1.18,
+    Color3.fromRGB(255,30,50),
+    .80,
+    151
 )
 
--- outer eye
-local Outer = Circle(
-    "OuterRing",
-    0.92,
-    Color3.fromRGB(15,10,30),
+local GlowInner = MakeCircle(
+    "GlowInner",
+    1.00,
+    Color3.fromRGB(255,30,50),
+    .70,
+    152
+)
+
+-- Main eye
+
+local EyeBase = MakeCircle(
+    "EyeBase",
+    .92,
+    Color3.fromRGB(15,5,8),
     0,
-    102
+    153
 )
 
-local OuterStroke = Instance.new("UIStroke")
-OuterStroke.Thickness = 2
-OuterStroke.Color = Color3.fromRGB(145,100,255)
-OuterStroke.Parent = Outer
+local EyeBaseStroke = Instance.new("UIStroke")
+EyeBaseStroke.Thickness = 2
+EyeBaseStroke.Color = Color3.fromRGB(255,40,50)
+EyeBaseStroke.Parent = EyeBase
 
--- second ring
-local Ring2 = Circle(
-    "Ring2",
-    0.76,
-    Color3.fromRGB(55,25,100),
+-- Rings
+
+local RingOuter = MakeCircle(
+    "RingOuter",
+    .78,
+    Color3.fromRGB(40,5,10),
     0,
-    103
+    154
 )
 
-local Ring2Stroke = Instance.new("UIStroke")
-Ring2Stroke.Thickness = 2
-Ring2Stroke.Color = Color3.fromRGB(100,55,220)
-Ring2Stroke.Parent = Ring2
+local RingOuterStroke = Instance.new("UIStroke")
+RingOuterStroke.Thickness = 2
+RingOuterStroke.Color = Color3.fromRGB(255,60,70)
+RingOuterStroke.Parent = RingOuter
 
--- iris
-local Iris = Circle(
+local RingMiddle = MakeCircle(
+    "RingMiddle",
+    .61,
+    Color3.fromRGB(90,10,20),
+    0,
+    155
+)
+
+local RingMiddleStroke = Instance.new("UIStroke")
+RingMiddleStroke.Thickness = 1.5
+RingMiddleStroke.Color = Color3.fromRGB(255,100,100)
+RingMiddleStroke.Parent = RingMiddle
+
+local Iris = MakeCircle(
     "Iris",
-    0.58,
-    Color3.fromRGB(95,40,180),
+    .45,
+    Color3.fromRGB(180,20,30),
     0,
-    104
+    156
 )
 
 local IrisStroke = Instance.new("UIStroke")
-IrisStroke.Thickness = 2
-IrisStroke.Color = Color3.fromRGB(180,100,255)
+IrisStroke.Thickness = 1.5
+IrisStroke.Color = Color3.fromRGB(255,150,150)
 IrisStroke.Parent = Iris
 
--- inner
-local Inner = Circle(
+local Inner = MakeCircle(
     "Inner",
-    0.40,
-    Color3.fromRGB(25,8,50),
+    .29,
+    Color3.fromRGB(40,3,7),
     0,
-    105
+    157
 )
 
--- pupil
-local Pupil = Circle(
+local Pupil = MakeCircle(
     "Pupil",
-    0.20,
+    .15,
     Color3.fromRGB(0,0,0),
     0,
-    106
+    158
 )
 
--- core
-local Core = Circle(
+local Core = MakeCircle(
     "Core",
-    0.075,
+    .045,
     Color3.fromRGB(255,255,255),
-    0.05,
-    107
+    0,
+    159
 )
 
---========================================================--
--- TOMOE / ORBIT DOTS
---========================================================--
+--==============================================================
+-- PROCEDURAL SYMBOL LAYERS
+--==============================================================
 
-local Orbit = Instance.new("Frame")
-Orbit.Name = "TomoeOrbit"
-Orbit.AnchorPoint = Vector2.new(0.5,0.5)
-Orbit.Position = UDim2.fromScale(0.5,0.5)
-Orbit.Size = UDim2.fromScale(0.82,0.82)
-Orbit.BackgroundTransparency = 1
-Orbit.ZIndex = 108
-Orbit.Parent = Eye
+local Symbol = Instance.new("Frame")
+Symbol.Name = "Symbol"
+Symbol.AnchorPoint = Vector2.new(.5,.5)
+Symbol.Position = UDim2.fromScale(.5,.5)
+Symbol.Size = UDim2.fromScale(.82,.82)
+Symbol.BackgroundTransparency = 1
+Symbol.ZIndex = 160
+Symbol.Parent = Eye
 
-local Dots = {}
+local SymbolObjects = {}
 
-for i = 1,6 do
+local function ClearSymbol()
 
-    local Dot = Instance.new("Frame")
-    Dot.Name = "Tomoe"..i
-    Dot.AnchorPoint = Vector2.new(0.5,0.5)
-    Dot.Size = UDim2.fromOffset(6,6)
-    Dot.BackgroundColor3 = Color3.fromRGB(235,210,255)
-    Dot.BorderSizePixel = 0
-    Dot.ZIndex = 109
-    Dot.Parent = Orbit
+    for _,Obj in ipairs(SymbolObjects) do
+
+        if Obj and Obj.Parent then
+            Obj:Destroy()
+        end
+
+    end
+
+    table.clear(SymbolObjects)
+end
+
+local function AddLine(angle,length,width,color)
+
+    local L = Instance.new("Frame")
+
+    L.AnchorPoint = Vector2.new(.5,.5)
+
+    L.Position = UDim2.fromScale(.5,.5)
+
+    L.Size = UDim2.new(
+        0,
+        length,
+        0,
+        width
+    )
+
+    L.Rotation = angle
+
+    L.BackgroundColor3 = color
+    L.BorderSizePixel = 0
+
+    L.ZIndex = 161
+    L.Parent = Symbol
+
+    table.insert(SymbolObjects,L)
+
+    return L
+end
+
+local function AddDot(x,y,size,color)
+
+    local D = Instance.new("Frame")
+
+    D.AnchorPoint = Vector2.new(.5,.5)
+
+    D.Position = UDim2.fromScale(x,y)
+
+    D.Size = UDim2.fromOffset(size,size)
+
+    D.BackgroundColor3 = color
+    D.BorderSizePixel = 0
+
+    D.ZIndex = 162
+    D.Parent = Symbol
 
     local C = Instance.new("UICorner")
     C.CornerRadius = UDim.new(1,0)
-    C.Parent = Dot
+    C.Parent = D
 
-    table.insert(Dots,Dot)
+    table.insert(SymbolObjects,D)
+
+    return D
 end
 
---========================================================--
--- EYE ROTATION
---========================================================--
+--==============================================================
+-- EYE TYPES
+--==============================================================
 
-local Rotation = 0
-local RotationConnection
+local EyeTypes = {
 
-local function StartRotation()
+    -- 1
+    {
+        Name = "SHARINGAN",
+        Color = Color3.fromRGB(255,35,45),
+        Accent = Color3.fromRGB(30,0,0),
+        Type = "TOMOE"
+    },
 
-    if RotationConnection then
-        RotationConnection:Disconnect()
-    end
+    -- 2
+    {
+        Name = "RINNEGAN",
+        Color = Color3.fromRGB(175,130,255),
+        Accent = Color3.fromRGB(30,10,70),
+        Type = "RINGS"
+    },
 
-    RotationConnection = RunService.RenderStepped:Connect(function(dt)
+    -- 3
+    {
+        Name = "MANGEKYO",
+        Color = Color3.fromRGB(230,30,40),
+        Accent = Color3.fromRGB(10,0,0),
+        Type = "STAR"
+    },
 
-        Rotation += dt * 70
+    -- 4
+    {
+        Name = "TRI-BLADE",
+        Color = Color3.fromRGB(255,45,45),
+        Accent = Color3.fromRGB(20,0,0),
+        Type = "TRI"
+    },
 
-        Orbit.Rotation = Rotation
-        Ring2.Rotation = -Rotation * 0.35
-        Iris.Rotation = Rotation * 0.55
+    -- 5
+    {
+        Name = "HEX",
+        Color = Color3.fromRGB(255,75,35),
+        Accent = Color3.fromRGB(25,0,0),
+        Type = "HEX"
+    },
 
-        for i,Dot in ipairs(Dots) do
+    -- 6
+    {
+        Name = "SPIRAL",
+        Color = Color3.fromRGB(245,40,60),
+        Accent = Color3.fromRGB(30,0,15),
+        Type = "SPIRAL"
+    },
 
-            local Angle = math.rad((i-1)*60 + Rotation)
-            local Radius = 0.29
+    -- 7
+    {
+        Name = "CRIMSON STAR",
+        Color = Color3.fromRGB(255,20,30),
+        Accent = Color3.fromRGB(0,0,0),
+        Type = "STAR6"
+    },
 
-            Dot.Position = UDim2.fromScale(
-                0.5 + math.cos(Angle)*Radius,
-                0.5 + math.sin(Angle)*Radius
+    -- 8
+    {
+        Name = "VOID",
+        Color = Color3.fromRGB(90,70,120),
+        Accent = Color3.fromRGB(5,5,10),
+        Type = "VOID"
+    },
+
+    -- 9
+    {
+        Name = "TRIPLE",
+        Color = Color3.fromRGB(220,35,55),
+        Accent = Color3.fromRGB(15,0,0),
+        Type = "TRIPLE"
+    },
+
+    -- 10
+    {
+        Name = "COSMIC",
+        Color = Color3.fromRGB(80,170,255),
+        Accent = Color3.fromRGB(15,30,70),
+        Type = "COSMIC"
+    },
+
+    -- 11
+    {
+        Name = "BLACK STAR",
+        Color = Color3.fromRGB(230,35,45),
+        Accent = Color3.fromRGB(0,0,0),
+        Type = "BLACKSTAR"
+    },
+
+    -- 12
+    {
+        Name = "RED RING",
+        Color = Color3.fromRGB(255,55,40),
+        Accent = Color3.fromRGB(30,0,0),
+        Type = "RINGS"
+    }
+}
+
+--==============================================================
+-- BUILD SYMBOL
+--==============================================================
+
+local function BuildSymbol(Data)
+
+    ClearSymbol()
+
+    local C = Data.Color
+    local A = Data.Accent
+
+    if Data.Type == "TOMOE" then
+
+        for i=1,3 do
+
+            local Angle = (i-1)*120
+
+            local D = AddDot(
+                .5 + math.cos(math.rad(Angle))*0.27,
+                .5 + math.sin(math.rad(Angle))*0.27,
+                10,
+                A
+            )
+
+            D.Rotation = Angle
+        end
+
+        for i=1,3 do
+
+            local L = AddLine(
+                (i-1)*120,
+                22,
+                5,
+                A
+            )
+
+            L.Position = UDim2.fromScale(
+                .5 + math.cos(math.rad((i-1)*120))*0.14,
+                .5 + math.sin(math.rad((i-1)*120))*0.14
             )
         end
-    end)
-end
 
-local function StopRotation()
+    elseif Data.Type == "RINGS" then
 
-    if RotationConnection then
-        RotationConnection:Disconnect()
-        RotationConnection = nil
+        for i=1,4 do
+
+            local R = Instance.new("Frame")
+
+            R.AnchorPoint = Vector2.new(.5,.5)
+            R.Position = UDim2.fromScale(.5,.5)
+
+            R.Size = UDim2.fromScale(
+                .15 + i*.13,
+                .15 + i*.13
+            )
+
+            R.BackgroundTransparency = 1
+            R.BorderSizePixel = 0
+            R.ZIndex = 161+i
+
+            R.Parent = Symbol
+
+            local S = Instance.new("UIStroke")
+
+            S.Thickness = 1.5
+            S.Color = A
+            S.Parent = R
+
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(1,0)
+            Corner.Parent = R
+
+            table.insert(SymbolObjects,R)
+        end
+
+    elseif Data.Type == "STAR" then
+
+        for i=1,6 do
+
+            local L = AddLine(
+                (i-1)*60,
+                48,
+                6,
+                A
+            )
+
+            L.Position = UDim2.fromScale(.5,.5)
+        end
+
+    elseif Data.Type == "TRI" then
+
+        for i=1,3 do
+
+            local L = AddLine(
+                (i-1)*120,
+                43,
+                7,
+                A
+            )
+
+            L.Position = UDim2.fromScale(.5,.5)
+        end
+
+    elseif Data.Type == "HEX" then
+
+        for i=1,6 do
+
+            AddLine(
+                (i-1)*60,
+                45,
+                5,
+                A
+            )
+        end
+
+        for i=1,6 do
+
+            local Angle = math.rad((i-1)*60)
+
+            AddDot(
+                .5 + math.cos(Angle)*.25,
+                .5 + math.sin(Angle)*.25,
+                6,
+                C
+            )
+        end
+
+    elseif Data.Type == "SPIRAL" then
+
+        for i=1,5 do
+
+            local L = AddLine(
+                i*32,
+                30+i*3,
+                4,
+                A
+            )
+
+            L.Position = UDim2.fromScale(
+                .5 + math.cos(math.rad(i*70))*.08,
+                .5 + math.sin(math.rad(i*70))*.08
+            )
+        end
+
+    elseif Data.Type == "STAR6" then
+
+        for i=1,6 do
+
+            local L = AddLine(
+                (i-1)*60,
+                52,
+                9,
+                A
+            )
+
+            L.Position = UDim2.fromScale(.5,.5)
+        end
+
+    elseif Data.Type == "VOID" then
+
+        for i=1,8 do
+
+            AddLine(
+                (i-1)*45,
+                42,
+                3,
+                C
+            )
+
+        end
+
+    elseif Data.Type == "TRIPLE" then
+
+        for i=1,3 do
+
+            local Angle = math.rad((i-1)*120)
+
+            local X =
+                .5 + math.cos(Angle)*.20
+
+            local Y =
+                .5 + math.sin(Angle)*.20
+
+            AddDot(X,Y,14,A)
+
+            AddLine(
+                (i-1)*120,
+                30,
+                6,
+                A
+            )
+        end
+
+    elseif Data.Type == "COSMIC" then
+
+        for i=1,8 do
+
+            local Angle = math.rad((i-1)*45)
+
+            AddDot(
+                .5 + math.cos(Angle)*.30,
+                .5 + math.sin(Angle)*.30,
+                5,
+                C
+            )
+
+            AddLine(
+                (i-1)*45,
+                42,
+                2,
+                A
+            )
+        end
+
+    elseif Data.Type == "BLACKSTAR" then
+
+        for i=1,5 do
+
+            AddLine(
+                (i-1)*36,
+                50,
+                9,
+                A
+            )
+
+        end
+
+        for i=1,5 do
+
+            local Angle = math.rad((i-1)*72)
+
+            AddDot(
+                .5 + math.cos(Angle)*.25,
+                .5 + math.sin(Angle)*.25,
+                8,
+                C
+            )
+
+        end
     end
 end
 
---========================================================--
--- OPEN ANIMATION
---========================================================--
+--==============================================================
+-- COLOR MORPH
+--==============================================================
 
-local Open = false
+local CurrentColor = Color3.fromRGB(255,35,45)
+local CurrentAccent = Color3.fromRGB(30,0,0)
 
-local function OpenMenu()
+local function TweenColor(Object,Color,Time)
 
-    if Open then return end
-    Open = true
-
-    Toggle.TextTransparency = 1
-    Eye.Visible = true
-
-    Eye.Size = UDim2.fromScale(0.05,0.05)
-
-    Main.Visible = true
-    Main.Size = UDim2.fromOffset(20,20)
-    Main.BackgroundTransparency = 1
+    if not Object then return end
 
     TweenService:Create(
-        Eye,
+        Object,
         TweenInfo.new(
-            0.55,
-            Enum.EasingStyle.Back,
-            Enum.EasingDirection.Out
+            Time,
+            Enum.EasingStyle.Sine,
+            Enum.EasingDirection.InOut
         ),
         {
-            Size = UDim2.fromScale(0.82,0.82)
+            BackgroundColor3 = Color
+        }
+    ):Play()
+end
+
+local function ChangeEyeColor(Data)
+
+    local Time = 1.8
+
+    TweenColor(
+        EyeBase,
+        Data.Accent,
+        Time
+    )
+
+    TweenColor(
+        RingOuter,
+        Data.Color,
+        Time
+    )
+
+    TweenColor(
+        RingMiddle,
+        Data.Color,
+        Time
+    )
+
+    TweenColor(
+        Iris,
+        Data.Color,
+        Time
+    )
+
+    TweenColor(
+        GlowOuter,
+        Data.Color,
+        Time
+    )
+
+    TweenColor(
+        GlowMiddle,
+        Data.Color,
+        Time
+    )
+
+    TweenColor(
+        GlowInner,
+        Data.Color,
+        Time
+    )
+
+    TweenService:Create(
+        EyeBaseStroke,
+        TweenInfo.new(Time),
+        {
+            Color = Data.Color
         }
     ):Play()
 
     TweenService:Create(
+        RingOuterStroke,
+        TweenInfo.new(Time),
+        {
+            Color = Data.Color
+        }
+    ):Play()
+
+    TweenService:Create(
+        RingMiddleStroke,
+        TweenInfo.new(Time),
+        {
+            Color = Data.Color
+        }
+    ):Play()
+
+    TweenService:Create(
+        IrisStroke,
+        TweenInfo.new(Time),
+        {
+            Color = Data.Color
+        }
+    ):Play()
+end
+
+--==============================================================
+-- MORPH ANIMATION
+--==============================================================
+
+local CurrentType = 1
+local Morphing = false
+local EyeOpen = false
+
+local function MorphTo(NewIndex)
+
+    if Morphing then return end
+
+    Morphing = true
+
+    local NewData = EyeTypes[NewIndex]
+
+    -- fase 1: eye pulse
+
+    TweenService:Create(
+        Eye,
+        TweenInfo.new(
+            .45,
+            Enum.EasingStyle.Sine,
+            Enum.EasingDirection.InOut
+        ),
+        {
+            Size = UDim2.fromScale(.70,.70)
+        }
+    ):Play()
+
+    -- phase 2: rotate quickly
+
+    local StartRotation = Symbol.Rotation
+
+    local RotateTween = TweenService:Create(
+        Symbol,
+        TweenInfo.new(
+            .8,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.InOut
+        ),
+        {
+            Rotation = StartRotation + 180
+        }
+    )
+
+    RotateTween:Play()
+
+    -- color starts transitioning immediately
+
+    ChangeEyeColor(NewData)
+
+    task.wait(.35)
+
+    -- fade old symbol
+
+    for _,Obj in ipairs(SymbolObjects) do
+
+        if Obj:IsA("Frame") then
+
+            TweenService:Create(
+                Obj,
+                TweenInfo.new(
+                    .55,
+                    Enum.EasingStyle.Sine,
+                    Enum.EasingDirection.InOut
+                ),
+                {
+                    BackgroundTransparency = 1
+                }
+            ):Play()
+
+        end
+    end
+
+    task.wait(.35)
+
+    BuildSymbol(NewData)
+
+    -- reveal new symbol
+
+    for _,Obj in ipairs(SymbolObjects) do
+
+        if Obj:IsA("Frame") then
+
+            Obj.BackgroundTransparency = 1
+
+            TweenService:Create(
+                Obj,
+                TweenInfo.new(
+                    .65,
+                    Enum.EasingStyle.Sine,
+                    Enum.EasingDirection.Out
+                ),
+                {
+                    BackgroundTransparency = 0
+                }
+            ):Play()
+
+        end
+    end
+
+    TweenService:Create(
+        Eye,
+        TweenInfo.new(
+            .65,
+            Enum.EasingStyle.Back,
+            Enum.EasingDirection.Out
+        ),
+        {
+            Size = UDim2.fromScale(.82,.82)
+        }
+    ):Play()
+
+    CurrentType = NewIndex
+
+    task.wait(.75)
+
+    Morphing = false
+end
+
+--==============================================================
+-- AUTO MORPH LOOP
+--==============================================================
+
+local MorphThread
+
+local function StartMorph()
+
+    if MorphThread then return end
+
+    MorphThread = task.spawn(function()
+
+        while EyeOpen do
+
+            task.wait(5)
+
+            if not EyeOpen then
+                break
+            end
+
+            local Next
+
+            repeat
+
+                Next = math.random(
+                    1,
+                    #EyeTypes
+                )
+
+            until Next ~= CurrentType
+
+            MorphTo(Next)
+        end
+
+        MorphThread = nil
+    end)
+end
+
+--==============================================================
+-- EYE OPEN
+--==============================================================
+
+local function OpenEye()
+
+    EyeOpen = true
+
+    Toggle.TextTransparency = 1
+
+    Eye.Visible = true
+
+    Eye.Size = UDim2.fromScale(.02,.02)
+
+    BuildSymbol(
+        EyeTypes[CurrentType]
+    )
+
+    ChangeEyeColor(
+        EyeTypes[CurrentType]
+    )
+
+    TweenService:Create(
+        Eye,
+        TweenInfo.new(
+            .75,
+            Enum.EasingStyle.Back,
+            Enum.EasingDirection.Out
+        ),
+        {
+            Size = UDim2.fromScale(.82,.82)
+        }
+    ):Play()
+
+    StartMorph()
+end
+
+--==============================================================
+-- EYE CLOSE
+--==============================================================
+
+local function CloseEye()
+
+    EyeOpen = false
+
+    TweenService:Create(
+        Eye,
+        TweenInfo.new(
+            .65,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.In
+        ),
+        {
+            Size = UDim2.fromScale(.02,.02)
+        }
+    ):Play()
+
+    task.wait(.55)
+
+    Eye.Visible = false
+
+    Toggle.Text = "Z"
+
+    TweenService:Create(
+        Toggle,
+        TweenInfo.new(
+            .35,
+            Enum.EasingStyle.Back,
+            Enum.EasingDirection.Out
+        ),
+        {
+            TextTransparency = 0
+        }
+    ):Play()
+end
+
+--==============================================================
+-- MENU OPEN
+--==============================================================
+
+local MenuOpen = false
+
+local function OpenMenu()
+
+    if MenuOpen then return end
+
+    MenuOpen = true
+
+    Main.Visible = true
+
+    Main.Size = UDim2.fromOffset(25,25)
+    Main.BackgroundTransparency = 1
+
+    OpenEye()
+
+    TweenService:Create(
         Main,
         TweenInfo.new(
-            0.55,
+            .60,
             Enum.EasingStyle.Back,
             Enum.EasingDirection.Out
         ),
         {
             Size = UDim2.fromOffset(460,520),
-            BackgroundTransparency = 0.08
+            BackgroundTransparency = .08
         }
     ):Play()
-
-    StartRotation()
 end
 
---========================================================--
--- CLOSE ANIMATION
---========================================================--
+--==============================================================
+-- MENU CLOSE
+--==============================================================
 
 local function CloseMenu()
 
-    if not Open then return end
-    Open = false
+    if not MenuOpen then return end
 
-    local EyeTween = TweenService:Create(
-        Eye,
-        TweenInfo.new(
-            0.5,
-            Enum.EasingStyle.Quint,
-            Enum.EasingDirection.In
-        ),
-        {
-            Size = UDim2.fromScale(0.03,0.03)
-        }
-    )
+    MenuOpen = false
 
-    local MenuTween = TweenService:Create(
+    CloseEye()
+
+    TweenService:Create(
         Main,
         TweenInfo.new(
-            0.35,
+            .40,
             Enum.EasingStyle.Quint,
             Enum.EasingDirection.In
         ),
         {
-            Size = UDim2.fromOffset(20,20),
+            Size = UDim2.fromOffset(25,25),
             BackgroundTransparency = 1
         }
-    )
+    ):Play()
 
-    EyeTween:Play()
-    MenuTween:Play()
+    task.delay(.42,function()
 
-    EyeTween.Completed:Connect(function()
-
-        StopRotation()
-
-        Eye.Visible = false
-
-        -- MẮT BIẾN THÀNH Z
-        Toggle.Text = "Z"
-
-        TweenService:Create(
-            Toggle,
-            TweenInfo.new(
-                0.28,
-                Enum.EasingStyle.Back,
-                Enum.EasingDirection.Out
-            ),
-            {
-                TextTransparency = 0
-            }
-        ):Play()
-    end)
-
-    MenuTween.Completed:Connect(function()
-
-        if not Open then
+        if not MenuOpen then
             Main.Visible = false
         end
+
     end)
 end
 
---========================================================--
--- BUTTON
---========================================================--
+--==============================================================
+-- BUTTON EVENTS
+--==============================================================
 
 Toggle.MouseButton1Click:Connect(function()
 
-    if Open then
+    if MenuOpen then
         CloseMenu()
     else
         OpenMenu()
     end
+
 end)
 
 Close.MouseButton1Click:Connect(function()
+
     CloseMenu()
+
 end)
 
---========================================================--
--- DRAG MOBILE
---========================================================--
+--==============================================================
+-- MOBILE DRAG
+--==============================================================
 
 local Dragging = false
 local DragStart
-local StartPosition
+local StartPos
 
 Toggle.InputBegan:Connect(function(Input)
 
@@ -622,9 +1318,12 @@ Toggle.InputBegan:Connect(function(Input)
     or Input.UserInputType == Enum.UserInputType.MouseButton1 then
 
         Dragging = true
+
         DragStart = Input.Position
-        StartPosition = Toggle.Position
+        StartPos = Toggle.Position
+
     end
+
 end)
 
 UserInputService.InputChanged:Connect(function(Input)
@@ -634,15 +1333,18 @@ UserInputService.InputChanged:Connect(function(Input)
     if Input.UserInputType == Enum.UserInputType.Touch
     or Input.UserInputType == Enum.UserInputType.MouseMovement then
 
-        local Delta = Input.Position - DragStart
+        local Delta =
+            Input.Position - DragStart
 
         Toggle.Position = UDim2.new(
-            StartPosition.X.Scale,
-            StartPosition.X.Offset + Delta.X,
-            StartPosition.Y.Scale,
-            StartPosition.Y.Offset + Delta.Y
+            StartPos.X.Scale,
+            StartPos.X.Offset + Delta.X,
+            StartPos.Y.Scale,
+            StartPos.Y.Offset + Delta.Y
         )
+
     end
+
 end)
 
 UserInputService.InputEnded:Connect(function(Input)
@@ -651,14 +1353,23 @@ UserInputService.InputEnded:Connect(function(Input)
     or Input.UserInputType == Enum.UserInputType.MouseButton1 then
 
         Dragging = false
+
     end
+
 end)
 
---========================================================--
+--==============================================================
 -- START
---========================================================--
+--==============================================================
 
-task.wait(0.25)
+task.wait(.25)
+
 OpenMenu()
 
-print("ZAKA PURE UI V1 LOADED")
+print("====================================")
+print(" ZAKA PURE UI V1")
+print(" EYE MORPH EDITION")
+print(" 12 PROCEDURAL EYE STYLES")
+print(" 5 SECOND AUTO MORPH")
+print(" COLOR TRANSITION ENABLED")
+print("====================================")
