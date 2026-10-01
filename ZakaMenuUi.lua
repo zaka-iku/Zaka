@@ -1,1159 +1,529 @@
---==============================================================--
--- ZAKA PURE UI V1 + V3 FUNCTIONS (FIXED - MENU LUÔN HIỆN)
---==============================================================--
+--[[
+    ZAKA NARUTO UI - RASENGAN EDITION
+    - Nút Rasengan động + đổi mắt
+    - Naruto & Sasuke bay 2 bên
+    - Naruto → Cửu Vĩ khi mở lâu
+    - Tab dọc chủ đề Naruto
+]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
-local VirtualUser = game:GetService("VirtualUser")
-local TeleportService = game:GetService("TeleportService")
-local TextChatService = game:GetService("TextChatService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-local Mouse = Player:GetMouse()
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Xóa bản cũ
 pcall(function()
-    local old = PlayerGui:FindFirstChild("ZakaPureUI")
-    if old then old:Destroy() end
-end)
-
---==============================================================
--- SETTINGS
---==============================================================
-local Settings = {
-    Aimbot = false, AimbotFOV = 120, AimbotSmooth = 0.25, SilentAim = false,
-    AutoClicker = false, ClickDelay = 0.05, TargetStrafe = false,
-    StrafeDistance = 12, StrafeSpeed = 6, SpinBot = false, SpinSpeed = 45,
-
-    HitboxHead = false, HeadSize = 15, HitboxTorso = false,
-    TorsoSize = Vector3.new(4,6,4), HitboxWeapon = false, WeaponSize = 5,
-    HitboxTransparent = 0.5, HitboxLimb = false, LimbSize = 4,
-
-    ESP = false, ESPBox = true, ESPName = true, ESPHealth = true,
-    ESPDistance = true, ESPMaxDist = 3500, Chams = false,
-    ChamsColor = Color3.fromRGB(0,200,255), CustomCrosshair = false,
-    CrosshairSize = 12, GlowTrail = false, Fullbright = false,
-    FOVChanger = false, FOVValue = 90,
-
-    Speed = false, SpeedValue = 26, Fly = false, FlySpeed = 50,
-    Noclip = false, InfiniteJump = false, HighJump = false, JumpPower = 100,
-    Bhop = false, SpiderClimb = false, SpiderSpeed = 30, WaterWalk = false,
-
-    TouchTP = false, BringNPC = false, GravityMod = false, GravityValue = 196.2,
-
-    ChatSpammer = false, SpamMessage = "Zaka Pure UI - Eye Morph", SpamDelay = 2,
-}
-
-local NoclipConn, SpeedConn, FlyConn, TouchTPConn, AutoClickConn, SpamConn, StrafeConn, WaterConn, SpiderConn
-local BodyGyro, BodyVelocity
-local ESPObjects = {}
-local ChamsObjects = {}
-local OriginalAmbient = Lighting.Ambient
-local OriginalGravity = Workspace.Gravity
-
--- Anti AFK
-Player.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-
---==============================================================
--- CORE FUNCTIONS
---==============================================================
-UserInputService.JumpRequest:Connect(function()
-    if Settings.InfiniteJump then
-        local hum = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    if PlayerGui:FindFirstChild("ZakaNarutoUI") then
+        PlayerGui.ZakaNarutoUI:Destroy()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-    local char = Player.Character
-    if char and char:FindFirstChildOfClass("Humanoid") then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if Settings.HighJump then hum.JumpPower = Settings.JumpPower end
-    end
-
-    if Settings.Fullbright then
-        Lighting.Ambient = Color3.new(1,1,1)
-        Lighting.OutdoorAmbient = Color3.new(1,1,1)
-        Lighting.Brightness = 2
-    else
-        Lighting.Ambient = OriginalAmbient
-    end
-
-    if Settings.FOVChanger then Camera.FieldOfView = Settings.FOVValue end
-    if Settings.GravityMod then Workspace.Gravity = Settings.GravityValue
-    else Workspace.Gravity = OriginalGravity end
-
-    if Settings.SpinBot and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-        Player.Character.HumanoidRootPart.CFrame *= CFrame.Angles(0, math.rad(Settings.SpinSpeed), 0)
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if Settings.Bhop then
-        local hum = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.FloorMaterial \~= Enum.Material.Air then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
-
-local function SetTouchTP(state)
-    Settings.TouchTP = state
-    if TouchTPConn then TouchTPConn:Disconnect() TouchTPConn = nil end
-    if state then
-        TouchTPConn = UserInputService.InputBegan:Connect(function(input, gp)
-            if not gp and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-                if Settings.TouchTP and Mouse.Hit then
-                    local char = Player.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0,3.5,0))
-                    end
-                end
-            end
-        end)
-    end
-end
-
-local function SetWaterWalk(state)
-    Settings.WaterWalk = state
-    if WaterConn then WaterConn:Disconnect() WaterConn = nil end
-    if state then
-        WaterConn = RunService.RenderStepped:Connect(function()
-            local char = Player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local root = char.HumanoidRootPart
-                local ray = Ray.new(root.Position, Vector3.new(0,-6,0))
-                local hit, pos, _, mat = Workspace:FindPartOnRay(ray, char)
-                if mat == Enum.Material.Water then
-                    root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
-                    root.CFrame = CFrame.new(root.Position.X, pos.Y + 3.2, root.Position.Z)
-                end
-            end
-        end)
-    end
-end
-
-local function SetSpiderClimb(state)
-    Settings.SpiderClimb = state
-    if SpiderConn then SpiderConn:Disconnect() SpiderConn = nil end
-    if state then
-        SpiderConn = RunService.RenderStepped:Connect(function()
-            local char = Player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local root = char.HumanoidRootPart
-                local ray = Ray.new(root.Position, root.CFrame.LookVector * 3)
-                local hit = Workspace:FindPartOnRay(ray, char)
-                if hit then
-                    root.Velocity = Vector3.new(root.Velocity.X, Settings.SpiderSpeed, root.Velocity.Z)
-                end
-            end
-        end)
-    end
-end
-
-local function SetAutoClicker(state)
-    Settings.AutoClicker = state
-    if AutoClickConn then AutoClickConn:Disconnect() AutoClickConn = nil end
-    if state then
-        AutoClickConn = RunService.RenderStepped:Connect(function()
-            if Settings.AutoClicker then
-                VirtualUser:Button1Down(Vector2.new())
-                task.wait(Settings.ClickDelay)
-                VirtualUser:Button1Up(Vector2.new())
-            end
-        end)
-    end
-end
-
-local function SetBringNPC(state)
-    Settings.BringNPC = state
-    if not state then return end
-    task.spawn(function()
-        while Settings.BringNPC do
-            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-            if myRoot then
-                for _, obj in ipairs(Workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj \~= Player.Character then
-                        local hum = obj:FindFirstChildOfClass("Humanoid")
-                        local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
-                        if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                            root.CFrame = myRoot.CFrame * CFrame.new(0,0,-4)
-                            root.Velocity = Vector3.zero
-                        end
-                    end
-                end
-            end
-            task.wait(0.15)
-        end
-    end)
-end
-
-local function SetChatSpammer(state)
-    Settings.ChatSpammer = state
-    if SpamConn then pcall(task.cancel, SpamConn) SpamConn = nil end
-    if state then
-        SpamConn = task.spawn(function()
-            while Settings.ChatSpammer do
-                pcall(function()
-                    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-                        TextChatService.TextChannels.RBXGeneral:SendAsync(Settings.SpamMessage)
-                    else
-                        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Settings.SpamMessage, "All")
-                    end
-                end)
-                task.wait(Settings.SpamDelay)
-            end
-        end)
-    end
-end
-
-local function SetTargetStrafe(state)
-    Settings.TargetStrafe = state
-    if StrafeConn then StrafeConn:Disconnect() StrafeConn = nil end
-    if state then
-        local angle = 0
-        StrafeConn = RunService.RenderStepped:Connect(function()
-            local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-            if not myRoot then return end
-            local target, minDist = nil, 9999
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr \~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                    if dist < minDist then minDist = dist target = plr.Character.HumanoidRootPart end
-                end
-            end
-            if target and minDist <= 50 then
-                angle = angle + math.rad(Settings.StrafeSpeed)
-                local offset = Vector3.new(math.cos(angle)*Settings.StrafeDistance, 0, math.sin(angle)*Settings.StrafeDistance)
-                myRoot.CFrame = CFrame.new(target.Position + offset, target.Position)
-            end
-        end)
-    end
-end
-
-local function SetGlowTrail(state)
-    Settings.GlowTrail = state
-    local char = Player.Character
-    if not char then return end
-    if state then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-        local a0 = Instance.new("Attachment", root) a0.Name = "TrailA0" a0.Position = Vector3.new(0,-2.2,0)
-        local a1 = Instance.new("Attachment", root) a1.Name = "TrailA1" a1.Position = Vector3.new(0,-2.0,0)
-        local trail = Instance.new("Trail")
-        trail.Name = "PlayerGlowTrail"
-        trail.Attachment0 = a0 trail.Attachment1 = a1
-        trail.Lifetime = 0.8
-        trail.Color = ColorSequence.new(Color3.fromRGB(120,80,255), Color3.fromRGB(255,50,100))
-        trail.Transparency = NumberSequence.new(0.1, 1)
-        trail.Parent = char
-    else
-        pcall(function()
-            if char:FindFirstChild("PlayerGlowTrail") then char.PlayerGlowTrail:Destroy() end
-            if char:FindFirstChild("HumanoidRootPart") then
-                if char.HumanoidRootPart:FindFirstChild("TrailA0") then char.HumanoidRootPart.TrailA0:Destroy() end
-                if char.HumanoidRootPart:FindFirstChild("TrailA1") then char.HumanoidRootPart.TrailA1:Destroy() end
-            end
-        end)
-    end
-end
-
--- Hitbox
-RunService.RenderStepped:Connect(function()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= Player and plr.Character then
-            local char = plr.Character
-            local head = char:FindFirstChild("Head")
-            if head then
-                if Settings.HitboxHead then
-                    head.Size = Vector3.new(Settings.HeadSize, Settings.HeadSize, Settings.HeadSize)
-                    head.Transparency = Settings.HitboxTransparent
-                    head.CanCollide = false
-                else
-                    head.Size = Vector3.new(2,1,1)
-                    head.Transparency = 0
-                end
-            end
-            local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-            if torso then
-                if Settings.HitboxTorso then
-                    torso.Size = Settings.TorsoSize
-                    torso.Transparency = Settings.HitboxTransparent
-                    torso.CanCollide = false
-                else
-                    torso.Size = Vector3.new(2,2,1)
-                    torso.Transparency = 0
-                end
-            end
-            if Settings.HitboxLimb then
-                for _, name in ipairs({"Left Arm","Right Arm","Left Leg","Right Leg","LeftLowerArm","RightLowerArm","LeftLowerLeg","RightLowerLeg"}) do
-                    local limb = char:FindFirstChild(name)
-                    if limb and limb:IsA("BasePart") then
-                        limb.Size = Vector3.new(Settings.LimbSize, Settings.LimbSize, Settings.LimbSize)
-                        limb.Transparency = Settings.HitboxTransparent
-                        limb.CanCollide = false
-                    end
-                end
-            end
-            if Settings.HitboxWeapon then
-                for _, tool in ipairs(char:GetChildren()) do
-                    if tool:IsA("Tool") then
-                        for _, part in ipairs(tool:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                part.Size = Vector3.new(Settings.WeaponSize, Settings.WeaponSize, Settings.WeaponSize)
-                                part.Transparency = Settings.HitboxTransparent
-                                part.CanCollide = false
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Drawing (an toàn)
-local FOVCircle, CrosshairV, CrosshairH
-local DrawingSupported = false
-
-pcall(function()
-    FOVCircle = Drawing.new("Circle")
-    FOVCircle.Thickness = 1.5
-    FOVCircle.NumSides = 64
-    FOVCircle.Radius = Settings.AimbotFOV
-    FOVCircle.Filled = false
-    FOVCircle.Visible = false
-    FOVCircle.Color = Color3.fromRGB(120,80,255)
-
-    CrosshairV = Drawing.new("Line")
-    CrosshairH = Drawing.new("Line")
-    DrawingSupported = true
-end)
-
-local function GetClosestPlayerHead()
-    local closest, shortest = nil, Settings.AimbotFOV
-    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= Player and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-            local head = plr.Character:FindFirstChild("Head")
-            if head then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                    if dist < shortest then shortest = dist closest = head end
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- Silent Aim (an toàn)
-pcall(function()
-    local oldIndex
-    oldIndex = hookmetamethod(game, "__index", function(self, key)
-        if not checkcaller() and Settings.SilentAim and self == Mouse and tostring(key) == "Hit" then
-            local target = GetClosestPlayerHead()
-            if target then return target.CFrame end
-        end
-        return oldIndex(self, key)
-    end)
-end)
-
-RunService.RenderStepped:Connect(function()
-    if not DrawingSupported then return end
-    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    FOVCircle.Position = center
-    FOVCircle.Radius = Settings.AimbotFOV
-    FOVCircle.Visible = Settings.Aimbot or Settings.SilentAim
-
-    if Settings.CustomCrosshair then
-        local s = Settings.CrosshairSize
-        CrosshairV.From = Vector2.new(center.X, center.Y - s)
-        CrosshairV.To = Vector2.new(center.X, center.Y + s)
-        CrosshairV.Color = Color3.fromRGB(160,100,255)
-        CrosshairV.Thickness = 2
-        CrosshairV.Visible = true
-        CrosshairH.From = Vector2.new(center.X - s, center.Y)
-        CrosshairH.To = Vector2.new(center.X + s, center.Y)
-        CrosshairH.Color = Color3.fromRGB(160,100,255)
-        CrosshairH.Thickness = 2
-        CrosshairH.Visible = true
-    else
-        CrosshairV.Visible = false
-        CrosshairH.Visible = false
-    end
-
-    if Settings.Aimbot then
-        local target = GetClosestPlayerHead()
-        if target then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.AimbotSmooth)
-        end
-    end
-end)
-
--- ESP + Chams
-RunService.RenderStepped:Connect(function()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr \~= Player and plr.Character then
-            if Settings.Chams then
-                if not ChamsObjects[plr] then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "ZakaChams"
-                    hl.FillColor = Settings.ChamsColor
-                    hl.OutlineColor = Color3.fromRGB(255,255,255)
-                    hl.FillTransparency = 0.35
-                    hl.Parent = plr.Character
-                    ChamsObjects[plr] = hl
-                end
-            else
-                if ChamsObjects[plr] then ChamsObjects[plr]:Destroy() ChamsObjects[plr] = nil end
-            end
-        end
-    end
-
-    if not Settings.ESP or not DrawingSupported then
-        for _, drawings in pairs(ESPObjects) do
-            for _, d in pairs(drawings) do pcall(function() d.Visible = false end) end
-        end
-        return
-    end
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == Player then continue end
-        if not ESPObjects[plr] then
-            local ok, box = pcall(Drawing.new, "Square")
-            local ok2, name = pcall(Drawing.new, "Text")
-            local ok3, health = pcall(Drawing.new, "Text")
-            local ok4, dist = pcall(Drawing.new, "Text")
-            if ok and ok2 and ok3 and ok4 then
-                ESPObjects[plr] = {Box = box, Name = name, Health = health, Distance = dist}
-                box.Filled = false
-                name.Size = 12 name.Center = true name.Outline = true
-                health.Size = 11 health.Center = true health.Outline = true
-                dist.Size = 11 dist.Center = true dist.Outline = true
-            end
-        end
-
-        local drawings = ESPObjects[plr]
-        if not drawings then continue end
-
-        local char = plr.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then
-            for _, d in pairs(drawings) do pcall(function() d.Visible = false end) end
-            continue
-        end
-
-        local root = char.HumanoidRootPart
-        local hum = char.Humanoid
-        local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
-        local dist = (root.Position - Camera.CFrame.Position).Magnitude
-
-        if not onScreen or dist > Settings.ESPMaxDist then
-            for _, d in pairs(drawings) do pcall(function() d.Visible = false end) end
-            continue
-        end
-
-        local size = Vector2.new(math.clamp(2000/pos.Z, 8, 300), math.clamp(3000/pos.Z, 12, 450))
-        drawings.Box.Size = size
-        drawings.Box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
-        drawings.Box.Color = Color3.fromRGB(120,80,255)
-        drawings.Box.Visible = Settings.ESPBox
-
-        drawings.Name.Text = plr.Name
-        drawings.Name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 14)
-        drawings.Name.Color = Color3.fromRGB(240,245,255)
-        drawings.Name.Visible = Settings.ESPName
-
-        drawings.Health.Text = math.floor(hum.Health) .. " HP"
-        drawings.Health.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 2)
-        drawings.Health.Visible = Settings.ESPHealth
-
-        drawings.Distance.Text = math.floor(dist) .. "m"
-        drawings.Distance.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 14)
-        drawings.Distance.Visible = Settings.ESPDistance
-    end
-end)
-
--- Fly
-local function StartFly()
-    local char = Player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    BodyGyro = Instance.new("BodyGyro")
-    BodyGyro.P = 9e4
-    BodyGyro.maxTorque = Vector3.new(9e9,9e9,9e9)
-    BodyGyro.cframe = root.CFrame
-    BodyGyro.Parent = root
-
-    BodyVelocity = Instance.new("BodyVelocity")
-    BodyVelocity.velocity = Vector3.zero
-    BodyVelocity.maxForce = Vector3.new(9e9,9e9,9e9)
-    BodyVelocity.Parent = root
-
-    FlyConn = RunService.RenderStepped:Connect(function()
-        if not Settings.Fly or not char or not char:FindFirstChild("Humanoid") then
-            if BodyGyro then BodyGyro:Destroy() end
-            if BodyVelocity then BodyVelocity:Destroy() end
-            if FlyConn then FlyConn:Disconnect() end
-            return
-        end
-        BodyGyro.cframe = Camera.CFrame
-        local moveDir = char.Humanoid.MoveDirection
-        if moveDir.Magnitude > 0 then
-            local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
-            BodyVelocity.velocity = flyVector.Unit * Settings.FlySpeed
-        else
-            BodyVelocity.velocity = Vector3.zero
-        end
-    end)
-end
-
-local function SetFly(state)
-    Settings.Fly = state
-    if state then StartFly()
-    else
-        if BodyGyro then BodyGyro:Destroy() end
-        if BodyVelocity then BodyVelocity:Destroy() end
-        if FlyConn then FlyConn:Disconnect() end
-    end
-end
-
-local function SetSpeed(state)
-    if SpeedConn then SpeedConn:Disconnect() SpeedConn = nil end
-    if state then
-        SpeedConn = RunService.Heartbeat:Connect(function()
-            local hum = Player.Character and Player.Character:FindFirstChild("Humanoid")
-            if hum then hum.WalkSpeed = Settings.SpeedValue end
-        end)
-    else
-        local hum = Player.Character and Player.Character:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = 16 end
-    end
-end
-
-local function SetNoclip(state)
-    if NoclipConn then NoclipConn:Disconnect() NoclipConn = nil end
-    if state then
-        NoclipConn = RunService.Stepped:Connect(function()
-            local char = Player.Character
-            if char then
-                for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
-            end
-        end)
-    end
-end
-
---==============================================================
--- GUI (V1 Eye Morph)
---==============================================================
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "ZakaPureUI"
+Gui.Name = "ZakaNarutoUI"
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = PlayerGui
 
+--==============================================================
+-- MÀU SẮC CHỦ ĐỀ
+--==============================================================
+local Colors = {
+    Orange = Color3.fromRGB(255, 140, 30),
+    Blue = Color3.fromRGB(40, 120, 255),
+    Purple = Color3.fromRGB(140, 60, 255),
+    Red = Color3.fromRGB(220, 40, 40),
+    Yellow = Color3.fromRGB(255, 210, 50),
+    Dark = Color3.fromRGB(12, 10, 18),
+    Kurama = Color3.fromRGB(255, 160, 20),
+}
+
+--==============================================================
+-- NÚT RASENGAN (TOGGLE)
+--==============================================================
 local Toggle = Instance.new("TextButton")
-Toggle.Name = "ToggleButton"
-Toggle.Size = UDim2.fromOffset(64,64)
-Toggle.Position = UDim2.new(0,18,0.42,0)
-Toggle.AnchorPoint = Vector2.new(0,0.5)
-Toggle.BackgroundColor3 = Color3.fromRGB(9,9,15)
-Toggle.BackgroundTransparency = 0.05
-Toggle.BorderSizePixel = 0
-Toggle.Text = "Z"
-Toggle.TextColor3 = Color3.new(1,1,1)
-Toggle.TextSize = 30
-Toggle.Font = Enum.Font.GothamBlack
+Toggle.Name = "RasenganBtn"
+Toggle.Size = UDim2.fromOffset(72, 72)
+Toggle.Position = UDim2.new(0, 20, 0.42, 0)
+Toggle.AnchorPoint = Vector2.new(0, 0.5)
+Toggle.BackgroundColor3 = Color3.fromRGB(15, 12, 25)
+Toggle.BackgroundTransparency = 0.1
+Toggle.Text = ""
 Toggle.AutoButtonColor = false
 Toggle.ZIndex = 100
 Toggle.Parent = Gui
-Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1,0)
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
 
 local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Thickness = 2
-ToggleStroke.Color = Color3.fromRGB(120,80,255)
-ToggleStroke.Transparency = 0.15
+ToggleStroke.Thickness = 2.5
+ToggleStroke.Color = Colors.Orange
+ToggleStroke.Transparency = 0.2
 ToggleStroke.Parent = Toggle
 
+-- Rasengan Core
+local Rasengan = Instance.new("Frame")
+Rasengan.Name = "Rasengan"
+Rasengan.AnchorPoint = Vector2.new(0.5, 0.5)
+Rasengan.Position = UDim2.fromScale(0.5, 0.5)
+Rasengan.Size = UDim2.fromScale(0.78, 0.78)
+Rasengan.BackgroundColor3 = Colors.Blue
+Rasengan.BorderSizePixel = 0
+Rasengan.ZIndex = 101
+Rasengan.Parent = Toggle
+Instance.new("UICorner", Rasengan).CornerRadius = UDim.new(1, 0)
+
+local RasenganStroke = Instance.new("UIStroke")
+RasenganStroke.Thickness = 2
+RasenganStroke.Color = Color3.fromRGB(180, 230, 255)
+RasenganStroke.Parent = Rasengan
+
+-- Vòng điện xoay
+local Ring1 = Instance.new("Frame")
+Ring1.AnchorPoint = Vector2.new(0.5, 0.5)
+Ring1.Position = UDim2.fromScale(0.5, 0.5)
+Ring1.Size = UDim2.fromScale(1.15, 1.15)
+Ring1.BackgroundTransparency = 1
+Ring1.ZIndex = 102
+Ring1.Parent = Toggle
+Instance.new("UICorner", Ring1).CornerRadius = UDim.new(1, 0)
+local Ring1Stroke = Instance.new("UIStroke")
+Ring1Stroke.Thickness = 1.5
+Ring1Stroke.Color = Colors.Orange
+Ring1Stroke.Transparency = 0.3
+Ring1Stroke.Parent = Ring1
+
+local Ring2 = Ring1:Clone()
+Ring2.Size = UDim2.fromScale(1.35, 1.35)
+Ring2.Parent = Toggle
+Ring2:FindFirstChildOfClass("UIStroke").Color = Colors.Blue
+
+-- Core sáng
+local Core = Instance.new("Frame")
+Core.AnchorPoint = Vector2.new(0.5, 0.5)
+Core.Position = UDim2.fromScale(0.5, 0.5)
+Core.Size = UDim2.fromScale(0.35, 0.35)
+Core.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Core.BorderSizePixel = 0
+Core.ZIndex = 103
+Core.Parent = Rasengan
+Instance.new("UICorner", Core).CornerRadius = UDim.new(1, 0)
+
+--==============================================================
+-- HỆ THỐNG ĐỔI MẮT RASENGAN
+--==============================================================
+local EyeStyles = {
+    {Name = "Rasengan", Color = Color3.fromRGB(80, 180, 255), Accent = Color3.fromRGB(200, 240, 255)},
+    {Name = "Sharingan", Color = Color3.fromRGB(220, 30, 30), Accent = Color3.fromRGB(255, 100, 100)},
+    {Name = "Rinnegan", Color = Color3.fromRGB(160, 80, 255), Accent = Color3.fromRGB(220, 180, 255)},
+    {Name = "Byakugan", Color = Color3.fromRGB(230, 230, 255), Accent = Color3.fromRGB(180, 200, 255)},
+    {Name = "Tenseigan", Color = Color3.fromRGB(80, 200, 255), Accent = Color3.fromRGB(150, 230, 255)},
+    {Name = "Ketsuryugan", Color = Color3.fromRGB(180, 20, 40), Accent = Color3.fromRGB(255, 80, 80)},
+    {Name = "Jogan", Color = Color3.fromRGB(40, 120, 255), Accent = Color3.fromRGB(100, 180, 255)},
+    {Name = "Kurama", Color = Color3.fromRGB(255, 160, 20), Accent = Color3.fromRGB(255, 220, 100)},
+}
+
+local CurrentEye = 1
+local UsedEyes = {}
+
+local function ChangeEyeStyle()
+    local available = {}
+    for i = 1, #EyeStyles do
+        if not UsedEyes[i] then
+            table.insert(available, i)
+        end
+    end
+    if #available == 0 then
+        UsedEyes = {}
+        available = {1,2,3,4,5,6,7,8}
+    end
+
+    local next = available[math.random(1, #available)]
+    UsedEyes[next] = true
+    CurrentEye = next
+
+    local style = EyeStyles[next]
+    TweenService:Create(Rasengan, TweenInfo.new(0.8, Enum.EasingStyle.Sine), {
+        BackgroundColor3 = style.Color
+    }):Play()
+    TweenService:Create(RasenganStroke, TweenInfo.new(0.8), {Color = style.Accent}):Play()
+    TweenService:Create(ToggleStroke, TweenInfo.new(0.8), {Color = style.Color}):Play()
+    TweenService:Create(Ring1Stroke, TweenInfo.new(0.8), {Color = style.Color}):Play()
+end
+
+-- Xoay Rasengan liên tục
+RunService.RenderStepped:Connect(function()
+    Rasengan.Rotation = Rasengan.Rotation + 2.2
+    Ring1.Rotation = Ring1.Rotation - 1.4
+    Ring2.Rotation = Ring2.Rotation + 1.8
+end)
+
+--==============================================================
+-- NARUTO & SASUKE BAY 2 BÊN
+--==============================================================
+local function CreateFloatingChar(name, side, color)
+    local frame = Instance.new("Frame")
+    frame.Name = name
+    frame.Size = UDim2.fromOffset(90, 140)
+    frame.Position = side == "Left" and UDim2.new(0, 15, 0.5, -70) or UDim2.new(1, -105, 0.5, -70)
+    frame.BackgroundTransparency = 1
+    frame.ZIndex = 50
+    frame.Parent = Gui
+
+    local body = Instance.new("Frame")
+    body.Size = UDim2.fromOffset(70, 100)
+    body.Position = UDim2.fromOffset(10, 20)
+    body.BackgroundColor3 = color
+    body.BackgroundTransparency = 0.15
+    body.BorderSizePixel = 0
+    body.Parent = frame
+    Instance.new("UICorner", body).CornerRadius = UDim.new(0, 16)
+
+    local head = Instance.new("Frame")
+    head.Size = UDim2.fromOffset(42, 42)
+    head.Position = UDim2.fromOffset(24, -5)
+    head.BackgroundColor3 = Color3.fromRGB(255, 210, 170)
+    head.BorderSizePixel = 0
+    head.Parent = frame
+    Instance.new("UICorner", head).CornerRadius = UDim.new(1, 0)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Position = UDim2.fromOffset(0, 125)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = color
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
+    label.Parent = frame
+
+    -- Bay lên xuống
+    local baseY = frame.Position.Y.Offset
+    task.spawn(function()
+        local t = 0
+        while frame.Parent do
+            t = t + 0.03
+            local offset = math.sin(t) * 12
+            frame.Position = UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, 0.5, baseY + offset)
+            task.wait()
+        end
+    end)
+
+    return frame, body
+end
+
+local NarutoFrame, NarutoBody = CreateFloatingChar("NARUTO", "Left", Colors.Orange)
+local SasukeFrame, SasukeBody = CreateFloatingChar("SASUKE", "Right", Colors.Blue)
+
+--==============================================================
+-- MAIN MENU
+--==============================================================
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.AnchorPoint = Vector2.new(.5,.5)
-Main.Position = UDim2.fromScale(.5,.5)
-Main.Size = UDim2.fromOffset(0,0)
-Main.BackgroundColor3 = Color3.fromRGB(8,8,14)
-Main.BackgroundTransparency = 1
-Main.BorderSizePixel = 0
+Main.Size = UDim2.fromOffset(480, 540)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Colors.Dark
+Main.BackgroundTransparency = 0.08
 Main.Visible = false
+Main.ClipsDescendants = true
 Main.ZIndex = 20
 Main.Parent = Gui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,18)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20)
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Thickness = 1.5
-MainStroke.Color = Color3.fromRGB(105,75,255)
-MainStroke.Transparency = .2
+MainStroke.Thickness = 1.8
+MainStroke.Color = Colors.Orange
+MainStroke.Transparency = 0.25
 MainStroke.Parent = Main
 
+-- Header
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1,0,0,65)
-Header.BackgroundTransparency = 1
+Header.Size = UDim2.new(1, 0, 0, 70)
+Header.BackgroundColor3 = Color3.fromRGB(18, 14, 28)
+Header.BackgroundTransparency = 0.3
 Header.Parent = Main
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 20)
 
 local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -80, 0, 30)
+Title.Position = UDim2.fromOffset(20, 12)
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.fromOffset(20,8)
-Title.Size = UDim2.new(1,-80,0,27)
-Title.Text = "ZAKA PURE UI"
+Title.Text = "ZAKA × NARUTO"
 Title.TextColor3 = Color3.new(1,1,1)
-Title.TextSize = 21
+Title.TextSize = 22
 Title.Font = Enum.Font.GothamBlack
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
-local Subtitle = Instance.new("TextLabel")
-Subtitle.BackgroundTransparency = 1
-Subtitle.Position = UDim2.fromOffset(21,36)
-Subtitle.Size = UDim2.new(1,-80,0,18)
-Subtitle.Text = "V1 • EYE MORPH + FULL FEATURES"
-Subtitle.TextColor3 = Color3.fromRGB(140,130,190)
-Subtitle.TextSize = 9
-Subtitle.Font = Enum.Font.GothamBold
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Parent = Header
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Size = UDim2.new(1, -80, 0, 20)
+SubTitle.Position = UDim2.fromOffset(20, 42)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "RASENGAN EDITION • EYE MORPH"
+SubTitle.TextColor3 = Color3.fromRGB(180, 150, 100)
+SubTitle.TextSize = 11
+SubTitle.Font = Enum.Font.GothamBold
+SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+SubTitle.Parent = Header
 
-local Close = Instance.new("TextButton")
-Close.Size = UDim2.fromOffset(38,38)
-Close.Position = UDim2.new(1,-48,0,12)
-Close.BackgroundColor3 = Color3.fromRGB(35,25,45)
-Close.BorderSizePixel = 0
-Close.Text = "×"
-Close.TextColor3 = Color3.new(1,1,1)
-Close.TextSize = 25
-Close.Font = Enum.Font.GothamBold
-Close.AutoButtonColor = false
-Close.Parent = Header
-Instance.new("UICorner", Close).CornerRadius = UDim.new(0,10)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.fromOffset(38, 38)
+CloseBtn.Position = UDim2.new(1, -52, 0, 16)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(50, 30, 40)
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+CloseBtn.TextSize = 24
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = Header
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 10)
+
+-- Tab dọc
+local TabContainer = Instance.new("ScrollingFrame")
+TabContainer.Size = UDim2.new(0, 130, 1, -90)
+TabContainer.Position = UDim2.fromOffset(12, 80)
+TabContainer.BackgroundTransparency = 1
+TabContainer.ScrollBarThickness = 2
+TabContainer.Parent = Main
+
+local TabList = Instance.new("UIListLayout")
+TabList.Padding = UDim.new(0, 8)
+TabList.Parent = TabContainer
 
 local Content = Instance.new("Frame")
-Content.Position = UDim2.fromOffset(14,75)
-Content.Size = UDim2.new(1,-28,1,-88)
+Content.Size = UDim2.new(1, -160, 1, -90)
+Content.Position = UDim2.fromOffset(150, 80)
 Content.BackgroundTransparency = 1
+Content.ClipsDescendants = true
 Content.Parent = Main
 
-local Banner = Instance.new("Frame")
-Banner.Size = UDim2.new(1,0,0,50)
-Banner.BackgroundColor3 = Color3.fromRGB(19,17,30)
-Banner.BorderSizePixel = 0
-Banner.Parent = Content
-Instance.new("UICorner", Banner).CornerRadius = UDim.new(0,12)
+-- Dữ liệu Tab (chủ đề Naruto)
+local TabsData = {
+    {Name = "RASENGAN", Icon = "🌀", Theme = "Kỹ thuật Rasengan & Chakra"},
+    {Name = "SHARINGAN", Icon = "👁", Theme = "Dojutsu & Ảo thuật"},
+    {Name = "NINJUTSU", Icon = "⚡", Theme = "Thuật nhẫn giả tấn công"},
+    {Name = "TAIJUTSU", Icon = "🥋", Theme = "Võ thuật thể chất"},
+    {Name = "GENJUTSU", Icon = "🌙", Theme = "Ảo thuật tâm trí"},
+    {Name = "BIJUU", Icon = "🦊", Theme = "Vĩ thú & Cửu Vĩ"},
+}
 
-local BannerText = Instance.new("TextLabel")
-BannerText.BackgroundTransparency = 1
-BannerText.Position = UDim2.fromOffset(15,6)
-BannerText.Size = UDim2.new(1,-30,0,20)
-BannerText.Text = "EYE SYSTEM + FULL FEATURES"
-BannerText.TextColor3 = Color3.new(1,1,1)
-BannerText.TextSize = 13
-BannerText.Font = Enum.Font.GothamBlack
-BannerText.TextXAlignment = Enum.TextXAlignment.Left
-BannerText.Parent = Banner
-
-local BannerSub = Instance.new("TextLabel")
-BannerSub.BackgroundTransparency = 1
-BannerSub.Position = UDim2.fromOffset(15,26)
-BannerSub.Size = UDim2.new(1,-30,0,16)
-BannerSub.Text = "Morphing • Aimbot • ESP • Fly • Hitbox • Troll"
-BannerSub.TextColor3 = Color3.fromRGB(135,125,160)
-BannerSub.TextSize = 9
-BannerSub.Font = Enum.Font.Gotham
-BannerSub.TextXAlignment = Enum.TextXAlignment.Left
-BannerSub.Parent = Banner
-
-local TabFrame = Instance.new("Frame")
-TabFrame.Position = UDim2.fromOffset(0,58)
-TabFrame.Size = UDim2.new(1,0,0,36)
-TabFrame.BackgroundTransparency = 1
-TabFrame.Parent = Content
-
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.Padding = UDim.new(0,5)
-TabLayout.Parent = TabFrame
-
-local TabNames = {"COMBAT","HITBOX","VISUAL","PLAYER","WORLD","TROLL"}
 local TabButtons = {}
 local Pages = {}
+local CurrentTab = 1
 
-for i, Name in ipairs(TabNames) do
-    local B = Instance.new("TextButton")
-    B.Size = UDim2.fromOffset(70,34)
-    B.BackgroundColor3 = Color3.fromRGB(20,18,30)
-    B.BorderSizePixel = 0
-    B.Text = Name
-    B.TextColor3 = Color3.fromRGB(180,175,205)
-    B.TextSize = 9
-    B.Font = Enum.Font.GothamBold
-    B.AutoButtonColor = false
-    B.Parent = TabFrame
-    Instance.new("UICorner", B).CornerRadius = UDim.new(0,9)
+local function CreateCard(parent, title, desc)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, 0, 0, 58)
+    card.BackgroundColor3 = Color3.fromRGB(22, 18, 32)
+    card.BorderSizePixel = 0
+    card.Parent = parent
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Colors.Orange
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = card
+
+    local t = Instance.new("TextLabel")
+    t.Size = UDim2.new(1, -20, 0, 24)
+    t.Position = UDim2.fromOffset(14, 8)
+    t.BackgroundTransparency = 1
+    t.Text = title
+    t.TextColor3 = Color3.new(1,1,1)
+    t.TextSize = 14
+    t.Font = Enum.Font.GothamBold
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.Parent = card
+
+    local d = Instance.new("TextLabel")
+    d.Size = UDim2.new(1, -20, 0, 18)
+    d.Position = UDim2.fromOffset(14, 32)
+    d.BackgroundTransparency = 1
+    d.Text = desc
+    d.TextColor3 = Color3.fromRGB(160, 140, 120)
+    d.TextSize = 11
+    d.Font = Enum.Font.Gotham
+    d.TextXAlignment = Enum.TextXAlignment.Left
+    d.Parent = card
+end
+
+for i, data in ipairs(TabsData) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 42)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+    btn.BackgroundTransparency = 0.3
+    btn.Text = data.Icon .. "  " .. data.Name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 12
+    btn.TextColor3 = Color3.fromRGB(180, 160, 140)
+    btn.AutoButtonColor = false
+    btn.Parent = TabContainer
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
     local page = Instance.new("ScrollingFrame")
-    page.Size = UDim2.new(1,0,1,-100)
-    page.Position = UDim2.fromOffset(0,100)
+    page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 3
-    page.ScrollBarImageColor3 = Color3.fromRGB(120,80,255)
+    page.ScrollBarImageColor3 = Colors.Orange
     page.Visible = false
-    page.CanvasSize = UDim2.new(0,0,0,0)
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.Parent = Content
 
     local list = Instance.new("UIListLayout")
-    list.Padding = UDim.new(0,7)
+    list.Padding = UDim.new(0, 8)
     list.Parent = page
     list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0,0,0, list.AbsoluteContentSize.Y + 20)
+        page.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 15)
     end)
 
-    TabButtons[i] = B
+    -- Nội dung theo chủ đề
+    if i == 1 then -- Rasengan
+        CreateCard(page, "Rasengan Thường", "Chakra xoáy hình cầu cơ bản")
+        CreateCard(page, "Odama Rasengan", "Rasengan khổng lồ")
+        CreateCard(page, "Rasenshuriken", "Rasengan biến thành shuriken gió")
+        CreateCard(page, "Senpo: Rasengan", "Rasengan tiên thuật")
+        CreateCard(page, "Chakra Nature Rasengan", "Kết hợp hệ chakra")
+    elseif i == 2 then -- Sharingan
+        CreateCard(page, "Sharingan 1 Tomoe", "Cấp độ cơ bản")
+        CreateCard(page, "Mangekyo Sharingan", "Ảo thuật vĩnh cửu")
+        CreateCard(page, "Rinnegan", "Mắt luân hồi")
+        CreateCard(page, "Izanagi / Izanami", "Thuật định mệnh")
+        CreateCard(page, "Susanoo", "Hộ thể khổng lồ")
+    elseif i == 3 then -- Ninjutsu
+        CreateCard(page, "Kage Bunshin", "Phân thân bóng")
+        CreateCard(page, "Rasengan Series", "Chuỗi kỹ thuật Rasengan")
+        CreateCard(page, "Chidori", "Sấm chớp xuyên phá")
+        CreateCard(page, "Amaterasu", "Hắc hỏa")
+        CreateCard(page, "Shinra Tensei", "Thần la thiên sinh")
+    elseif i == 4 then -- Taijutsu
+        CreateCard(page, "Konoha Taijutsu", "Võ thuật làng Lá")
+        CreateCard(page, "Gentle Fist", "Quyền nhu Byakugan")
+        CreateCard(page, "Primary Lotus", "Liên hoa sơ cấp")
+        CreateCard(page, "Shadow of the Dancing Leaf", "Bóng lá nhảy múa")
+    elseif i == 5 then -- Genjutsu
+        CreateCard(page, "Tsukuyomi", "Ảo thuật mặt trăng")
+        CreateCard(page, "Kotoamatsukami", "Điều khiển ý chí")
+        CreateCard(page, "Ephemeral", "Ảo ảnh phù du")
+    elseif i == 6 then -- Bijuu
+        CreateCard(page, "Cửu Vĩ Chakra Mode", "Áo choàng Cửu Vĩ")
+        CreateCard(page, "Kurama Mode", "Hợp thể với Cửu Vĩ")
+        CreateCard(page, "Bijuudama", "Đạn vĩ thú")
+        CreateCard(page, "Tailed Beast Bomb", "Bom vĩ thú")
+    end
+
+    TabButtons[i] = btn
     Pages[i] = page
 end
 
-local function CreateToggle(parent, text, default, callback)
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1,0,0,42)
-    card.BackgroundColor3 = Color3.fromRGB(17,16,27)
-    card.BorderSizePixel = 0
-    card.Parent = parent
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0,10)
-
-    local label = Instance.new("TextLabel")
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.fromOffset(14,0)
-    label.Size = UDim2.new(1,-70,1,0)
-    label.Text = text
-    label.TextColor3 = Color3.new(1,1,1)
-    label.TextSize = 12
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = card
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.fromOffset(36,20)
-    btn.Position = UDim2.new(1,-48,0.5,-10)
-    btn.BackgroundColor3 = default and Color3.fromRGB(120,80,255) or Color3.fromRGB(40,35,55)
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.Parent = card
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-
-    local enabled = default
-    btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        TweenService:Create(btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = enabled and Color3.fromRGB(120,80,255) or Color3.fromRGB(40,35,55)
-        }):Play()
-        callback(enabled)
-    end)
-end
-
--- Nội dung Tab
-CreateToggle(Pages[1], "Aimbot Lock Head", false, function(v) Settings.Aimbot = v end)
-CreateToggle(Pages[1], "Silent Aim", false, function(v) Settings.SilentAim = v end)
-CreateToggle(Pages[1], "Auto Clicker", false, function(v) SetAutoClicker(v) end)
-CreateToggle(Pages[1], "Target Strafe", false, function(v) SetTargetStrafe(v) end)
-CreateToggle(Pages[1], "SpinBot", false, function(v) Settings.SpinBot = v end)
-
-CreateToggle(Pages[2], "Hitbox Head", false, function(v) Settings.HitboxHead = v end)
-CreateToggle(Pages[2], "Hitbox Torso", false, function(v) Settings.HitboxTorso = v end)
-CreateToggle(Pages[2], "Hitbox Limb", false, function(v) Settings.HitboxLimb = v end)
-CreateToggle(Pages[2], "Hitbox Weapon", false, function(v) Settings.HitboxWeapon = v end)
-
-CreateToggle(Pages[3], "ESP Box", false, function(v) Settings.ESP = v end)
-CreateToggle(Pages[3], "Chams", false, function(v) Settings.Chams = v end)
-CreateToggle(Pages[3], "Custom Crosshair", false, function(v) Settings.CustomCrosshair = v end)
-CreateToggle(Pages[3], "Glow Trail", false, function(v) SetGlowTrail(v) end)
-CreateToggle(Pages[3], "Fullbright", false, function(v) Settings.Fullbright = v end)
-CreateToggle(Pages[3], "FOV Changer", false, function(v) Settings.FOVChanger = v end)
-
-CreateToggle(Pages[4], "Speed Walk", false, function(v) Settings.Speed = v SetSpeed(v) end)
-CreateToggle(Pages[4], "Fly", false, function(v) SetFly(v) end)
-CreateToggle(Pages[4], "Noclip", false, function(v) Settings.Noclip = v SetNoclip(v) end)
-CreateToggle(Pages[4], "Infinite Jump", false, function(v) Settings.InfiniteJump = v end)
-CreateToggle(Pages[4], "High Jump", false, function(v) Settings.HighJump = v end)
-CreateToggle(Pages[4], "Bunny Hop", false, function(v) Settings.Bhop = v end)
-CreateToggle(Pages[4], "Spider Climb", false, function(v) SetSpiderClimb(v) end)
-CreateToggle(Pages[4], "Water Walk", false, function(v) SetWaterWalk(v) end)
-
-CreateToggle(Pages[5], "Touch TP", false, function(v) SetTouchTP(v) end)
-CreateToggle(Pages[5], "Bring NPC", false, function(v) SetBringNPC(v) end)
-CreateToggle(Pages[5], "Gravity Mod", false, function(v) Settings.GravityMod = v end)
-
-CreateToggle(Pages[6], "Chat Spammer", false, function(v) SetChatSpammer(v) end)
-
 local function SwitchTab(index)
     for i, btn in ipairs(TabButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(20,18,30)
-        btn.TextColor3 = Color3.fromRGB(180,175,205)
+        btn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+        btn.TextColor3 = Color3.fromRGB(180, 160, 140)
         Pages[i].Visible = false
     end
-    TabButtons[index].BackgroundColor3 = Color3.fromRGB(72,50,145)
+    TabButtons[index].BackgroundColor3 = Colors.Orange
     TabButtons[index].TextColor3 = Color3.new(1,1,1)
     Pages[index].Visible = true
+    CurrentTab = index
 end
 
 for i, btn in ipairs(TabButtons) do
-    btn.MouseButton1Click:Connect(function() SwitchTab(i) end)
+    btn.MouseButton1Click:Connect(function()
+        SwitchTab(i)
+    end)
 end
 SwitchTab(1)
 
 --==============================================================
--- EYE SYSTEM
+-- MỞ / ĐÓNG MENU + BIẾN THÀNH CỬU VĨ
 --==============================================================
-local Eye = Instance.new("Frame")
-Eye.Name = "ZakaEye"
-Eye.AnchorPoint = Vector2.new(.5,.5)
-Eye.Position = UDim2.fromScale(.5,.5)
-Eye.Size = UDim2.fromScale(.82,.82)
-Eye.BackgroundTransparency = 1
-Eye.Visible = false
-Eye.ZIndex = 150
-Eye.Parent = Toggle
-
-local function MakeCircle(Name, Size, Color, Transparency, Z)
-    local F = Instance.new("Frame")
-    F.Name = Name
-    F.AnchorPoint = Vector2.new(.5,.5)
-    F.Position = UDim2.fromScale(.5,.5)
-    F.Size = UDim2.fromScale(Size, Size)
-    F.BackgroundColor3 = Color
-    F.BackgroundTransparency = Transparency or 0
-    F.BorderSizePixel = 0
-    F.ZIndex = Z or 150
-    F.Parent = Eye
-    Instance.new("UICorner", F).CornerRadius = UDim.new(1,0)
-    return F
-end
-
-local GlowOuter = MakeCircle("GlowOuter", 1.40, Color3.fromRGB(255,30,50), .90, 150)
-local GlowMiddle = MakeCircle("GlowMiddle", 1.18, Color3.fromRGB(255,30,50), .80, 151)
-local GlowInner = MakeCircle("GlowInner", 1.00, Color3.fromRGB(255,30,50), .70, 152)
-local EyeBase = MakeCircle("EyeBase", .92, Color3.fromRGB(15,5,8), 0, 153)
-local EyeBaseStroke = Instance.new("UIStroke")
-EyeBaseStroke.Thickness = 2
-EyeBaseStroke.Color = Color3.fromRGB(255,40,50)
-EyeBaseStroke.Parent = EyeBase
-
-local RingOuter = MakeCircle("RingOuter", .78, Color3.fromRGB(40,5,10), 0, 154)
-local RingOuterStroke = Instance.new("UIStroke")
-RingOuterStroke.Thickness = 2
-RingOuterStroke.Color = Color3.fromRGB(255,60,70)
-RingOuterStroke.Parent = RingOuter
-
-local RingMiddle = MakeCircle("RingMiddle", .61, Color3.fromRGB(90,10,20), 0, 155)
-local RingMiddleStroke = Instance.new("UIStroke")
-RingMiddleStroke.Thickness = 1.5
-RingMiddleStroke.Color = Color3.fromRGB(255,100,100)
-RingMiddleStroke.Parent = RingMiddle
-
-local Iris = MakeCircle("Iris", .45, Color3.fromRGB(180,20,30), 0, 156)
-local IrisStroke = Instance.new("UIStroke")
-IrisStroke.Thickness = 1.5
-IrisStroke.Color = Color3.fromRGB(255,150,150)
-IrisStroke.Parent = Iris
-
-local Inner = MakeCircle("Inner", .29, Color3.fromRGB(40,3,7), 0, 157)
-local Pupil = MakeCircle("Pupil", .15, Color3.fromRGB(0,0,0), 0, 158)
-local Core = MakeCircle("Core", .045, Color3.fromRGB(255,255,255), 0, 159)
-
-local Symbol = Instance.new("Frame")
-Symbol.Name = "Symbol"
-Symbol.AnchorPoint = Vector2.new(.5,.5)
-Symbol.Position = UDim2.fromScale(.5,.5)
-Symbol.Size = UDim2.fromScale(.82,.82)
-Symbol.BackgroundTransparency = 1
-Symbol.ZIndex = 160
-Symbol.Parent = Eye
-
-local SymbolObjects = {}
-local function ClearSymbol()
-    for _, Obj in ipairs(SymbolObjects) do
-        if Obj and Obj.Parent then Obj:Destroy() end
-    end
-    table.clear(SymbolObjects)
-end
-
-local function AddLine(angle, length, width, color)
-    local L = Instance.new("Frame")
-    L.AnchorPoint = Vector2.new(.5,.5)
-    L.Position = UDim2.fromScale(.5,.5)
-    L.Size = UDim2.new(0, length, 0, width)
-    L.Rotation = angle
-    L.BackgroundColor3 = color
-    L.BorderSizePixel = 0
-    L.ZIndex = 161
-    L.Parent = Symbol
-    table.insert(SymbolObjects, L)
-    return L
-end
-
-local function AddDot(x, y, size, color)
-    local D = Instance.new("Frame")
-    D.AnchorPoint = Vector2.new(.5,.5)
-    D.Position = UDim2.fromScale(x, y)
-    D.Size = UDim2.fromOffset(size, size)
-    D.BackgroundColor3 = color
-    D.BorderSizePixel = 0
-    D.ZIndex = 162
-    D.Parent = Symbol
-    Instance.new("UICorner", D).CornerRadius = UDim.new(1,0)
-    table.insert(SymbolObjects, D)
-    return D
-end
-
-local EyeTypes = {
-    {Name="SHARINGAN", Color=Color3.fromRGB(255,35,45), Accent=Color3.fromRGB(30,0,0), Type="TOMOE"},
-    {Name="RINNEGAN", Color=Color3.fromRGB(175,130,255), Accent=Color3.fromRGB(30,10,70), Type="RINGS"},
-    {Name="MANGEKYO", Color=Color3.fromRGB(230,30,40), Accent=Color3.fromRGB(10,0,0), Type="STAR"},
-    {Name="TRI-BLADE", Color=Color3.fromRGB(255,45,45), Accent=Color3.fromRGB(20,0,0), Type="TRI"},
-    {Name="HEX", Color=Color3.fromRGB(255,75,35), Accent=Color3.fromRGB(25,0,0), Type="HEX"},
-    {Name="SPIRAL", Color=Color3.fromRGB(245,40,60), Accent=Color3.fromRGB(30,0,15), Type="SPIRAL"},
-    {Name="CRIMSON STAR", Color=Color3.fromRGB(255,20,30), Accent=Color3.fromRGB(0,0,0), Type="STAR6"},
-    {Name="VOID", Color=Color3.fromRGB(90,70,120), Accent=Color3.fromRGB(5,5,10), Type="VOID"},
-    {Name="TRIPLE", Color=Color3.fromRGB(220,35,55), Accent=Color3.fromRGB(15,0,0), Type="TRIPLE"},
-    {Name="COSMIC", Color=Color3.fromRGB(80,170,255), Accent=Color3.fromRGB(15,30,70), Type="COSMIC"},
-    {Name="BLACK STAR", Color=Color3.fromRGB(230,35,45), Accent=Color3.fromRGB(0,0,0), Type="BLACKSTAR"},
-    {Name="RED RING", Color=Color3.fromRGB(255,55,40), Accent=Color3.fromRGB(30,0,0), Type="RINGS"},
-}
-
-local function BuildSymbol(Data)
-    ClearSymbol()
-    local C, A = Data.Color, Data.Accent
-    if Data.Type == "TOMOE" then
-        for i=1,3 do
-            local Angle = (i-1)*120
-            AddDot(.5 + math.cos(math.rad(Angle))*0.27, .5 + math.sin(math.rad(Angle))*0.27, 10, A)
-            local L = AddLine((i-1)*120, 22, 5, A)
-            L.Position = UDim2.fromScale(.5 + math.cos(math.rad((i-1)*120))*0.14, .5 + math.sin(math.rad((i-1)*120))*0.14)
-        end
-    elseif Data.Type == "RINGS" then
-        for i=1,4 do
-            local R = Instance.new("Frame")
-            R.AnchorPoint = Vector2.new(.5,.5)
-            R.Position = UDim2.fromScale(.5,.5)
-            R.Size = UDim2.fromScale(.15 + i*.13, .15 + i*.13)
-            R.BackgroundTransparency = 1
-            R.ZIndex = 161+i
-            R.Parent = Symbol
-            local S = Instance.new("UIStroke")
-            S.Thickness = 1.5
-            S.Color = A
-            S.Parent = R
-            Instance.new("UICorner", R).CornerRadius = UDim.new(1,0)
-            table.insert(SymbolObjects, R)
-        end
-    elseif Data.Type == "STAR" then
-        for i=1,6 do AddLine((i-1)*60, 48, 6, A) end
-    elseif Data.Type == "TRI" then
-        for i=1,3 do AddLine((i-1)*120, 43, 7, A) end
-    elseif Data.Type == "HEX" then
-        for i=1,6 do AddLine((i-1)*60, 45, 5, A) end
-        for i=1,6 do
-            local Angle = math.rad((i-1)*60)
-            AddDot(.5 + math.cos(Angle)*.25, .5 + math.sin(Angle)*.25, 6, C)
-        end
-    elseif Data.Type == "SPIRAL" then
-        for i=1,5 do
-            local L = AddLine(i*32, 30+i*3, 4, A)
-            L.Position = UDim2.fromScale(.5 + math.cos(math.rad(i*70))*.08, .5 + math.sin(math.rad(i*70))*.08)
-        end
-    elseif Data.Type == "STAR6" then
-        for i=1,6 do AddLine((i-1)*60, 52, 9, A) end
-    elseif Data.Type == "VOID" then
-        for i=1,8 do AddLine((i-1)*45, 42, 3, C) end
-    elseif Data.Type == "TRIPLE" then
-        for i=1,3 do
-            local Angle = math.rad((i-1)*120)
-            AddDot(.5 + math.cos(Angle)*.20, .5 + math.sin(Angle)*.20, 14, A)
-            AddLine((i-1)*120, 30, 6, A)
-        end
-    elseif Data.Type == "COSMIC" then
-        for i=1,8 do
-            local Angle = math.rad((i-1)*45)
-            AddDot(.5 + math.cos(Angle)*.30, .5 + math.sin(Angle)*.30, 5, C)
-            AddLine((i-1)*45, 42, 2, A)
-        end
-    elseif Data.Type == "BLACKSTAR" then
-        for i=1,5 do AddLine((i-1)*36, 50, 9, A) end
-        for i=1,5 do
-            local Angle = math.rad((i-1)*72)
-            AddDot(.5 + math.cos(Angle)*.25, .5 + math.sin(Angle)*.25, 8, C)
-        end
-    end
-end
-
-local function TweenColor(Object, Color, Time)
-    if not Object then return end
-    TweenService:Create(Object, TweenInfo.new(Time, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundColor3 = Color}):Play()
-end
-
-local function ChangeEyeColor(Data)
-    local Time = 1.8
-    TweenColor(EyeBase, Data.Accent, Time)
-    TweenColor(RingOuter, Data.Color, Time)
-    TweenColor(RingMiddle, Data.Color, Time)
-    TweenColor(Iris, Data.Color, Time)
-    TweenColor(GlowOuter, Data.Color, Time)
-    TweenColor(GlowMiddle, Data.Color, Time)
-    TweenColor(GlowInner, Data.Color, Time)
-    TweenService:Create(EyeBaseStroke, TweenInfo.new(Time), {Color = Data.Color}):Play()
-    TweenService:Create(RingOuterStroke, TweenInfo.new(Time), {Color = Data.Color}):Play()
-    TweenService:Create(RingMiddleStroke, TweenInfo.new(Time), {Color = Data.Color}):Play()
-    TweenService:Create(IrisStroke, TweenInfo.new(Time), {Color = Data.Color}):Play()
-end
-
-local CurrentType = 1
-local Morphing = false
-local EyeOpen = false
-
-local function MorphTo(NewIndex)
-    if Morphing then return end
-    Morphing = true
-    local NewData = EyeTypes[NewIndex]
-
-    TweenService:Create(Eye, TweenInfo.new(.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.fromScale(.70,.70)}):Play()
-    TweenService:Create(Symbol, TweenInfo.new(.8, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), {Rotation = Symbol.Rotation + 180}):Play()
-    ChangeEyeColor(NewData)
-    task.wait(.35)
-
-    for _, Obj in ipairs(SymbolObjects) do
-        if Obj:IsA("Frame") then
-            TweenService:Create(Obj, TweenInfo.new(.55), {BackgroundTransparency = 1}):Play()
-        end
-    end
-    task.wait(.35)
-    BuildSymbol(NewData)
-
-    for _, Obj in ipairs(SymbolObjects) do
-        if Obj:IsA("Frame") then
-            Obj.BackgroundTransparency = 1
-            TweenService:Create(Obj, TweenInfo.new(.65), {BackgroundTransparency = 0}):Play()
-        end
-    end
-
-    TweenService:Create(Eye, TweenInfo.new(.65, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.fromScale(.82,.82)}):Play()
-    CurrentType = NewIndex
-    task.wait(.75)
-    Morphing = false
-end
-
-local MorphThread
-local function StartMorph()
-    if MorphThread then return end
-    MorphThread = task.spawn(function()
-        while EyeOpen do
-            task.wait(5)
-            if not EyeOpen then break end
-            local Next
-            repeat Next = math.random(1, #EyeTypes) until Next \~= CurrentType
-            MorphTo(Next)
-        end
-        MorphThread = nil
-    end)
-end
-
-local function OpenEye()
-    EyeOpen = true
-    Toggle.TextTransparency = 1
-    Eye.Visible = true
-    Eye.Size = UDim2.fromScale(.02,.02)
-    BuildSymbol(EyeTypes[CurrentType])
-    ChangeEyeColor(EyeTypes[CurrentType])
-    TweenService:Create(Eye, TweenInfo.new(.75, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.fromScale(.82,.82)}):Play()
-    StartMorph()
-end
-
-local function CloseEye()
-    EyeOpen = false
-    TweenService:Create(Eye, TweenInfo.new(.65, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Size = UDim2.fromScale(.02,.02)}):Play()
-    task.wait(.55)
-    Eye.Visible = false
-    Toggle.Text = "Z"
-    TweenService:Create(Toggle, TweenInfo.new(.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-end
-
 local MenuOpen = false
+local OpenTime = 0
+local IsKurama = false
 
 local function OpenMenu()
     if MenuOpen then return end
     MenuOpen = true
+    OpenTime = tick()
     Main.Visible = true
-    Main.Size = UDim2.fromOffset(25,25)
+    Main.Size = UDim2.fromOffset(30, 30)
     Main.BackgroundTransparency = 1
-    OpenEye()
-    TweenService:Create(Main, TweenInfo.new(.60, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.fromOffset(460,520),
-        BackgroundTransparency = .08
+
+    TweenService:Create(Main, TweenInfo.new(0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.fromOffset(480, 540),
+        BackgroundTransparency = 0.08
     }):Play()
+
+    -- Đổi mắt mỗi lần mở
+    ChangeEyeStyle()
 end
 
 local function CloseMenu()
     if not MenuOpen then return end
     MenuOpen = false
-    CloseEye()
-    TweenService:Create(Main, TweenInfo.new(.40, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-        Size = UDim2.fromOffset(25,25),
+    IsKurama = false
+
+    -- Trả về màu thường
+    TweenService:Create(NarutoBody, TweenInfo.new(0.6), {BackgroundColor3 = Colors.Orange}):Play()
+    TweenService:Create(MainStroke, TweenInfo.new(0.6), {Color = Colors.Orange}):Play()
+
+    TweenService:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+        Size = UDim2.fromOffset(30, 30),
         BackgroundTransparency = 1
     }):Play()
-    task.delay(.42, function()
+
+    task.delay(0.4, function()
         if not MenuOpen then Main.Visible = false end
     end)
 end
 
+-- Biến thành Cửu Vĩ khi mở lâu
+RunService.Heartbeat:Connect(function()
+    if MenuOpen and not IsKurama then
+        if tick() - OpenTime > 12 then -- sau 12 giây
+            IsKurama = true
+            TweenService:Create(NarutoBody, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
+                BackgroundColor3 = Colors.Kurama
+            }):Play()
+            TweenService:Create(MainStroke, TweenInfo.new(1.2), {Color = Colors.Kurama}):Play()
+            TweenService:Create(ToggleStroke, TweenInfo.new(1.2), {Color = Colors.Kurama}):Play()
+        end
+    end
+end)
+
 Toggle.MouseButton1Click:Connect(function()
     if MenuOpen then CloseMenu() else OpenMenu() end
 end)
-Close.MouseButton1Click:Connect(CloseMenu)
+CloseBtn.MouseButton1Click:Connect(CloseMenu)
 
--- Drag
-local Dragging, DragStart, StartPos
-Toggle.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = true
-        DragStart = Input.Position
-        StartPos = Toggle.Position
+-- Kéo nút Rasengan
+local dragging, dragStart, startPos
+Toggle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Toggle.Position
     end
 end)
 
-UserInputService.InputChanged:Connect(function(Input)
-    if not Dragging then return end
-    if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseMovement then
-        local Delta = Input.Position - DragStart
-        Toggle.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Toggle.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-UserInputService.InputEnded:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = false
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
     end
 end)
 
--- START
-task.wait(0.3)
+-- Tự mở
+task.wait(0.5)
 OpenMenu()
 
-print("✅ ZAKA PURE UI V1 + V3 LOADED - Menu should appear!")
+print("✅ ZAKA NARUTO UI - RASENGAN EDITION LOADED")
