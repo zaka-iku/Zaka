@@ -1,29 +1,28 @@
---==============================================================--
+--============================================================--
 -- ZAKA PURE UI V1
--- EYE MORPH EDITION
---==============================================================--
+-- RAINBOW BORDER + ROTATING EYE MORPH
+--============================================================--
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
---==============================================================
--- CLEAN OLD VERSION
---==============================================================
+--============================================================--
+-- CLEAN
+--============================================================--
 
 local Old = PlayerGui:FindFirstChild("ZakaPureUI")
-
 if Old then
     Old:Destroy()
 end
 
---==============================================================
+--============================================================--
 -- GUI
---==============================================================
+--============================================================--
 
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "ZakaPureUI"
@@ -32,17 +31,16 @@ Gui.IgnoreGuiInset = true
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = PlayerGui
 
---==============================================================
+--============================================================--
 -- TOGGLE
---==============================================================
+--============================================================--
 
 local Toggle = Instance.new("TextButton")
 Toggle.Name = "ToggleButton"
 Toggle.Size = UDim2.fromOffset(64,64)
 Toggle.Position = UDim2.new(0,18,0.42,0)
 Toggle.AnchorPoint = Vector2.new(0,0.5)
-Toggle.BackgroundColor3 = Color3.fromRGB(9,9,15)
-Toggle.BackgroundTransparency = 0.05
+Toggle.BackgroundColor3 = Color3.fromRGB(8,8,14)
 Toggle.BorderSizePixel = 0
 Toggle.Text = "Z"
 Toggle.TextColor3 = Color3.new(1,1,1)
@@ -52,19 +50,18 @@ Toggle.AutoButtonColor = false
 Toggle.ZIndex = 100
 Toggle.Parent = Gui
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1,0)
-ToggleCorner.Parent = Toggle
+local TC = Instance.new("UICorner")
+TC.CornerRadius = UDim.new(1,0)
+TC.Parent = Toggle
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Thickness = 2
-ToggleStroke.Color = Color3.fromRGB(120,80,255)
-ToggleStroke.Transparency = 0.15
+ToggleStroke.Color = Color3.fromRGB(255,0,0)
 ToggleStroke.Parent = Toggle
 
---==============================================================
+--============================================================--
 -- MAIN
---==============================================================
+--============================================================--
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -78,19 +75,43 @@ Main.Visible = false
 Main.ZIndex = 20
 Main.Parent = Gui
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0,18)
-MainCorner.Parent = Main
+local MC = Instance.new("UICorner")
+MC.CornerRadius = UDim.new(0,18)
+MC.Parent = Main
 
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Thickness = 1.5
-MainStroke.Color = Color3.fromRGB(105,75,255)
-MainStroke.Transparency = .2
-MainStroke.Parent = Main
+-- RAINBOW BORDER
+local RainbowBorder = Instance.new("UIStroke")
+RainbowBorder.Name = "RainbowBorder"
+RainbowBorder.Thickness = 2.5
+RainbowBorder.Transparency = 0
+RainbowBorder.Parent = Main
 
---==============================================================
+--============================================================--
+-- RAINBOW ENGINE
+--============================================================--
+
+local RainbowHue = 0
+local RainbowConnection
+
+RainbowConnection = RunService.RenderStepped:Connect(function(dt)
+
+    RainbowHue = (RainbowHue + dt * 0.10) % 1
+
+    local Color = Color3.fromHSV(
+        RainbowHue,
+        0.9,
+        1
+    )
+
+    RainbowBorder.Color = Color
+
+    ToggleStroke.Color = Color
+
+end)
+
+--============================================================--
 -- HEADER
---==============================================================
+--============================================================--
 
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1,0,0,65)
@@ -112,8 +133,8 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.BackgroundTransparency = 1
 Subtitle.Position = UDim2.fromOffset(21,36)
 Subtitle.Size = UDim2.new(1,-80,0,18)
-Subtitle.Text = "V1 • EYE MORPH EDITION"
-Subtitle.TextColor3 = Color3.fromRGB(140,130,190)
+Subtitle.Text = "V1 • RAINBOW EYE MORPH"
+Subtitle.TextColor3 = Color3.fromRGB(150,145,175)
 Subtitle.TextSize = 9
 Subtitle.Font = Enum.Font.GothamBold
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -122,7 +143,7 @@ Subtitle.Parent = Header
 local Close = Instance.new("TextButton")
 Close.Size = UDim2.fromOffset(38,38)
 Close.Position = UDim2.new(1,-48,0,12)
-Close.BackgroundColor3 = Color3.fromRGB(35,25,45)
+Close.BackgroundColor3 = Color3.fromRGB(30,25,40)
 Close.BorderSizePixel = 0
 Close.Text = "×"
 Close.TextColor3 = Color3.new(1,1,1)
@@ -131,13 +152,13 @@ Close.Font = Enum.Font.GothamBold
 Close.AutoButtonColor = false
 Close.Parent = Header
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0,10)
-CloseCorner.Parent = Close
+local CC = Instance.new("UICorner")
+CC.CornerRadius = UDim.new(0,10)
+CC.Parent = Close
 
---==============================================================
+--============================================================--
 -- CONTENT
---==============================================================
+--============================================================--
 
 local Content = Instance.new("Frame")
 Content.Position = UDim2.fromOffset(14,75)
@@ -147,50 +168,50 @@ Content.Parent = Main
 
 local Banner = Instance.new("Frame")
 Banner.Size = UDim2.new(1,0,0,60)
-Banner.BackgroundColor3 = Color3.fromRGB(19,17,30)
+Banner.BackgroundColor3 = Color3.fromRGB(18,17,28)
 Banner.BorderSizePixel = 0
 Banner.Parent = Content
 
-local BannerCorner = Instance.new("UICorner")
-BannerCorner.CornerRadius = UDim.new(0,12)
-BannerCorner.Parent = Banner
+local BC = Instance.new("UICorner")
+BC.CornerRadius = UDim.new(0,12)
+BC.Parent = Banner
 
-local BannerText = Instance.new("TextLabel")
-BannerText.BackgroundTransparency = 1
-BannerText.Position = UDim2.fromOffset(15,7)
-BannerText.Size = UDim2.new(1,-30,0,22)
-BannerText.Text = "EYE SYSTEM"
-BannerText.TextColor3 = Color3.new(1,1,1)
-BannerText.TextSize = 14
-BannerText.Font = Enum.Font.GothamBlack
-BannerText.TextXAlignment = Enum.TextXAlignment.Left
-BannerText.Parent = Banner
+local BT = Instance.new("TextLabel")
+BT.BackgroundTransparency = 1
+BT.Position = UDim2.fromOffset(15,7)
+BT.Size = UDim2.new(1,-30,0,22)
+BT.Text = "ZAKA EYE SYSTEM"
+BT.TextColor3 = Color3.new(1,1,1)
+BT.TextSize = 14
+BT.Font = Enum.Font.GothamBlack
+BT.TextXAlignment = Enum.TextXAlignment.Left
+BT.Parent = Banner
 
-local BannerSub = Instance.new("TextLabel")
-BannerSub.BackgroundTransparency = 1
-BannerSub.Position = UDim2.fromOffset(15,30)
-BannerSub.Size = UDim2.new(1,-30,0,20)
-BannerSub.Text = "Morphing • Color transition • Rotation"
-BannerSub.TextColor3 = Color3.fromRGB(135,125,160)
-BannerSub.TextSize = 9
-BannerSub.Font = Enum.Font.Gotham
-BannerSub.TextXAlignment = Enum.TextXAlignment.Left
-BannerSub.Parent = Banner
+local BS = Instance.new("TextLabel")
+BS.BackgroundTransparency = 1
+BS.Position = UDim2.fromOffset(15,31)
+BS.Size = UDim2.new(1,-30,0,18)
+BS.Text = "Rotating • Morphing • Rainbow"
+BS.TextColor3 = Color3.fromRGB(130,125,155)
+BS.TextSize = 9
+BS.Font = Enum.Font.Gotham
+BS.TextXAlignment = Enum.TextXAlignment.Left
+BS.Parent = Banner
 
---==============================================================
+--============================================================--
 -- TABS
---==============================================================
+--============================================================--
 
-local TabFrame = Instance.new("Frame")
-TabFrame.Position = UDim2.fromOffset(0,70)
-TabFrame.Size = UDim2.new(1,0,0,40)
-TabFrame.BackgroundTransparency = 1
-TabFrame.Parent = Content
+local Tabs = Instance.new("Frame")
+Tabs.Position = UDim2.fromOffset(0,70)
+Tabs.Size = UDim2.new(1,0,0,40)
+Tabs.BackgroundTransparency = 1
+Tabs.Parent = Content
 
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.Padding = UDim.new(0,5)
-TabLayout.Parent = TabFrame
+local TL = Instance.new("UIListLayout")
+TL.FillDirection = Enum.FillDirection.Horizontal
+TL.Padding = UDim.new(0,5)
+TL.Parent = Tabs
 
 for _,Name in ipairs({
     "COMBAT",
@@ -209,7 +230,7 @@ for _,Name in ipairs({
     B.TextSize = 9
     B.Font = Enum.Font.GothamBold
     B.AutoButtonColor = false
-    B.Parent = TabFrame
+    B.Parent = Tabs
 
     local C = Instance.new("UICorner")
     C.CornerRadius = UDim.new(0,9)
@@ -217,55 +238,48 @@ for _,Name in ipairs({
 
     B.MouseButton1Click:Connect(function()
 
-        for _,X in ipairs(TabFrame:GetChildren()) do
+        for _,X in ipairs(Tabs:GetChildren()) do
 
             if X:IsA("TextButton") then
-
-                X.BackgroundColor3 =
-                    Color3.fromRGB(20,18,30)
-
-                X.TextColor3 =
-                    Color3.fromRGB(180,175,205)
-
+                X.BackgroundColor3 = Color3.fromRGB(20,18,30)
+                X.TextColor3 = Color3.fromRGB(180,175,205)
             end
+
         end
 
-        B.BackgroundColor3 =
-            Color3.fromRGB(72,50,145)
-
-        B.TextColor3 =
-            Color3.new(1,1,1)
+        B.BackgroundColor3 = Color3.fromRGB(70,50,145)
+        B.TextColor3 = Color3.new(1,1,1)
 
     end)
 end
 
---==============================================================
+--============================================================--
 -- CARDS
---==============================================================
+--============================================================--
 
-local CardFrame = Instance.new("Frame")
-CardFrame.Position = UDim2.fromOffset(0,120)
-CardFrame.Size = UDim2.new(1,0,1,-120)
-CardFrame.BackgroundTransparency = 1
-CardFrame.Parent = Content
+local Cards = Instance.new("Frame")
+Cards.Position = UDim2.fromOffset(0,120)
+Cards.Size = UDim2.new(1,0,1,-120)
+Cards.BackgroundTransparency = 1
+Cards.Parent = Content
 
-local CardLayout = Instance.new("UIListLayout")
-CardLayout.Padding = UDim.new(0,8)
-CardLayout.Parent = CardFrame
+local CL = Instance.new("UIListLayout")
+CL.Padding = UDim.new(0,8)
+CL.Parent = Cards
 
 for _,Data in ipairs({
     {"AIM SYSTEM","Targeting interface"},
     {"ESP SYSTEM","Visual interface"},
     {"MOVEMENT","Movement controls"},
     {"WORLD","World settings"},
-    {"SETTINGS","UI configuration"},
+    {"SETTINGS","UI configuration"}
 }) do
 
     local Card = Instance.new("Frame")
     Card.Size = UDim2.new(1,0,0,50)
     Card.BackgroundColor3 = Color3.fromRGB(17,16,27)
     Card.BorderSizePixel = 0
-    Card.Parent = CardFrame
+    Card.Parent = Cards
 
     local C = Instance.new("UICorner")
     C.CornerRadius = UDim.new(0,11)
@@ -292,21 +306,11 @@ for _,Data in ipairs({
     S.Font = Enum.Font.Gotham
     S.TextXAlignment = Enum.TextXAlignment.Left
     S.Parent = Card
-
-    local Arrow = Instance.new("TextLabel")
-    Arrow.BackgroundTransparency = 1
-    Arrow.Position = UDim2.new(1,-38,0,10)
-    Arrow.Size = UDim2.fromOffset(25,25)
-    Arrow.Text = "›"
-    Arrow.TextColor3 = Color3.fromRGB(130,105,255)
-    Arrow.TextSize = 24
-    Arrow.Font = Enum.Font.GothamBold
-    Arrow.Parent = Card
 end
 
---==============================================================
--- EYE SYSTEM
---==============================================================
+--============================================================--
+-- EYE
+--============================================================--
 
 local Eye = Instance.new("Frame")
 Eye.Name = "ZakaEye"
@@ -318,159 +322,193 @@ Eye.Visible = false
 Eye.ZIndex = 150
 Eye.Parent = Toggle
 
---==============================================================
--- EYE LAYERS
---==============================================================
+--============================================================--
+-- EYE ROTATION CONTAINERS
+--============================================================--
 
-local function MakeCircle(Name,Size,Color,Transparency,Z)
+local OuterSpin = Instance.new("Frame")
+OuterSpin.Name = "OuterSpin"
+OuterSpin.AnchorPoint = Vector2.new(.5,.5)
+OuterSpin.Position = UDim2.fromScale(.5,.5)
+OuterSpin.Size = UDim2.fromScale(1,1)
+OuterSpin.BackgroundTransparency = 1
+OuterSpin.ZIndex = 150
+OuterSpin.Parent = Eye
+
+local InnerSpin = Instance.new("Frame")
+InnerSpin.Name = "InnerSpin"
+InnerSpin.AnchorPoint = Vector2.new(.5,.5)
+InnerSpin.Position = UDim2.fromScale(.5,.5)
+InnerSpin.Size = UDim2.fromScale(1,1)
+InnerSpin.BackgroundTransparency = 1
+InnerSpin.ZIndex = 160
+InnerSpin.Parent = Eye
+
+local SymbolSpin = Instance.new("Frame")
+SymbolSpin.Name = "SymbolSpin"
+SymbolSpin.AnchorPoint = Vector2.new(.5,.5)
+SymbolSpin.Position = UDim2.fromScale(.5,.5)
+SymbolSpin.Size = UDim2.fromScale(1,1)
+SymbolSpin.BackgroundTransparency = 1
+SymbolSpin.ZIndex = 170
+SymbolSpin.Parent = Eye
+
+--============================================================--
+-- CIRCLE CREATOR
+--============================================================--
+
+local function Circle(
+    Parent,
+    Name,
+    Size,
+    Color,
+    Transparency,
+    Z
+)
 
     local F = Instance.new("Frame")
 
     F.Name = Name
     F.AnchorPoint = Vector2.new(.5,.5)
     F.Position = UDim2.fromScale(.5,.5)
-
     F.Size = UDim2.fromScale(Size,Size)
 
     F.BackgroundColor3 = Color
     F.BackgroundTransparency = Transparency or 0
-
     F.BorderSizePixel = 0
     F.ZIndex = Z or 150
 
-    F.Parent = Eye
+    F.Parent = Parent
 
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(1,0)
-    Corner.Parent = F
+    local C = Instance.new("UICorner")
+    C.CornerRadius = UDim.new(1,0)
+    C.Parent = F
 
     return F
 end
 
--- Glow
+--============================================================--
+-- GLOW
+--============================================================--
 
-local GlowOuter = MakeCircle(
+local GlowOuter = Circle(
+    OuterSpin,
     "GlowOuter",
-    1.40,
-    Color3.fromRGB(255,30,50),
+    1.38,
+    Color3.fromRGB(255,20,40),
     .90,
     150
 )
 
-local GlowMiddle = MakeCircle(
-    "GlowMiddle",
-    1.18,
+local Glow = Circle(
+    OuterSpin,
+    "Glow",
+    1.14,
     Color3.fromRGB(255,30,50),
-    .80,
+    .78,
     151
 )
 
-local GlowInner = MakeCircle(
-    "GlowInner",
-    1.00,
-    Color3.fromRGB(255,30,50),
-    .70,
+--============================================================--
+-- MAIN RINGS
+--============================================================--
+
+local Base = Circle(
+    OuterSpin,
+    "Base",
+    .92,
+    Color3.fromRGB(35,5,10),
+    0,
     152
 )
 
--- Main eye
+local BaseStroke = Instance.new("UIStroke")
+BaseStroke.Thickness = 2
+BaseStroke.Color = Color3.fromRGB(255,40,50)
+BaseStroke.Parent = Base
 
-local EyeBase = MakeCircle(
-    "EyeBase",
-    .92,
-    Color3.fromRGB(15,5,8),
+local Ring1 = Circle(
+    OuterSpin,
+    "Ring1",
+    .78,
+    Color3.fromRGB(70,5,15),
     0,
     153
 )
 
-local EyeBaseStroke = Instance.new("UIStroke")
-EyeBaseStroke.Thickness = 2
-EyeBaseStroke.Color = Color3.fromRGB(255,40,50)
-EyeBaseStroke.Parent = EyeBase
+local Ring1Stroke = Instance.new("UIStroke")
+Ring1Stroke.Thickness = 2
+Ring1Stroke.Color = Color3.fromRGB(255,70,80)
+Ring1Stroke.Parent = Ring1
 
--- Rings
-
-local RingOuter = MakeCircle(
-    "RingOuter",
-    .78,
-    Color3.fromRGB(40,5,10),
+local Ring2 = Circle(
+    OuterSpin,
+    "Ring2",
+    .63,
+    Color3.fromRGB(120,10,25),
     0,
     154
 )
 
-local RingOuterStroke = Instance.new("UIStroke")
-RingOuterStroke.Thickness = 2
-RingOuterStroke.Color = Color3.fromRGB(255,60,70)
-RingOuterStroke.Parent = RingOuter
+local Ring2Stroke = Instance.new("UIStroke")
+Ring2Stroke.Thickness = 1.5
+Ring2Stroke.Color = Color3.fromRGB(255,120,130)
+Ring2Stroke.Parent = Ring2
 
-local RingMiddle = MakeCircle(
-    "RingMiddle",
-    .61,
-    Color3.fromRGB(90,10,20),
-    0,
-    155
-)
+--============================================================--
+-- INNER IRIS
+--============================================================--
 
-local RingMiddleStroke = Instance.new("UIStroke")
-RingMiddleStroke.Thickness = 1.5
-RingMiddleStroke.Color = Color3.fromRGB(255,100,100)
-RingMiddleStroke.Parent = RingMiddle
-
-local Iris = MakeCircle(
+local Iris = Circle(
+    InnerSpin,
     "Iris",
-    .45,
-    Color3.fromRGB(180,20,30),
+    .47,
+    Color3.fromRGB(210,25,40),
     0,
-    156
+    160
 )
 
 local IrisStroke = Instance.new("UIStroke")
-IrisStroke.Thickness = 1.5
-IrisStroke.Color = Color3.fromRGB(255,150,150)
+IrisStroke.Thickness = 2
+IrisStroke.Color = Color3.fromRGB(255,150,160)
 IrisStroke.Parent = Iris
 
-local Inner = MakeCircle(
+local Inner = Circle(
+    InnerSpin,
     "Inner",
-    .29,
-    Color3.fromRGB(40,3,7),
+    .30,
+    Color3.fromRGB(35,2,5),
     0,
-    157
+    161
 )
 
-local Pupil = MakeCircle(
+local Pupil = Circle(
+    InnerSpin,
     "Pupil",
-    .15,
+    .14,
     Color3.fromRGB(0,0,0),
     0,
-    158
+    162
 )
 
-local Core = MakeCircle(
+local Core = Circle(
+    InnerSpin,
     "Core",
     .045,
     Color3.fromRGB(255,255,255),
     0,
-    159
+    163
 )
 
---==============================================================
--- PROCEDURAL SYMBOL LAYERS
---==============================================================
+--============================================================--
+-- SYMBOL
+--============================================================--
 
-local Symbol = Instance.new("Frame")
-Symbol.Name = "Symbol"
-Symbol.AnchorPoint = Vector2.new(.5,.5)
-Symbol.Position = UDim2.fromScale(.5,.5)
-Symbol.Size = UDim2.fromScale(.82,.82)
-Symbol.BackgroundTransparency = 1
-Symbol.ZIndex = 160
-Symbol.Parent = Eye
+local Symbols = {}
 
-local SymbolObjects = {}
+local function ClearSymbols()
 
-local function ClearSymbol()
-
-    for _,Obj in ipairs(SymbolObjects) do
+    for _,Obj in ipairs(Symbols) do
 
         if Obj and Obj.Parent then
             Obj:Destroy()
@@ -478,205 +516,190 @@ local function ClearSymbol()
 
     end
 
-    table.clear(SymbolObjects)
+    table.clear(Symbols)
 end
 
-local function AddLine(angle,length,width,color)
-
-    local L = Instance.new("Frame")
-
-    L.AnchorPoint = Vector2.new(.5,.5)
-
-    L.Position = UDim2.fromScale(.5,.5)
-
-    L.Size = UDim2.new(
-        0,
-        length,
-        0,
-        width
-    )
-
-    L.Rotation = angle
-
-    L.BackgroundColor3 = color
-    L.BorderSizePixel = 0
-
-    L.ZIndex = 161
-    L.Parent = Symbol
-
-    table.insert(SymbolObjects,L)
-
-    return L
-end
-
-local function AddDot(x,y,size,color)
+local function Dot(
+    X,
+    Y,
+    Size,
+    Color
+)
 
     local D = Instance.new("Frame")
 
     D.AnchorPoint = Vector2.new(.5,.5)
+    D.Position = UDim2.fromScale(X,Y)
+    D.Size = UDim2.fromOffset(Size,Size)
 
-    D.Position = UDim2.fromScale(x,y)
-
-    D.Size = UDim2.fromOffset(size,size)
-
-    D.BackgroundColor3 = color
+    D.BackgroundColor3 = Color
     D.BorderSizePixel = 0
-
-    D.ZIndex = 162
-    D.Parent = Symbol
+    D.ZIndex = 171
+    D.Parent = SymbolSpin
 
     local C = Instance.new("UICorner")
     C.CornerRadius = UDim.new(1,0)
     C.Parent = D
 
-    table.insert(SymbolObjects,D)
+    table.insert(Symbols,D)
 
     return D
 end
 
---==============================================================
+local function Line(
+    Angle,
+    Length,
+    Width,
+    Color
+)
+
+    local L = Instance.new("Frame")
+
+    L.AnchorPoint = Vector2.new(.5,.5)
+    L.Position = UDim2.fromScale(.5,.5)
+
+    L.Size = UDim2.fromOffset(
+        Length,
+        Width
+    )
+
+    L.Rotation = Angle
+
+    L.BackgroundColor3 = Color
+    L.BorderSizePixel = 0
+    L.ZIndex = 171
+    L.Parent = SymbolSpin
+
+    table.insert(Symbols,L)
+
+    return L
+end
+
+--============================================================--
 -- EYE TYPES
---==============================================================
+--============================================================--
 
 local EyeTypes = {
 
-    -- 1
     {
-        Name = "SHARINGAN",
-        Color = Color3.fromRGB(255,35,45),
-        Accent = Color3.fromRGB(30,0,0),
-        Type = "TOMOE"
+        Name="SHARINGAN",
+        Main=Color3.fromRGB(255,35,45),
+        Dark=Color3.fromRGB(25,0,5),
+        Accent=Color3.fromRGB(5,0,0),
+        Type="TOMOE"
     },
 
-    -- 2
     {
-        Name = "RINNEGAN",
-        Color = Color3.fromRGB(175,130,255),
-        Accent = Color3.fromRGB(30,10,70),
-        Type = "RINGS"
+        Name="RINNEGAN",
+        Main=Color3.fromRGB(175,125,255),
+        Dark=Color3.fromRGB(35,15,70),
+        Accent=Color3.fromRGB(10,0,25),
+        Type="RINGS"
     },
 
-    -- 3
     {
-        Name = "MANGEKYO",
-        Color = Color3.fromRGB(230,30,40),
-        Accent = Color3.fromRGB(10,0,0),
-        Type = "STAR"
+        Name="MANGEKYO",
+        Main=Color3.fromRGB(235,25,40),
+        Dark=Color3.fromRGB(30,0,5),
+        Accent=Color3.fromRGB(0,0,0),
+        Type="STAR"
     },
 
-    -- 4
     {
-        Name = "TRI-BLADE",
-        Color = Color3.fromRGB(255,45,45),
-        Accent = Color3.fromRGB(20,0,0),
-        Type = "TRI"
+        Name="TRI-BLADE",
+        Main=Color3.fromRGB(255,55,45),
+        Dark=Color3.fromRGB(35,0,5),
+        Accent=Color3.fromRGB(0,0,0),
+        Type="TRI"
     },
 
-    -- 5
     {
-        Name = "HEX",
-        Color = Color3.fromRGB(255,75,35),
-        Accent = Color3.fromRGB(25,0,0),
-        Type = "HEX"
+        Name="CRIMSON",
+        Main=Color3.fromRGB(255,20,30),
+        Dark=Color3.fromRGB(20,0,0),
+        Accent=Color3.fromRGB(0,0,0),
+        Type="STAR6"
     },
 
-    -- 6
     {
-        Name = "SPIRAL",
-        Color = Color3.fromRGB(245,40,60),
-        Accent = Color3.fromRGB(30,0,15),
-        Type = "SPIRAL"
+        Name="COSMIC",
+        Main=Color3.fromRGB(70,170,255),
+        Dark=Color3.fromRGB(10,30,70),
+        Accent=Color3.fromRGB(0,10,30),
+        Type="COSMIC"
     },
 
-    -- 7
     {
-        Name = "CRIMSON STAR",
-        Color = Color3.fromRGB(255,20,30),
-        Accent = Color3.fromRGB(0,0,0),
-        Type = "STAR6"
+        Name="VIOLET",
+        Main=Color3.fromRGB(180,60,255),
+        Dark=Color3.fromRGB(35,5,65),
+        Accent=Color3.fromRGB(10,0,20),
+        Type="HEX"
     },
 
-    -- 8
     {
-        Name = "VOID",
-        Color = Color3.fromRGB(90,70,120),
-        Accent = Color3.fromRGB(5,5,10),
-        Type = "VOID"
+        Name="ORANGE",
+        Main=Color3.fromRGB(255,100,25),
+        Dark=Color3.fromRGB(50,15,0),
+        Accent=Color3.fromRGB(15,3,0),
+        Type="TRIPLE"
     },
 
-    -- 9
     {
-        Name = "TRIPLE",
-        Color = Color3.fromRGB(220,35,55),
-        Accent = Color3.fromRGB(15,0,0),
-        Type = "TRIPLE"
+        Name="VOID",
+        Main=Color3.fromRGB(110,100,140),
+        Dark=Color3.fromRGB(8,8,15),
+        Accent=Color3.fromRGB(0,0,0),
+        Type="VOID"
     },
 
-    -- 10
     {
-        Name = "COSMIC",
-        Color = Color3.fromRGB(80,170,255),
-        Accent = Color3.fromRGB(15,30,70),
-        Type = "COSMIC"
-    },
-
-    -- 11
-    {
-        Name = "BLACK STAR",
-        Color = Color3.fromRGB(230,35,45),
-        Accent = Color3.fromRGB(0,0,0),
-        Type = "BLACKSTAR"
-    },
-
-    -- 12
-    {
-        Name = "RED RING",
-        Color = Color3.fromRGB(255,55,40),
-        Accent = Color3.fromRGB(30,0,0),
-        Type = "RINGS"
+        Name="CRAZY",
+        Main=Color3.fromRGB(255,40,100),
+        Dark=Color3.fromRGB(40,0,15),
+        Accent=Color3.fromRGB(0,0,0),
+        Type="SPIRAL"
     }
 }
 
---==============================================================
--- BUILD SYMBOL
---==============================================================
+--============================================================--
+-- BUILD EYE
+--============================================================--
 
-local function BuildSymbol(Data)
+local function BuildEye(Data)
 
-    ClearSymbol()
+    ClearSymbols()
 
-    local C = Data.Color
+    local C = Data.Main
     local A = Data.Accent
 
     if Data.Type == "TOMOE" then
 
         for i=1,3 do
 
-            local Angle = (i-1)*120
+            local Angle =
+                math.rad((i-1)*120)
 
-            local D = AddDot(
-                .5 + math.cos(math.rad(Angle))*0.27,
-                .5 + math.sin(math.rad(Angle))*0.27,
-                10,
+            Dot(
+                .5 + math.cos(Angle)*.28,
+                .5 + math.sin(Angle)*.28,
+                9,
                 A
             )
 
-            D.Rotation = Angle
-        end
+            local Small =
+                Line(
+                    math.deg(Angle)+35,
+                    19,
+                    5,
+                    A
+                )
 
-        for i=1,3 do
-
-            local L = AddLine(
-                (i-1)*120,
-                22,
-                5,
-                A
-            )
-
-            L.Position = UDim2.fromScale(
-                .5 + math.cos(math.rad((i-1)*120))*0.14,
-                .5 + math.sin(math.rad((i-1)*120))*0.14
-            )
+            Small.Position =
+                UDim2.fromScale(
+                    .5 + math.cos(Angle)*.18,
+                    .5 + math.sin(Angle)*.18
+                )
         end
 
     elseif Data.Type == "RINGS" then
@@ -685,99 +708,87 @@ local function BuildSymbol(Data)
 
             local R = Instance.new("Frame")
 
-            R.AnchorPoint = Vector2.new(.5,.5)
-            R.Position = UDim2.fromScale(.5,.5)
+            R.AnchorPoint =
+                Vector2.new(.5,.5)
 
-            R.Size = UDim2.fromScale(
-                .15 + i*.13,
-                .15 + i*.13
-            )
+            R.Position =
+                UDim2.fromScale(.5,.5)
+
+            local S =
+                .18 + i*.12
+
+            R.Size =
+                UDim2.fromScale(S,S)
 
             R.BackgroundTransparency = 1
-            R.BorderSizePixel = 0
-            R.ZIndex = 161+i
+            R.ZIndex = 171+i
+            R.Parent = SymbolSpin
 
-            R.Parent = Symbol
+            local St =
+                Instance.new("UIStroke")
 
-            local S = Instance.new("UIStroke")
+            St.Thickness = 1.4
+            St.Color = A
+            St.Parent = R
 
-            S.Thickness = 1.5
-            S.Color = A
-            S.Parent = R
+            local Co =
+                Instance.new("UICorner")
 
-            local Corner = Instance.new("UICorner")
-            Corner.CornerRadius = UDim.new(1,0)
-            Corner.Parent = R
+            Co.CornerRadius =
+                UDim.new(1,0)
 
-            table.insert(SymbolObjects,R)
+            Co.Parent = R
+
+            table.insert(Symbols,R)
+        end
+
+        for i=1,6 do
+
+            local Angle =
+                math.rad((i-1)*60)
+
+            Dot(
+                .5 + math.cos(Angle)*.31,
+                .5 + math.sin(Angle)*.31,
+                5,
+                C
+            )
         end
 
     elseif Data.Type == "STAR" then
 
         for i=1,6 do
-
-            local L = AddLine(
+            Line(
                 (i-1)*60,
-                48,
-                6,
+                50,
+                7,
                 A
             )
-
-            L.Position = UDim2.fromScale(.5,.5)
         end
 
     elseif Data.Type == "TRI" then
 
         for i=1,3 do
 
-            local L = AddLine(
+            Line(
                 (i-1)*120,
-                43,
-                7,
+                50,
+                8,
                 A
             )
 
-            L.Position = UDim2.fromScale(.5,.5)
         end
 
-    elseif Data.Type == "HEX" then
+        for i=1,3 do
 
-        for i=1,6 do
+            local Angle =
+                math.rad((i-1)*120)
 
-            AddLine(
-                (i-1)*60,
-                45,
-                5,
-                A
-            )
-        end
-
-        for i=1,6 do
-
-            local Angle = math.rad((i-1)*60)
-
-            AddDot(
-                .5 + math.cos(Angle)*.25,
-                .5 + math.sin(Angle)*.25,
-                6,
+            Dot(
+                .5 + math.cos(Angle)*.24,
+                .5 + math.sin(Angle)*.24,
+                8,
                 C
-            )
-        end
-
-    elseif Data.Type == "SPIRAL" then
-
-        for i=1,5 do
-
-            local L = AddLine(
-                i*32,
-                30+i*3,
-                4,
-                A
-            )
-
-            L.Position = UDim2.fromScale(
-                .5 + math.cos(math.rad(i*70))*.08,
-                .5 + math.sin(math.rad(i*70))*.08
             )
         end
 
@@ -785,285 +796,374 @@ local function BuildSymbol(Data)
 
         for i=1,6 do
 
-            local L = AddLine(
-                (i-1)*60,
+            Line(
+                (i-1)*30,
                 52,
-                9,
+                7,
                 A
             )
 
-            L.Position = UDim2.fromScale(.5,.5)
-        end
-
-    elseif Data.Type == "VOID" then
-
-        for i=1,8 do
-
-            AddLine(
-                (i-1)*45,
-                42,
-                3,
-                C
-            )
-
-        end
-
-    elseif Data.Type == "TRIPLE" then
-
-        for i=1,3 do
-
-            local Angle = math.rad((i-1)*120)
-
-            local X =
-                .5 + math.cos(Angle)*.20
-
-            local Y =
-                .5 + math.sin(Angle)*.20
-
-            AddDot(X,Y,14,A)
-
-            AddLine(
-                (i-1)*120,
-                30,
-                6,
-                A
-            )
         end
 
     elseif Data.Type == "COSMIC" then
 
         for i=1,8 do
 
-            local Angle = math.rad((i-1)*45)
+            local Angle =
+                math.rad((i-1)*45)
 
-            AddDot(
-                .5 + math.cos(Angle)*.30,
-                .5 + math.sin(Angle)*.30,
-                5,
-                C
+            Line(
+                (i-1)*45,
+                48,
+                3,
+                A
             )
 
-            AddLine(
-                (i-1)*45,
+            Dot(
+                .5 + math.cos(Angle)*.29,
+                .5 + math.sin(Angle)*.29,
+                6,
+                C
+            )
+        end
+
+    elseif Data.Type == "HEX" then
+
+        for i=1,6 do
+
+            local Angle =
+                math.rad((i-1)*60)
+
+            Dot(
+                .5 + math.cos(Angle)*.26,
+                .5 + math.sin(Angle)*.26,
+                8,
+                A
+            )
+
+            Line(
+                (i-1)*60,
                 42,
-                2,
+                5,
                 A
             )
         end
 
-    elseif Data.Type == "BLACKSTAR" then
+    elseif Data.Type == "TRIPLE" then
 
-        for i=1,5 do
+        for i=1,3 do
 
-            AddLine(
-                (i-1)*36,
-                50,
+            local Angle =
+                math.rad((i-1)*120)
+
+            Line(
+                (i-1)*120,
+                45,
                 9,
                 A
             )
 
+            Dot(
+                .5 + math.cos(Angle)*.24,
+                .5 + math.sin(Angle)*.24,
+                12,
+                C
+            )
         end
 
-        for i=1,5 do
+    elseif Data.Type == "VOID" then
 
-            local Angle = math.rad((i-1)*72)
+        for i=1,8 do
 
-            AddDot(
-                .5 + math.cos(Angle)*.25,
-                .5 + math.sin(Angle)*.25,
-                8,
+            Line(
+                (i-1)*45,
+                48,
+                3,
                 C
             )
 
         end
+
+    elseif Data.Type == "SPIRAL" then
+
+        for i=1,7 do
+
+            local Angle =
+                (i-1)*48
+
+            local L =
+                Line(
+                    Angle,
+                    20+i*4,
+                    4,
+                    A
+                )
+
+            L.Position =
+                UDim2.fromScale(
+                    .5 + math.cos(math.rad(Angle))*.10,
+                    .5 + math.sin(math.rad(Angle))*.10
+                )
+        end
     end
 end
 
---==============================================================
--- COLOR MORPH
---==============================================================
+--============================================================--
+-- COLOR SET
+--============================================================--
 
-local CurrentColor = Color3.fromRGB(255,35,45)
-local CurrentAccent = Color3.fromRGB(30,0,0)
+local function SetEyeColor(Data,Time)
 
-local function TweenColor(Object,Color,Time)
-
-    if not Object then return end
-
-    TweenService:Create(
-        Object,
+    local Info =
         TweenInfo.new(
             Time,
             Enum.EasingStyle.Sine,
             Enum.EasingDirection.InOut
-        ),
-        {
-            BackgroundColor3 = Color
-        }
+        )
+
+    TweenService:Create(
+        Base,
+        Info,
+        {BackgroundColor3=Data.Dark}
     ):Play()
-end
 
-local function ChangeEyeColor(Data)
+    TweenService:Create(
+        Ring1,
+        Info,
+        {BackgroundColor3=Data.Dark}
+    ):Play()
 
-    local Time = 1.8
+    TweenService:Create(
+        Ring2,
+        Info,
+        {BackgroundColor3=Data.Main}
+    ):Play()
 
-    TweenColor(
-        EyeBase,
-        Data.Accent,
-        Time
-    )
-
-    TweenColor(
-        RingOuter,
-        Data.Color,
-        Time
-    )
-
-    TweenColor(
-        RingMiddle,
-        Data.Color,
-        Time
-    )
-
-    TweenColor(
+    TweenService:Create(
         Iris,
-        Data.Color,
-        Time
-    )
+        Info,
+        {BackgroundColor3=Data.Main}
+    ):Play()
 
-    TweenColor(
+    TweenService:Create(
+        Glow,
+        Info,
+        {BackgroundColor3=Data.Main}
+    ):Play()
+
+    TweenService:Create(
         GlowOuter,
-        Data.Color,
-        Time
-    )
-
-    TweenColor(
-        GlowMiddle,
-        Data.Color,
-        Time
-    )
-
-    TweenColor(
-        GlowInner,
-        Data.Color,
-        Time
-    )
-
-    TweenService:Create(
-        EyeBaseStroke,
-        TweenInfo.new(Time),
-        {
-            Color = Data.Color
-        }
+        Info,
+        {BackgroundColor3=Data.Main}
     ):Play()
 
     TweenService:Create(
-        RingOuterStroke,
-        TweenInfo.new(Time),
-        {
-            Color = Data.Color
-        }
+        BaseStroke,
+        Info,
+        {Color=Data.Main}
     ):Play()
 
     TweenService:Create(
-        RingMiddleStroke,
-        TweenInfo.new(Time),
-        {
-            Color = Data.Color
-        }
+        Ring1Stroke,
+        Info,
+        {Color=Data.Main}
+    ):Play()
+
+    TweenService:Create(
+        Ring2Stroke,
+        Info,
+        {Color=Data.Main}
     ):Play()
 
     TweenService:Create(
         IrisStroke,
-        TweenInfo.new(Time),
-        {
-            Color = Data.Color
-        }
+        Info,
+        {Color=Data.Main}
     ):Play()
 end
 
---==============================================================
--- MORPH ANIMATION
---==============================================================
+--============================================================--
+-- CONTINUOUS ROTATION
+--============================================================--
 
-local CurrentType = 1
+local EyeRotationConnection
+
+local OuterAngle = 0
+local InnerAngle = 0
+local SymbolAngle = 0
+
+local function StartEyeRotation()
+
+    if EyeRotationConnection then
+        EyeRotationConnection:Disconnect()
+    end
+
+    EyeRotationConnection =
+        RunService.RenderStepped:Connect(function(dt)
+
+            if not Eye.Visible then
+                return
+            end
+
+            -- vòng ngoài
+            OuterAngle =
+                (OuterAngle + dt*22) % 360
+
+            -- vòng trong ngược chiều
+            InnerAngle =
+                (InnerAngle - dt*34) % 360
+
+            -- họa tiết quay nhanh hơn
+            SymbolAngle =
+                (SymbolAngle + dt*48) % 360
+
+            OuterSpin.Rotation =
+                OuterAngle
+
+            InnerSpin.Rotation =
+                InnerAngle
+
+            SymbolSpin.Rotation =
+                SymbolAngle
+
+        end)
+end
+
+local function StopEyeRotation()
+
+    if EyeRotationConnection then
+
+        EyeRotationConnection:Disconnect()
+        EyeRotationConnection = nil
+
+    end
+end
+
+--============================================================--
+-- MORPH
+--============================================================--
+
+local CurrentIndex = 1
 local Morphing = false
 local EyeOpen = false
 
-local function MorphTo(NewIndex)
+local function MorphEye(NewIndex)
 
-    if Morphing then return end
+    if Morphing or not EyeOpen then
+        return
+    end
 
     Morphing = true
 
-    local NewData = EyeTypes[NewIndex]
+    local NewData =
+        EyeTypes[NewIndex]
 
-    -- fase 1: eye pulse
+    --========================================================--
+    -- PHASE 1
+    -- XOAY MẠNH
+    --========================================================--
+
+    local Spin1 =
+        TweenService:Create(
+            Eye,
+            TweenInfo.new(
+                .22,
+                Enum.EasingStyle.Sine,
+                Enum.EasingDirection.InOut
+            ),
+            {
+                Size=UDim2.fromScale(.86,.86)
+            }
+        )
+
+    Spin1:Play()
+
+    local RotationTween =
+        TweenService:Create(
+            SymbolSpin,
+            TweenInfo.new(
+                1.15,
+                Enum.EasingStyle.Quint,
+                Enum.EasingDirection.Out
+            ),
+            {
+                Rotation=
+                    SymbolSpin.Rotation + 360
+            }
+        )
+
+    RotationTween:Play()
+
+    RotationTween.Completed:Wait()
+
+    --========================================================--
+    -- PHASE 2
+    -- XOAY CHẬM LẠI
+    --========================================================--
 
     TweenService:Create(
         Eye,
         TweenInfo.new(
-            .45,
+            .35,
             Enum.EasingStyle.Sine,
-            Enum.EasingDirection.InOut
+            Enum.EasingDirection.Out
         ),
         {
-            Size = UDim2.fromScale(.70,.70)
+            Size=UDim2.fromScale(.80,.80)
         }
     ):Play()
 
-    -- phase 2: rotate quickly
+    task.wait(.18)
 
-    local StartRotation = Symbol.Rotation
+    --========================================================--
+    -- PHASE 3
+    -- BẮT ĐẦU ĐỔI MÀU
+    --========================================================--
 
-    local RotateTween = TweenService:Create(
-        Symbol,
-        TweenInfo.new(
-            .8,
-            Enum.EasingStyle.Quint,
-            Enum.EasingDirection.InOut
-        ),
-        {
-            Rotation = StartRotation + 180
-        }
+    SetEyeColor(
+        NewData,
+        1.5
     )
 
-    RotateTween:Play()
+    --========================================================--
+    -- PHASE 4
+    -- SYMBOL CŨ MỜ DẦN
+    --========================================================--
 
-    -- color starts transitioning immediately
-
-    ChangeEyeColor(NewData)
-
-    task.wait(.35)
-
-    -- fade old symbol
-
-    for _,Obj in ipairs(SymbolObjects) do
+    for _,Obj in ipairs(Symbols) do
 
         if Obj:IsA("Frame") then
 
             TweenService:Create(
                 Obj,
                 TweenInfo.new(
-                    .55,
+                    .8,
                     Enum.EasingStyle.Sine,
                     Enum.EasingDirection.InOut
                 ),
                 {
-                    BackgroundTransparency = 1
+                    BackgroundTransparency=1
                 }
             ):Play()
 
         end
     end
 
-    task.wait(.35)
+    task.wait(.65)
 
-    BuildSymbol(NewData)
+    --========================================================--
+    -- PHASE 5
+    -- TẠO MẮT MỚI
+    --========================================================--
 
-    -- reveal new symbol
+    BuildEye(NewData)
 
-    for _,Obj in ipairs(SymbolObjects) do
+    --========================================================--
+    -- PHASE 6
+    -- MẮT MỚI HIỆN DẦN
+    --========================================================--
+
+    for _,Obj in ipairs(Symbols) do
 
         if Obj:IsA("Frame") then
 
@@ -1072,12 +1172,12 @@ local function MorphTo(NewIndex)
             TweenService:Create(
                 Obj,
                 TweenInfo.new(
-                    .65,
+                    .9,
                     Enum.EasingStyle.Sine,
                     Enum.EasingDirection.Out
                 ),
                 {
-                    BackgroundTransparency = 0
+                    BackgroundTransparency=0
                 }
             ):Play()
 
@@ -1092,58 +1192,64 @@ local function MorphTo(NewIndex)
             Enum.EasingDirection.Out
         ),
         {
-            Size = UDim2.fromScale(.82,.82)
+            Size=UDim2.fromScale(.82,.82)
         }
     ):Play()
 
-    CurrentType = NewIndex
+    CurrentIndex = NewIndex
 
     task.wait(.75)
 
     Morphing = false
 end
 
---==============================================================
--- AUTO MORPH LOOP
---==============================================================
+--============================================================--
+-- AUTO MORPH
+--============================================================--
 
 local MorphThread
 
 local function StartMorph()
 
-    if MorphThread then return end
+    if MorphThread then
+        return
+    end
 
-    MorphThread = task.spawn(function()
+    MorphThread =
+        task.spawn(function()
 
-        while EyeOpen do
+            while EyeOpen do
 
-            task.wait(5)
+                task.wait(5)
 
-            if not EyeOpen then
-                break
+                if not EyeOpen then
+                    break
+                end
+
+                local Next
+
+                repeat
+
+                    Next =
+                        math.random(
+                            1,
+                            #EyeTypes
+                        )
+
+                until Next ~= CurrentIndex
+
+                MorphEye(Next)
+
             end
 
-            local Next
+            MorphThread = nil
 
-            repeat
-
-                Next = math.random(
-                    1,
-                    #EyeTypes
-                )
-
-            until Next ~= CurrentType
-
-            MorphTo(Next)
-        end
-
-        MorphThread = nil
-    end)
+        end)
 end
 
---==============================================================
--- EYE OPEN
---==============================================================
+--============================================================--
+-- OPEN EYE
+--============================================================--
 
 local function OpenEye()
 
@@ -1153,15 +1259,19 @@ local function OpenEye()
 
     Eye.Visible = true
 
-    Eye.Size = UDim2.fromScale(.02,.02)
+    Eye.Size =
+        UDim2.fromScale(.03,.03)
 
-    BuildSymbol(
-        EyeTypes[CurrentType]
+    BuildEye(
+        EyeTypes[CurrentIndex]
     )
 
-    ChangeEyeColor(
-        EyeTypes[CurrentType]
+    SetEyeColor(
+        EyeTypes[CurrentIndex],
+        .1
     )
+
+    StartEyeRotation()
 
     TweenService:Create(
         Eye,
@@ -1171,16 +1281,16 @@ local function OpenEye()
             Enum.EasingDirection.Out
         ),
         {
-            Size = UDim2.fromScale(.82,.82)
+            Size=UDim2.fromScale(.82,.82)
         }
     ):Play()
 
     StartMorph()
 end
 
---==============================================================
--- EYE CLOSE
---==============================================================
+--============================================================--
+-- CLOSE EYE
+--============================================================--
 
 local function CloseEye()
 
@@ -1194,11 +1304,13 @@ local function CloseEye()
             Enum.EasingDirection.In
         ),
         {
-            Size = UDim2.fromScale(.02,.02)
+            Size=UDim2.fromScale(.02,.02)
         }
     ):Play()
 
     task.wait(.55)
+
+    StopEyeRotation()
 
     Eye.Visible = false
 
@@ -1212,26 +1324,30 @@ local function CloseEye()
             Enum.EasingDirection.Out
         ),
         {
-            TextTransparency = 0
+            TextTransparency=0
         }
     ):Play()
 end
 
---==============================================================
--- MENU OPEN
---==============================================================
+--============================================================--
+-- MENU
+--============================================================--
 
 local MenuOpen = false
 
 local function OpenMenu()
 
-    if MenuOpen then return end
+    if MenuOpen then
+        return
+    end
 
     MenuOpen = true
 
     Main.Visible = true
 
-    Main.Size = UDim2.fromOffset(25,25)
+    Main.Size =
+        UDim2.fromOffset(20,20)
+
     Main.BackgroundTransparency = 1
 
     OpenEye()
@@ -1244,19 +1360,17 @@ local function OpenMenu()
             Enum.EasingDirection.Out
         ),
         {
-            Size = UDim2.fromOffset(460,520),
-            BackgroundTransparency = .08
+            Size=UDim2.fromOffset(460,520),
+            BackgroundTransparency=.08
         }
     ):Play()
 end
 
---==============================================================
--- MENU CLOSE
---==============================================================
-
 local function CloseMenu()
 
-    if not MenuOpen then return end
+    if not MenuOpen then
+        return
+    end
 
     MenuOpen = false
 
@@ -1270,8 +1384,8 @@ local function CloseMenu()
             Enum.EasingDirection.In
         ),
         {
-            Size = UDim2.fromOffset(25,25),
-            BackgroundTransparency = 1
+            Size=UDim2.fromOffset(20,20),
+            BackgroundTransparency=1
         }
     ):Play()
 
@@ -1284,9 +1398,9 @@ local function CloseMenu()
     end)
 end
 
---==============================================================
--- BUTTON EVENTS
---==============================================================
+--============================================================--
+-- EVENTS
+--============================================================--
 
 Toggle.MouseButton1Click:Connect(function()
 
@@ -1299,18 +1413,16 @@ Toggle.MouseButton1Click:Connect(function()
 end)
 
 Close.MouseButton1Click:Connect(function()
-
     CloseMenu()
-
 end)
 
---==============================================================
+--============================================================--
 -- MOBILE DRAG
---==============================================================
+--============================================================--
 
 local Dragging = false
 local DragStart
-local StartPos
+local StartPosition
 
 Toggle.InputBegan:Connect(function(Input)
 
@@ -1318,17 +1430,17 @@ Toggle.InputBegan:Connect(function(Input)
     or Input.UserInputType == Enum.UserInputType.MouseButton1 then
 
         Dragging = true
-
         DragStart = Input.Position
-        StartPos = Toggle.Position
+        StartPosition = Toggle.Position
 
     end
-
 end)
 
 UserInputService.InputChanged:Connect(function(Input)
 
-    if not Dragging then return end
+    if not Dragging then
+        return
+    end
 
     if Input.UserInputType == Enum.UserInputType.Touch
     or Input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -1337,14 +1449,14 @@ UserInputService.InputChanged:Connect(function(Input)
             Input.Position - DragStart
 
         Toggle.Position = UDim2.new(
-            StartPos.X.Scale,
-            StartPos.X.Offset + Delta.X,
-            StartPos.Y.Scale,
-            StartPos.Y.Offset + Delta.Y
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + Delta.X,
+
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + Delta.Y
         )
 
     end
-
 end)
 
 UserInputService.InputEnded:Connect(function(Input)
@@ -1355,21 +1467,20 @@ UserInputService.InputEnded:Connect(function(Input)
         Dragging = false
 
     end
-
 end)
 
---==============================================================
+--============================================================--
 -- START
---==============================================================
+--============================================================--
 
 task.wait(.25)
 
 OpenMenu()
 
-print("====================================")
+print("================================")
 print(" ZAKA PURE UI V1")
-print(" EYE MORPH EDITION")
-print(" 12 PROCEDURAL EYE STYLES")
-print(" 5 SECOND AUTO MORPH")
-print(" COLOR TRANSITION ENABLED")
-print("====================================")
+print(" RAINBOW BORDER")
+print(" ROTATING EYE")
+print(" SEQUENTIAL EYE MORPH")
+print(" 10 EYE STYLES")
+print("================================")
