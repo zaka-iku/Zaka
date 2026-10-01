@@ -123,6 +123,57 @@ local Themes = {
 local Theme = Themes[Config.Theme]
 
 --==========================================================
+-- LANGUAGE SYSTEM
+--==========================================================
+local Language = "VI"
+local LangLabels = {
+    VI = {
+        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  20 TABS",
+        Search="🔎  Gõ vào đây để tìm kiếm kỹ năng", Execute="THỰC HIỆN",
+        Language="VI / EN", LanguageHint="Ngôn ngữ",
+        Tabs={Combat="Combat", ["Aim Training"]="Luyện tập ngắm", ["ESP / Debug"]="ESP / Debug", Players="Người chơi", NPC="NPC", Mobs="Mob", Items="Vật phẩm", Weapons="Vũ khí", Locations="Vị trí", Movement="Di chuyển", ["Fly & Glide"]="Bay & Lướt", World="Thế giới", Server="Máy chủ", ["Troll / Admin"]="Troll / Admin", Effects="Hiệu ứng", Camera="Camera", Debug="Debug", Stats="Thống kê", ["Game Tools"]="Công cụ game", Settings="Cài đặt"},
+    },
+    EN = {
+        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  20 TABS",
+        Search="🔎  Search features", Execute="EXECUTE",
+        Language="EN / VI", LanguageHint="Language",
+        Tabs={Combat="Combat", ["Aim Training"]="Aim Training", ["ESP / Debug"]="ESP / Debug", Players="Players", NPC="NPC", Mobs="Mobs", Items="Items", Weapons="Weapons", Locations="Locations", Movement="Movement", ["Fly & Glide"]="Fly & Glide", World="World", Server="Server", ["Troll / Admin"]="Troll / Admin", Effects="Effects", Camera="Camera", Debug="Debug", Stats="Stats", ["Game Tools"]="Game Tools", Settings="Settings"},
+    },
+}
+local ENName = {
+    ["Chế độ luyện tập"]="Training Mode",["Bộ đếm combo"]="Combo Counter",["Đèn báo thao tác"]="Action Indicator",["Đồng hồ phản xạ"]="Reaction Timer",
+    ["Vòng FOV luyện tập"]="Training FOV Circle",["Kích thước FOV"]="FOV Size",["Tâm ngắm"]="Crosshair",["Kích thước tâm ngắm"]="Crosshair Size",
+    ["Đánh dấu mục tiêu luyện tập"]="Mark Training Targets",["Xóa đánh dấu mục tiêu"]="Clear Target Marks",["Khung debug đối tượng"]="Object Debug Box",["Nhãn khoảng cách debug"]="Debug Distance Label",["Kiểm tra Raycast"]="Raycast Test",["Đếm đối tượng Workspace"]="Count Workspace Objects",
+    ["Thông tin người chơi"]="Player Info",["Khoảng cách người chơi"]="Player Distance",["Theo dõi tốc độ"]="Speed Monitor",["Theo dõi máu"]="Health Monitor",["Làm mới danh sách"]="Refresh List",
+    ["Đánh dấu NPC có tag"]="Mark Tagged NPCs",["Đếm NPC"]="Count NPCs",["Theo dõi máu NPC"]="NPC Health Monitor",["Đánh dấu Mob"]="Mark Mobs",["Đếm Mob"]="Count Mobs",["Đánh dấu Boss"]="Mark Bosses",
+    ["Đánh dấu Item"]="Mark Items",["Đếm Item"]="Count Items",["Đánh dấu Rương"]="Mark Chests",["Đánh dấu vũ khí"]="Mark Weapons",["Đếm vũ khí"]="Count Weapons",["Thông tin Tool đang cầm"]="Held Tool Info",
+    ["Đánh dấu điểm quan trọng"]="Mark Important Locations",["Đặt mốc vị trí"]="Set Position Marker",["Xóa mốc vị trí"]="Clear Position Marker",
+    ["Tốc độ chạy"]="Walk Speed",["Lực nhảy"]="Jump Power",["Tự xoay nhân vật"]="Auto Rotate",["Nhảy hai lần"]="Double Jump",["Lướt nhẹ"]="Glide",["Tăng tốc tạm thời"]="Temporary Boost",
+    ["Điều khiển bay"]="Fly Control",["Tốc độ bay"]="Fly Speed",["Tốc độ bay dọc"]="Vertical Fly Speed",["Tốc độ lướt"]="Glide Speed",
+    ["Trọng lực"]="Gravity",["Ban ngày"]="Daytime",["Ban đêm"]="Nighttime",["Độ sáng"]="Brightness",["Sương mù"]="Fog",
+    ["Thông tin Server"]="Server Info",["Vào lại Server hiện tại"]="Rejoin Current Server",["Vào Server mới"]="New Server",["Hiển thị JobId"]="Show JobId",
+    ["Xoay nhân vật"]="Spin Character",["Ngồi"]="Sit",["Ragdoll thử nghiệm"]="Ragdoll Test",["Phóng nhân vật"]="Launch Character",["Confetti"]="Confetti",
+    ["Vòng năng lượng"]="Energy Ring",["Nhịp sáng"]="Light Pulse",["Lightning"]="Lightning",["Flash màn hình"]="Screen Flash",
+    ["FOV Camera"]="Camera FOV",["Rung camera"]="Camera Shake",["Thu phóng camera"]="Camera Zoom",["Reset Camera"]="Reset Camera",
+    ["FPS"]="FPS",["Tọa độ"]="Coordinates",["Vận tốc"]="Velocity",["Kiểm tra Humanoid"]="Humanoid Check",["Đếm Part"]="Count Parts",["Máu"]="Health",["Tốc độ"]="Speed",["FOV"]="FOV",["Kiểm tra hệ thống"]="System Check",["Thông báo thử"]="Test Notification",["Hiệu ứng thử"]="Test Effect",["Refresh UI"]="Refresh UI",
+    ["Aim Assist luyện tập"]="Training Aim Assist",["Vùng ghim mục tiêu"]="Target Lock Part",["Độ mạnh ghim"]="Lock Strength",["Khoảng cách mục tiêu"]="Target Range",["Kiểm tra xuyên vật thể"]="Line of Sight Check",
+    ["Kích thước UI"]="UI Scale",["Độ trong suốt UI"]="UI Transparency",["Blur"]="Blur",["Animation Speed"]="Animation Speed",["Cyber Theme"]="Cyber Theme",["Purple Theme"]="Purple Theme",["Ice Theme"]="Ice Theme",["Glow UI"]="Glow UI",["Night Vision"]="Night Vision",["Xóa Highlight"]="Clear Highlights",["Xóa hiệu ứng"]="Clear Effects",["Reset nhân vật"]="Reset Character",["Reset chuyển động"]="Reset Movement",["Reset thế giới"]="Reset World",["Anti-Cheat Debug"]="Anti-Cheat Debug",["Ngưỡng tốc độ"]="Speed Threshold",["Ngưỡng dịch chuyển"]="Teleport Threshold",["Reset cảnh báo Security"]="Reset Security Warnings",
+}
+local function featureText(f)
+    return Language=="EN" and (ENName[f.Name] or f.Name) or f.Name
+end
+local function featureDesc(f)
+    if Language=="VI" then return f.Description end
+    return f.ENDescription or "Configure this feature for your experience."
+end
+local function tabText(tab)
+    return LangLabels[Language].Tabs[tab] or tab
+end
+local function uiText(key)
+    return LangLabels[Language][key] or key
+end
+
+--==========================================================
 -- STATE / REGISTRY
 --==========================================================
 local Features = {}
@@ -257,7 +308,7 @@ Main.Size=UDim2.fromOffset(0,0)
 Main.BackgroundColor3=Theme.Background
 Main.BackgroundTransparency=Config.UITransparency
 Main.Visible=false
-Main.ClipsDescendants=true
+Main.ClipsDescendants=false
 Main.ZIndex=20
 Main.Parent=Gui
 corner(Main,24)
@@ -277,7 +328,7 @@ Title.Position=UDim2.new(0,22,0,10)
 Title.Size=UDim2.fromOffset(300,28)
 Title.TextColor3=Theme.Accent2
 
-local Subtitle=label(Top,"V1.0  •  GLASS  •  20 TABS",10,false)
+local Subtitle=label(Top,uiText("Subtitle"),10,false)
 Subtitle.Position=UDim2.new(0,23,0,40)
 Subtitle.Size=UDim2.fromOffset(350,18)
 Subtitle.TextColor3=Theme.Sub
@@ -289,11 +340,31 @@ Close.BackgroundColor3=Theme.Card
 Close.BackgroundTransparency=.22
 Close.Text="×"
 Close.TextColor3=Theme.Text
+    if LangBtn then LangBtn.BackgroundColor3=Theme.Card; LangBtn.TextColor3=Theme.Accent2 end
 Close.TextSize=24
 Close.Font=Enum.Font.GothamBold
 Close.AutoButtonColor=false
 Close.Parent=Top
 corner(Close,13)
+
+local RefreshLanguage
+local LangBtn=Instance.new("TextButton")
+LangBtn.Size=UDim2.fromOffset(70,30)
+LangBtn.Position=UDim2.new(1,-135,0,21)
+LangBtn.BackgroundColor3=Theme.Card
+LangBtn.BackgroundTransparency=.16
+LangBtn.Text=uiText("Language")
+LangBtn.TextColor3=Theme.Accent2
+LangBtn.TextSize=10
+LangBtn.Font=Enum.Font.GothamBold
+LangBtn.AutoButtonColor=false
+LangBtn.Parent=Top
+corner(LangBtn,10)
+stroke(LangBtn,.55)
+LangBtn.Activated:Connect(function()
+    Language = Language=="VI" and "EN" or "VI"
+    if RefreshLanguage then RefreshLanguage() end
+end)
 
 local Body=Instance.new("Frame")
 Body.Position=UDim2.new(0,10,0,72)
@@ -338,7 +409,7 @@ Search.Position=UDim2.new(0,3,0,0)
 Search.BackgroundColor3=Theme.Panel
 Search.BackgroundTransparency=.30
 Search.BorderSizePixel=0
-Search.PlaceholderText="🔎  Gõ vào đây để tìm kiếm kỹ năng"
+Search.PlaceholderText=uiText("Search")
 Search.PlaceholderColor3=Theme.Sub
 Search.Text=""
 Search.TextColor3=Theme.Text
@@ -395,7 +466,7 @@ local TabData={
 --==========================================================
 local function add(name,tab,icon,description,kind,default,minValue,maxValue,step,handler,keywords)
     local f={
-        Name=name,Tab=tab,Icon=icon or "◆",Description=description,
+        Name=name,Tab=tab,Icon=icon or "◆",Description=description,ENDescription="Configure "..(ENName[name] or name)..".",
         Kind=kind or "Toggle",Default=default,Min=minValue,Max=maxValue,
         Step=step or 1,Handler=handler,Keywords=keywords or {}
     }
@@ -666,6 +737,258 @@ local function scanFolder(folderName)
 end
 
 --==========================================================
+-- DEV AIM TRAINER / AIM ASSIST (OWN-EXPERIENCE / STUDIO ONLY)
+--==========================================================
+-- Safe dev implementation: targets are explicitly tagged ZAKA_Target.
+-- This does not bypass or evade anti-cheat in third-party experiences.
+local AimTrainer = {
+    Enabled=false,
+    Active=false,
+    Mode="Hold",
+    Part="Head",
+    Strength=85,
+    MaxDistance=600,
+    FOV=180,
+    RequireLineOfSight=true,
+    Priority="Screen",
+    Prediction=0,
+    Sticky=true,
+    CurrentTarget=nil,
+    Key=Enum.KeyCode.E,
+    Deadzone=0,
+    LockGrace=0.35,
+    AdaptivePrediction=true,
+    MaxPrediction=0.65,
+    LastTargetTime=0,
+}
+
+local function aimPartNames()
+    if AimTrainer.Part=="Head" then
+        return {"Head"}
+    elseif AimTrainer.Part=="Body" then
+        return {"UpperTorso","Torso","HumanoidRootPart"}
+    else
+        return {"LeftFoot","RightFoot","LeftLowerLeg","RightLowerLeg","Left Leg","Right Leg"}
+    end
+end
+
+local function getAimPoint(model)
+    for _,name in ipairs(aimPartNames()) do
+        local part=model:FindFirstChild(name)
+        if part and part:IsA("BasePart") then return part end
+    end
+    return nil
+end
+
+local function hasLineOfSight(part,model)
+    if not AimTrainer.RequireLineOfSight then return true end
+    local params=RaycastParams.new()
+    params.FilterType=Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances={LocalPlayer.Character}
+    local hit=workspace:Raycast(Camera.CFrame.Position,part.Position-Camera.CFrame.Position,params)
+    return (not hit) or hit.Instance:IsDescendantOf(model)
+end
+
+local function findTrainingTarget()
+    local best,bestScore
+    local center=Camera.ViewportSize/2
+    local current=AimTrainer.CurrentTarget
+
+    -- Sticky lock: retain the current tagged target while it remains valid.
+    if AimTrainer.Sticky and current and current.Parent then
+        local model=current:FindFirstAncestorOfClass("Model")
+        local hum=model and model:FindFirstChildOfClass("Humanoid")
+        local root=model and (model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart)
+        local part=model and getAimPoint(model)
+        if model and hum and hum.Health>0 and root and part then
+            local screen,onScreen=Camera:WorldToViewportPoint(part.Position)
+            local pixel=(Vector2.new(screen.X,screen.Y)-center).Magnitude
+            local dist=(Camera.CFrame.Position-part.Position).Magnitude
+            if onScreen and pixel<=AimTrainer.FOV and dist<=AimTrainer.MaxDistance and hasLineOfSight(part,model) then
+                return part
+            end
+        end
+        AimTrainer.CurrentTarget=nil
+    end
+
+    for _,obj in ipairs(CollectionService:GetTagged("ZAKA_Target")) do
+        if obj and obj.Parent then
+            local model=obj:IsA("Model") and obj or obj:FindFirstAncestorOfClass("Model")
+            if model and model~=LocalPlayer.Character then
+                local hum=model:FindFirstChildOfClass("Humanoid")
+                local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+                local part=hum and root and getAimPoint(model)
+                if hum and hum.Health>0 and root and part then
+                    local dist=(Camera.CFrame.Position-part.Position).Magnitude
+                    local screen,onScreen=Camera:WorldToViewportPoint(part.Position)
+                    local pixel=(Vector2.new(screen.X,screen.Y)-center).Magnitude
+                    if onScreen and dist<=AimTrainer.MaxDistance and pixel<=AimTrainer.FOV and pixel>=AimTrainer.Deadzone and hasLineOfSight(part,model) then
+                        local score
+                        if AimTrainer.Priority=="Distance" then
+                            score=dist
+                        elseif AimTrainer.Priority=="Balanced" then
+                            score=pixel+(dist*0.15)
+                        else
+                            score=pixel
+                        end
+                        if bestScore==nil or score<bestScore then
+                            best,bestScore=part,score
+                        end
+                    end
+                end
+            end
+        end
+    end
+    AimTrainer.CurrentTarget=best
+    return best
+end
+
+local function predictedPosition(part)
+    local model=part:FindFirstAncestorOfClass("Model")
+    local root=model and (model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart)
+    local velocity=root and root:IsA("BasePart") and root.AssemblyLinearVelocity or Vector3.zero
+    local distance=(Camera.CFrame.Position-part.Position).Magnitude
+    local base=math.clamp(distance/1400,0.02,AimTrainer.MaxPrediction)
+    local factor=math.clamp(AimTrainer.Prediction,0,2)
+    if AimTrainer.AdaptivePrediction then
+        local horizontal=Vector3.new(velocity.X,0,velocity.Z).Magnitude
+        local adaptive=math.clamp(horizontal/55,0,1)
+        factor=math.max(factor,adaptive)
+    end
+    if factor<=0 then return part.Position end
+    return part.Position + velocity * base * factor
+end
+
+local AimConn
+local function stopAimTrainer()
+    if AimConn then AimConn:Disconnect(); AimConn=nil end
+    AimTrainer.CurrentTarget=nil
+end
+
+local function startAimTrainer()
+    stopAimTrainer()
+    if not RunService:IsStudio() then
+        notify("Aim Assist chỉ hoạt động trong Studio/experience bạn kiểm soát")
+        return
+    end
+    AimConn=RunService.RenderStepped:Connect(function(dt)
+        if not AimTrainer.Enabled or not AimTrainer.Active then return end
+        local target=findTrainingTarget()
+        if not target then return end
+        local camPos=Camera.CFrame.Position
+        local desired=CFrame.lookAt(camPos,predictedPosition(target))
+        local alpha=math.clamp(AimTrainer.Strength/100,0,1)
+        local angularBoost=math.clamp((target.Position-Camera.CFrame.Position).Magnitude/250,0,0.28)
+        local step=1-math.pow(1-alpha,math.max(dt,1/240)*(12+angularBoost*20))
+        Camera.CFrame=Camera.CFrame:Lerp(desired,math.clamp(step,0,0.98))
+        AimTrainer.LastTargetTime=os.clock()
+    end)
+end
+
+-- Mobile aim control: no keyboard key is required on phones/tablets.
+local AimTouchButton=Instance.new("TextButton")
+AimTouchButton.Name="AimTouchButton"
+AimTouchButton.AnchorPoint=Vector2.new(1,1)
+AimTouchButton.Position=UDim2.new(1,-18,1,-92)
+AimTouchButton.Size=UDim2.fromOffset(118,42)
+AimTouchButton.BackgroundColor3=Theme.Panel
+AimTouchButton.BackgroundTransparency=.08
+AimTouchButton.TextColor3=Theme.Text
+AimTouchButton.Font=Enum.Font.GothamBold
+AimTouchButton.TextSize=13
+AimTouchButton.AutoButtonColor=false
+AimTouchButton.ZIndex=90
+AimTouchButton.Visible=UserInputService.TouchEnabled
+AimTouchButton.Parent=Gui
+corner(AimTouchButton,14)
+stroke(AimTouchButton,.12)
+
+function updateAimTouchButton()
+    local active=AimTrainer.Active
+    AimTouchButton.Text=(active and "🎯 AIM • ON" or "🎯 AIM • OFF")
+    AimTouchButton.BackgroundColor3=active and Color3.fromRGB(70,8,16) or Theme.Panel
+end
+updateAimTouchButton()
+AimTouchButton.Activated:Connect(function()
+    if not AimTrainer.Enabled then
+        notify("Hãy bật Aim Assist luyện tập trước")
+        return
+    end
+    AimTrainer.Active=not AimTrainer.Active
+    updateAimTouchButton()
+end)
+
+-- Keep the mobile control above the menu and reposition it for small screens.
+connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
+    AimTouchButton.Position=UDim2.new(1,-18,1,Camera.ViewportSize.Y<600 and -76 or -92)
+    AimTouchButton.Visible=UserInputService.TouchEnabled
+end)
+
+add("Aim Assist luyện tập","Aim Training","🎯","Aim assist mạnh cho bộ target ZAKA_Target của experience bạn: chọn vùng Head/Body/Legs, FOV, prediction và sticky lock.","Toggle",false,nil,nil,nil,
+    function(v)
+        AimTrainer.Enabled=v
+        AimTrainer.Active=v and AimTrainer.Mode=="Toggle"
+        if v then startAimTrainer() else stopAimTrainer() end
+        if AimTouchButton then updateAimTouchButton() end
+    end,{"aimbot","aim assist","target lock","head","body","legs"})
+
+add("Chế độ Aim","Aim Training","🖱","Chuyển giữa Hold và Toggle cho Aim Assist.","Button",false,nil,nil,nil,
+    function()
+        AimTrainer.Mode=(AimTrainer.Mode=="Hold" and "Toggle" or "Hold")
+        notify("Aim mode: "..AimTrainer.Mode)
+    end,{"aim mode","hold","toggle"})
+
+add("Vùng ghim mục tiêu","Aim Training","🎯","Chọn Head, Body hoặc Legs cho mục tiêu luyện tập.","Button",false,nil,nil,nil,
+    function()
+        local order={"Head","Body","Legs"}
+        local idx=1
+        for i,v in ipairs(order) do if v==AimTrainer.Part then idx=i break end end
+        AimTrainer.Part=order[idx%#order+1]
+        AimTrainer.CurrentTarget=nil
+        notify("Aim target: "..AimTrainer.Part)
+    end,{"head","body","legs","bone","part"})
+
+add("Độ mạnh ghim","Aim Training","⚡","Tăng/giảm độ bám camera vào mục tiêu trong bộ luyện tập Studio.","Input",85,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then AimTrainer.Strength=math.clamp(n,0,100) end end,{"strength","smooth","lock"})
+
+add("FOV Aim","Aim Training","⭕","Giới hạn vùng màn hình mà Aim Assist được phép chọn mục tiêu.","Input",180,nil,nil,nil,
+    function(v) local n=tonumber(v); if n and n>=1 then AimTrainer.FOV=n end end,{"fov","field of view","screen"})
+
+add("Ưu tiên mục tiêu","Aim Training","📡","Đổi cách chọn mục tiêu: Screen, Distance hoặc Balanced.","Button",false,nil,nil,nil,
+    function()
+        local order={"Screen","Distance","Balanced"}
+        local idx=1
+        for i,v in ipairs(order) do if v==AimTrainer.Priority then idx=i break end end
+        AimTrainer.Priority=order[idx%#order+1]
+        AimTrainer.CurrentTarget=nil
+        notify("Target priority: "..AimTrainer.Priority)
+    end,{"priority","screen","distance","balanced"})
+
+add("Prediction","Aim Training","🔮","Bù chuyển động mục tiêu dựa trên vận tốc HumanoidRootPart của target.","Input",0,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then AimTrainer.Prediction=math.clamp(n,0,2) end end,{"prediction","movement","velocity"})
+
+add("Sticky Lock","Aim Training","🔒","Giữ mục tiêu hiện tại nếu mục tiêu vẫn hợp lệ, giúp aim ổn định hơn.","Toggle",true,nil,nil,nil,
+    function(v) AimTrainer.Sticky=v; if not v then AimTrainer.CurrentTarget=nil end end,{"sticky","lock","target"})
+
+add("Vùng chết tâm ngắm","Aim Training","⭕","Khoảng cách tối thiểu từ tâm màn hình trước khi khóa mục tiêu, giúp tránh rung khi mục tiêu đi sát tâm.","Input",0,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then AimTrainer.Deadzone=math.max(0,n) end end,{"deadzone","center","aim"})
+
+add("Prediction thích ứng","Aim Training","🧠","Tự tăng prediction theo vận tốc ngang của mục tiêu trong bộ target luyện tập.","Toggle",true,nil,nil,nil,
+    function(v) AimTrainer.AdaptivePrediction=v end,{"adaptive","prediction","velocity"})
+
+add("Giới hạn Prediction","Aim Training","📐","Giới hạn thời gian dự đoán để tránh khóa quá xa vị trí hiện tại.","Input",0.65,nil,nil,nil,
+    function(v) local n=tonumber(v); if n and n>0 then AimTrainer.MaxPrediction=math.clamp(n,0.02,3) end end,{"prediction","limit","max"})
+
+add("Nút Aim trên điện thoại","Aim Training","📱","Hiển thị nút cảm ứng riêng để bật/tắt aim mà không cần bàn phím.","Toggle",true,nil,nil,nil,
+    function(v) AimTouchButton.Visible=v and UserInputService.TouchEnabled; if not v then AimTrainer.Active=false; updateAimTouchButton() end end,{"mobile","touch","button","aim"})
+
+add("Reset khóa mục tiêu","Aim Training","♻","Xóa mục tiêu đang giữ và buộc hệ thống chọn lại mục tiêu hợp lệ.","Button",false,nil,nil,nil,
+    function() AimTrainer.CurrentTarget=nil; notify("Đã reset mục tiêu Aim") end,{"reset","target","lock"})
+
+add("Kiểm tra xuyên vật thể","Aim Training","👁","Yêu cầu raycast không bị vật thể che khuất trước khi ghim.","Toggle",true,nil,nil,nil,
+    function(v) AimTrainer.RequireLineOfSight=v end,{"raycast","visibility","wall"})
+
+--==========================================================
 -- 20 TABS: FUNCTIONAL CORE
 --==========================================================
 add("Chế độ luyện tập","Combat","⚔","Bật lớp hiển thị luyện tập cục bộ.","Toggle",false,nil,nil,nil,
@@ -812,8 +1135,8 @@ add("Đặt mốc vị trí","Locations","🚩","Lưu vị trí hiện tại tro
 add("Xóa mốc vị trí","Locations","🧹","Xóa mốc vị trí hiện tại.","Button",false,nil,nil,nil,
     function() Runtime.Bookmark=nil; notify("Đã xóa mốc") end,{"bookmark","clear"})
 
-add("Tốc độ chạy","Movement","🏃","Điều chỉnh WalkSpeed cục bộ.","Slider",16,0,500,1,
-    function(v) Config.WalkSpeed=v; applyCharacterSettings() end,{"walk","speed"})
+add("Tốc độ chạy","Movement","🏃","Điều chỉnh WalkSpeed cục bộ. Nhập số tùy ý, không đặt trần trong UI.","Input",16,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then Config.WalkSpeed=n; applyCharacterSettings() end end,{"walk","speed","unlimited"})
 
 add("Lực nhảy","Movement","⬆","Điều chỉnh JumpPower cục bộ.","Slider",50,0,500,1,
     function(v) Config.JumpPower=v; applyCharacterSettings() end,{"jump","power"})
@@ -842,11 +1165,11 @@ add("Điều khiển bay","Fly & Glide","🪽","Bộ điều khiển bay cục b
         if v then startFly() else stopFly() end
     end,{"fly","flight"})
 
-add("Tốc độ bay","Fly & Glide","⚡","Điều chỉnh tốc độ bay 0–500.","Slider",80,0,500,1,
-    function(v) Config.FlySpeed=v end,{"fly","speed"})
+add("Tốc độ bay","Fly & Glide","⚡","Nhập tốc độ bay tùy ý, không đặt trần trong UI.","Input",80,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then Config.FlySpeed=n end end,{"fly","speed","unlimited"})
 
-add("Tốc độ bay dọc","Fly & Glide","↕","Điều chỉnh tốc độ lên/xuống 0–500.","Slider",60,0,500,1,
-    function(v) Config.FlyVertical=v end,{"fly","vertical"})
+add("Tốc độ bay dọc","Fly & Glide","↕","Nhập tốc độ lên/xuống tùy ý, không đặt trần trong UI.","Input",60,nil,nil,nil,
+    function(v) local n=tonumber(v); if n then Config.FlyVertical=n end end,{"fly","vertical","unlimited"})
 
 add("Tốc độ lướt","Fly & Glide","🌬","Điều chỉnh tốc độ rơi khi lướt.","Slider",18,1,100,1,
     function(v) Runtime.GlideFallSpeed=v end,{"glide","speed"})
@@ -1038,6 +1361,48 @@ add("Reset thế giới","World","♻","Khôi phục Gravity và ClockTime.","Bu
     end,{"reset","world"})
 
 --==========================================================
+-- DEV SECURITY / ANTI-CHEAT DIAGNOSTICS
+-- Client-side only: real enforcement belongs on the server.
+--==========================================================
+local Security = {Enabled=false, MaxSpeed=40, MaxTeleport=120, Sample=.35, LastPos=nil, LastTime=0, Violations=0}
+local SecurityConn
+local function securityStop()
+    if SecurityConn then SecurityConn:Disconnect(); SecurityConn=nil end
+end
+local function securityStart()
+    securityStop()
+    Security.LastPos=nil
+    Security.LastTime=os.clock()
+    Security.Violations=0
+    SecurityConn=RunService.Heartbeat:Connect(function()
+        if not Security.Enabled then return end
+        local r=rootPart()
+        if not r then return end
+        local now=os.clock()
+        local dt=now-Security.LastTime
+        if dt<Security.Sample then return end
+        if Security.LastPos then
+            local dist=(r.Position-Security.LastPos).Magnitude
+            local speed=dist/math.max(dt,.001)
+            if speed>Security.MaxSpeed and dist>Security.MaxTeleport then
+                Security.Violations+=1
+                notify((Language=="EN" and "Security warning: abnormal movement " or "Cảnh báo anti-cheat: di chuyển bất thường ")..math.floor(speed).." studs/s")
+            end
+        end
+        Security.LastPos=r.Position
+        Security.LastTime=now
+    end)
+end
+add("Anti-Cheat Debug","Debug","🛡","Bật bộ giám sát chuyển động để test trong experience bạn kiểm soát. Đây không phải bypass anti-cheat.","Toggle",false,nil,nil,nil,
+    function(v) Security.Enabled=v; if v then securityStart() else securityStop() end end,{"anti","cheat","security","debug"})
+add("Ngưỡng tốc độ","Debug","🏃","Ngưỡng tốc độ dùng cho kiểm thử phát hiện chuyển động bất thường.","Input",40,nil,nil,nil,
+    function(v) local n=tonumber(v); if n and n>=0 then Security.MaxSpeed=n end end,{"anti","speed","threshold"})
+add("Ngưỡng dịch chuyển","Debug","📡","Khoảng cách tối thiểu để phân biệt bước di chuyển lớn khi kiểm thử.","Input",120,nil,nil,nil,
+    function(v) local n=tonumber(v); if n and n>=0 then Security.MaxTeleport=n end end,{"anti","teleport","threshold"})
+add("Reset cảnh báo Security","Debug","♻","Xóa bộ đếm cảnh báo của phiên debug.","Button",false,nil,nil,nil,
+    function() Security.Violations=0; notify(Language=="EN" and "Security violations reset" or "Đã reset cảnh báo Security") end,{"anti","reset","security"})
+
+--==========================================================
 -- THEME APPLY
 --==========================================================
 local function applyTheme()
@@ -1053,6 +1418,7 @@ local function applyTheme()
     Search.PlaceholderColor3=Theme.Sub
     HUD.TextColor3=Theme.Accent2
     Close.TextColor3=Theme.Text
+    if LangBtn then LangBtn.BackgroundColor3=Theme.Card; LangBtn.TextColor3=Theme.Accent2 end
 
     for _,b in ipairs(Runtime.TabButtons) do
         b.BackgroundColor3=Theme.Card
@@ -1236,11 +1602,11 @@ local function makeCard(parent,feature,index)
     icon.Size=UDim2.fromOffset(40,28)
     icon.TextXAlignment=Enum.TextXAlignment.Center
 
-    local name=label(card,feature.Name,13,true)
+    local name=label(card,featureText(feature),13,true)
     name.Position=UDim2.new(0,62,0,11)
     name.Size=UDim2.new(1,-285,0,22)
 
-    local desc=label(card,feature.Description,10,false)
+    local desc=label(card,featureDesc(feature),10,false)
     desc.Position=UDim2.new(0,63,0,37)
     desc.Size=UDim2.new(1,-285,0,31)
     desc.TextColor3=Theme.Sub
@@ -1255,30 +1621,28 @@ local function makeCard(parent,feature,index)
         control.Position=UDim2.new(1,-210,.5,-21)
     elseif feature.Kind=="Input" then
         control=Instance.new("TextBox")
-        control.Size=UDim2.fromOffset(120,38)
-        control.Position=UDim2.new(1,-136,.5,-19)
+        control.Size=UDim2.fromOffset(105,38)
+        control.Position=UDim2.new(1,-120,.5,-19)
         control.BackgroundColor3=Theme.Panel
         control.BackgroundTransparency=.08
-        control.Text=tostring(State[feature.Name] or feature.Default or "")
-        control.PlaceholderText=feature.Placeholder or "Nhập số"
-        control.ClearTextOnFocus=false
+        control.Text=tostring(State[feature.Name] or feature.Default or 0)
+        control.PlaceholderText=Language=="EN" and "Enter number" or "Nhập số"
         control.TextColor3=Theme.Accent2
-        control.PlaceholderColor3=Theme.Sub
         control.TextSize=11
         control.Font=Enum.Font.GothamBold
+        control.ClearTextOnFocus=false
         control.Parent=card
         corner(control,13)
-        stroke(control,.65)
+        stroke(control,.55)
         control.FocusLost:Connect(function()
-            local raw=control.Text:gsub(",",".")
-            local v=tonumber(raw)
-            if not v or v<0 or v~=v or v==math.huge then
+            local n=tonumber(control.Text)
+            if n then
+                State[feature.Name]=n
+                control.Text=tostring(n)
+                if feature.Handler then feature.Handler(n) end
+            else
                 control.Text=tostring(State[feature.Name] or feature.Default or 0)
-                return
             end
-            State[feature.Name]=v
-            if feature.Handler then feature.Handler(v) end
-            control.Text=tostring(v)
         end)
     else
         control=Instance.new("TextButton")
@@ -1286,7 +1650,7 @@ local function makeCard(parent,feature,index)
         control.Position=UDim2.new(1,-92,.5,-19)
         control.BackgroundColor3=Theme.Panel
         control.BackgroundTransparency=.10
-        control.Text="THỰC HIỆN"
+        control.Text=uiText("Execute")
         control.TextColor3=Theme.Accent2
         control.TextSize=9
         control.Font=Enum.Font.GothamBold
@@ -1339,10 +1703,12 @@ end
 local function scoreFeature(f,q)
     if q=="" then return 0 end
     local n=normalize(f.Name)
+    local en=normalize(ENName[f.Name] or f.Name)
     local d=normalize(f.Description)
-    if n==q then return 1000 end
-    if n:sub(1,#q)==q then return 900 end
-    if n:find(q,1,true) then return 700 end
+    local ed=normalize(f.ENDescription or "")
+    if n==q or en==q then return 1000 end
+    if n:sub(1,#q)==q or en:sub(1,#q)==q then return 900 end
+    if n:find(q,1,true) or en:find(q,1,true) then return 700 end
 
     local score=0
     for _,k in ipairs(f.Keywords or {}) do
@@ -1351,11 +1717,11 @@ local function scoreFeature(f,q)
         elseif k:sub(1,#q)==q then score=math.max(score,800)
         elseif k:find(q,1,true) then score=math.max(score,650) end
     end
-    if d:find(q,1,true) then score=math.max(score,450) end
+    if d:find(q,1,true) or ed:find(q,1,true) then score=math.max(score,450) end
 
     local matched=0
     for token in q:gmatch("%S+") do
-        if n:find(token,1,true) or d:find(token,1,true) then matched+=1 end
+        if n:find(token,1,true) or en:find(token,1,true) or d:find(token,1,true) or ed:find(token,1,true) then matched+=1 end
     end
     return math.max(score,matched*120)
 end
@@ -1376,6 +1742,7 @@ local function buildPage(tabName)
     page.BackgroundTransparency=1
     page.BorderSizePixel=0
     page.ScrollBarThickness=2
+    hookScrollBoost(page)
     page.AutomaticCanvasSize=Enum.AutomaticSize.Y
     page.CanvasSize=UDim2.new()
     page.Parent=PageArea
@@ -1412,6 +1779,23 @@ local function showTab(tabName)
     for _,p in pairs(Runtime.Pages) do p.Visible=false end
     local page=Runtime.Pages[tabName] or buildPage(tabName)
     page.Visible=true
+end
+
+RefreshLanguage=function()
+    LangBtn.Text=uiText("Language")
+    Title.Text=uiText("Title")
+    Subtitle.Text=uiText("Subtitle")
+    Search.PlaceholderText=uiText("Search")
+    for _,b in ipairs(Runtime.TabButtons) do
+        local tab=b:GetAttribute("ZakaTab")
+        if tab then b.Text=b:GetAttribute("ZakaIcon").."  "..tabText(tab) end
+    end
+    for tab,page in pairs(Runtime.Pages) do
+        if page and page.Parent then page:Destroy() end
+        Runtime.Pages[tab]=nil
+    end
+    if Runtime.CurrentTab then showTab(Runtime.CurrentTab) end
+    notify(Language=="EN" and "Language: English" or "Ngôn ngữ: Tiếng Việt")
 end
 
 local function buildSearch()
@@ -1479,7 +1863,9 @@ for i,data in ipairs(TabData) do
     b.Size=UDim2.new(1,-14,0,50)
     b.BackgroundColor3=Theme.Card
     b.BackgroundTransparency=.20
-    b.Text=icon.."  "..name
+    b.Text=icon.."  "..tabText(name)
+    b:SetAttribute("ZakaTab",name)
+    b:SetAttribute("ZakaIcon",icon)
     b.TextColor3=Theme.Text
     b.TextSize=12
     b.Font=Enum.Font.GothamBold
@@ -1624,6 +2010,15 @@ draggable(OpenButton,function(pos) Config.OpenButtonPosition=pos end)
 connect(UserInputService.InputBegan,function(input,gp)
     if gp then return end
 
+    if input.KeyCode==AimTrainer.Key and AimTrainer.Enabled then
+        if AimTrainer.Mode=="Toggle" then
+            AimTrainer.Active=not AimTrainer.Active
+        else
+            AimTrainer.Active=true
+        end
+        if AimTouchButton then updateAimTouchButton() end
+    end
+
     if input.UserInputType==Enum.UserInputType.MouseButton1 then
         if State["Bộ đếm combo"] then
             local now=os.clock()
@@ -1635,6 +2030,14 @@ connect(UserInputService.InputBegan,function(input,gp)
             Runtime.LastClick=now
             if State["Đèn báo thao tác"] then screenFlash() end
         end
+    end
+end)
+
+connect(UserInputService.InputEnded,function(input,gp)
+    if gp then return end
+    if input.KeyCode==AimTrainer.Key and AimTrainer.Mode=="Hold" then
+        AimTrainer.Active=false
+        if AimTouchButton then updateAimTouchButton() end
     end
 end)
 
@@ -1756,6 +2159,96 @@ connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
     refreshCarousel()
 end)
 
+
+--==========================================================
+-- SIDE RASENGAN EYES: RED, FIXED STYLE, SCROLL BOOST
+--==========================================================
+local SideEyeBoostUntil=0
+local SideEyes={}
+
+local function makeSideEye(name,side)
+    local holder=Instance.new("TextButton")
+    holder.Name=name
+    holder.Size=UDim2.fromOffset(38,38)
+    holder.Position=side=="Left" and UDim2.new(0,-43,.5,-19) or UDim2.new(1,5,.5,-19)
+    holder.BackgroundTransparency=1
+    holder.Text=""
+    holder.AutoButtonColor=false
+    holder.ZIndex=75
+    holder.Parent=Main
+
+    local outer=Instance.new("Frame")
+    outer.AnchorPoint=Vector2.new(.5,.5)
+    outer.Position=UDim2.fromScale(.5,.5)
+    outer.Size=UDim2.fromScale(.9,.9)
+    outer.BackgroundColor3=Color3.fromRGB(18,0,3)
+    outer.BorderSizePixel=0
+    outer.ZIndex=76
+    outer.Parent=holder
+    local oc=Instance.new("UICorner"); oc.CornerRadius=UDim.new(1,0); oc.Parent=outer
+    local os=Instance.new("UIStroke"); os.Color=Color3.fromRGB(255,40,55); os.Thickness=1.7; os.Parent=outer
+
+    local ring=Instance.new("Frame")
+    ring.AnchorPoint=Vector2.new(.5,.5); ring.Position=UDim2.fromScale(.5,.5)
+    ring.Size=UDim2.fromScale(.67,.67); ring.BackgroundColor3=Color3.fromRGB(205,8,24)
+    ring.BorderSizePixel=0; ring.ZIndex=77; ring.Parent=outer
+    local rc=Instance.new("UICorner"); rc.CornerRadius=UDim.new(1,0); rc.Parent=ring
+    local rs=Instance.new("UIStroke"); rs.Color=Color3.fromRGB(255,80,85); rs.Thickness=1; rs.Parent=ring
+
+    local iris=Instance.new("Frame")
+    iris.AnchorPoint=Vector2.new(.5,.5); iris.Position=UDim2.fromScale(.5,.5)
+    iris.Size=UDim2.fromScale(.40,.40); iris.BackgroundColor3=Color3.fromRGB(245,22,35)
+    iris.BorderSizePixel=0; iris.ZIndex=78; iris.Parent=ring
+    local ic=Instance.new("UICorner"); ic.CornerRadius=UDim.new(1,0); ic.Parent=iris
+
+    local detailRing=Instance.new("Frame")
+    detailRing.AnchorPoint=Vector2.new(.5,.5); detailRing.Position=UDim2.fromScale(.5,.5)
+    detailRing.Size=UDim2.fromScale(.52,.52); detailRing.BackgroundTransparency=1
+    detailRing.ZIndex=78; detailRing.Parent=ring
+    local drs=Instance.new("UIStroke"); drs.Color=Color3.fromRGB(255,120,125); drs.Thickness=1; drs.Transparency=.18; drs.Parent=detailRing
+    local drc=Instance.new("UICorner"); drc.CornerRadius=UDim.new(1,0); drc.Parent=detailRing
+
+    local shine=Instance.new("Frame")
+    shine.AnchorPoint=Vector2.new(.5,.5); shine.Position=UDim2.fromScale(.36,.32)
+    shine.Size=UDim2.fromOffset(4,4); shine.BackgroundColor3=Color3.fromRGB(255,235,235)
+    shine.BorderSizePixel=0; shine.ZIndex=82; shine.Parent=iris
+    local shc=Instance.new("UICorner"); shc.CornerRadius=UDim.new(1,0); shc.Parent=shine
+
+    local pupil=Instance.new("Frame")
+    pupil.AnchorPoint=Vector2.new(.5,.5); pupil.Position=UDim2.fromScale(.5,.5)
+    pupil.Size=UDim2.fromScale(.24,.24); pupil.BackgroundColor3=Color3.fromRGB(3,0,0)
+    pupil.BorderSizePixel=0; pupil.ZIndex=80; pupil.Parent=iris
+    local pc=Instance.new("UICorner"); pc.CornerRadius=UDim.new(1,0); pc.Parent=pupil
+
+    -- Three small tomoe-like marks, always crimson/red.
+    for i=1,3 do
+        local a=math.rad((i-1)*120)
+        local mark=Instance.new("Frame")
+        mark.AnchorPoint=Vector2.new(.5,.5)
+        mark.Position=UDim2.fromScale(.5+math.cos(a)*.25,.5+math.sin(a)*.25)
+        mark.Size=UDim2.fromOffset(5,9)
+        mark.Rotation=math.deg(a)+35
+        mark.BackgroundColor3=Color3.fromRGB(255,45,55)
+        mark.BorderSizePixel=0
+        mark.ZIndex=79
+        mark.Parent=iris
+        local mc=Instance.new("UICorner"); mc.CornerRadius=UDim.new(1,0); mc.Parent=mark
+    end
+    return {Holder=holder,Outer=outer,Ring=ring,Iris=iris,Pupil=pupil,Angle=0}
+end
+
+SideEyes.Left=makeSideEye("ZakaRasenganEyeLeft","Left")
+SideEyes.Right=makeSideEye("ZakaRasenganEyeRight","Right")
+
+local function boostSideEyes()
+    SideEyeBoostUntil=os.clock()+.65
+end
+
+local function hookScrollBoost(sf)
+    if not sf or not sf:IsA("ScrollingFrame") then return end
+    sf:GetPropertyChangedSignal("CanvasPosition"):Connect(boostSideEyes)
+end
+hookScrollBoost(Tabs)
 
 --==========================================================
 -- V1 VISUAL UPGRADE: RAINBOW BORDER + ANIME EYE
@@ -1928,6 +2421,14 @@ V1VisualConn=RunService.RenderStepped:Connect(function(dt)
     local c=Color3.fromHSV(V1RainbowHue,.92,1)
     V1RainbowStroke.Color=c
     if not EyeOpen then OpenButton.TextColor3=c end
+    local fast=os.clock()<SideEyeBoostUntil
+    local speed=fast and 145 or 18
+    for _,eye in pairs(SideEyes) do
+        eye.Angle=(eye.Angle+dt*speed)%360
+        eye.Outer.Rotation=eye.Angle
+        eye.Ring.Rotation=-eye.Angle*1.35
+        eye.Iris.Rotation=eye.Angle*1.9
+    end
 end)
 
 -- Poll Config.Open so the existing menu event handlers remain untouched.
@@ -1958,541 +2459,12 @@ corner(OpenButton,999)
 
 
 --==========================================================
--- V1 ADVANCED DEVELOPER TOOLKIT
--- Safe scope: only runs in Studio or for explicitly authorized
--- developer user IDs, and target assist only uses tagged NPCs.
---==========================================================
-local ADVANCED_DEV_USER_IDS = {
-    -- Add your Roblox UserId here for a published/group-owned experience.
-    -- Example: [123456789] = true,
-}
-local AdvancedAuthorized = RunService:IsStudio()
-    or ADVANCED_DEV_USER_IDS[LocalPlayer.UserId] == true
-    or (game.CreatorType == Enum.CreatorType.User and game.CreatorId == LocalPlayer.UserId)
-
-local Advanced = {
-    SavedPositions = {},
-    TargetAssist = false,
-    TargetRange = 500,
-    TargetFOV = 140,
-    TargetSmooth = 0.18,
-    TargetPart = "Head",
-    AutoHop = false,
-    HopMinutes = 10,
-    PersistActive = true,
-    TargetConnection = nil,
-    HopToken = 0,
-}
-
-local function advancedGuard()
-    if AdvancedAuthorized then return true end
-    notify("Advanced Dev: chỉ hoạt động trong Studio hoặc UserId được cấp quyền.")
-    return false
-end
-
-local function getTargetableModels()
-    local out={}
-    for _,inst in ipairs(CollectionService:GetTagged("ZAKA_Targetable")) do
-        local model=inst:IsA("Model") and inst or inst:FindFirstAncestorOfClass("Model")
-        if model and model.Parent then
-            local hum=model:FindFirstChildOfClass("Humanoid")
-            local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
-            if hum and hum.Health>0 and root then
-                table.insert(out,model)
-            end
-        end
-    end
-    return out
-end
-
-local function pickTarget()
-    local best,bestScore=nil,math.huge
-    local vp=Camera.ViewportSize
-    local center=Vector2.new(vp.X/2,vp.Y/2)
-    for _,model in ipairs(getTargetableModels()) do
-        local part=model:FindFirstChild(Advanced.TargetPart) or model:FindFirstChild("Head") or model.PrimaryPart
-        if part then
-            local dist=(part.Position-Camera.CFrame.Position).Magnitude
-            if dist<=Advanced.TargetRange then
-                local pos,onScreen=Camera:WorldToViewportPoint(part.Position)
-                if onScreen then
-                    local screen=Vector2.new(pos.X,pos.Y)
-                    local fov=(screen-center).Magnitude
-                    if fov<=Advanced.TargetFOV and fov<bestScore then
-                        best=model
-                        bestScore=fov
-                    end
-                end
-            end
-        end
-    end
-    return best
-end
-
-local function stopTargetAssist()
-    if Advanced.TargetConnection then
-        Advanced.TargetConnection:Disconnect()
-        Advanced.TargetConnection=nil
-    end
-end
-
-local function startTargetAssist()
-    stopTargetAssist()
-    if not AdvancedAuthorized then return end
-    Advanced.TargetConnection=RunService.RenderStepped:Connect(function()
-        if not Advanced.TargetAssist then return end
-        local target=pickTarget()
-        if not target then return end
-        local part=target:FindFirstChild(Advanced.TargetPart) or target:FindFirstChild("Head") or target.PrimaryPart
-        if not part then return end
-        local desired=CFrame.lookAt(Camera.CFrame.Position,part.Position)
-        local alpha=math.clamp(Advanced.TargetSmooth,0.01,1)
-        Camera.CFrame=Camera.CFrame:Lerp(desired,alpha)
-    end)
-end
-
-local function savePosition(slot)
-    if not advancedGuard() then return end
-    local root=getRoot()
-    if not root then notify("Không tìm thấy HumanoidRootPart."); return end
-    Advanced.SavedPositions[slot]={
-        x=root.Position.X,y=root.Position.Y,z=root.Position.Z,
-        rx=root.Orientation.X,ry=root.Orientation.Y,rz=root.Orientation.Z,
-    }
-    notify("Đã lưu vị trí #"..slot)
-end
-
-local function teleportToSaved(slot)
-    if not advancedGuard() then return end
-    local data=Advanced.SavedPositions[slot]
-    local root=getRoot()
-    if not data or not root then
-        notify("Chưa có vị trí #"..slot)
-        return
-    end
-    root.CFrame=CFrame.new(data.x,data.y,data.z)*CFrame.Angles(
-        math.rad(data.rx),math.rad(data.ry),math.rad(data.rz)
-    )
-    notify("Đã dịch chuyển tới vị trí #"..slot)
-end
-
-local function buildTeleportData()
-    local saved={}
-    for slot,pos in pairs(Advanced.SavedPositions) do
-        saved[tostring(slot)]={x=pos.x,y=pos.y,z=pos.z,rx=pos.rx,ry=pos.ry,rz=pos.rz}
-    end
-    return {
-        ZAKA_V1=true,
-        OpenMenu=true,
-        Config={
-            WalkSpeed=Config.WalkSpeed,
-            JumpPower=Config.JumpPower,
-            Fly=Config.Fly,
-            FlySpeed=Config.FlySpeed,
-            FlyVertical=Config.FlyVertical,
-            DoubleJump=Config.DoubleJump,
-            Glide=Config.Glide,
-            FOV=Config.FOV,
-        },
-        Advanced={
-            TargetAssist=Advanced.TargetAssist,
-            TargetRange=Advanced.TargetRange,
-            TargetFOV=Advanced.TargetFOV,
-            TargetSmooth=Advanced.TargetSmooth,
-            AutoHop=Advanced.AutoHop,
-            HopMinutes=Advanced.HopMinutes,
-            SavedPositions=saved,
-        }
-    }
-end
-
-local function restoreTeleportData()
-    local ok,data=pcall(function()
-        return TeleportService:GetLocalPlayerTeleportData()
-    end)
-    if not ok or type(data)~="table" or data.ZAKA_V1~=true then return false end
-
-    if type(data.Config)=="table" then
-        for k,v in pairs(data.Config) do
-            if Config[k]~=nil and type(v)==type(Config[k]) then Config[k]=v end
-        end
-    end
-    if type(data.Advanced)=="table" then
-        for _,k in ipairs({"TargetAssist","TargetRange","TargetFOV","TargetSmooth","AutoHop","HopMinutes"}) do
-            if data.Advanced[k]~=nil then Advanced[k]=data.Advanced[k] end
-        end
-        if type(data.Advanced.SavedPositions)=="table" then
-            for slot,pos in pairs(data.Advanced.SavedPositions) do
-                local n=tonumber(slot)
-                if n and type(pos)=="table" then Advanced.SavedPositions[n]=pos end
-            end
-        end
-    end
-    return true
-end
-
-local function teleportNewServer()
-    if not advancedGuard() then return end
-    local data=Advanced.PersistActive and buildTeleportData() or nil
-    local ok,err=pcall(function()
-        TeleportService:Teleport(game.PlaceId,LocalPlayer,data)
-    end)
-    if not ok then notify("Teleport lỗi: "..tostring(err)) end
-end
-
-local function rejoinCurrentServer()
-    if not advancedGuard() then return end
-    local data=Advanced.PersistActive and buildTeleportData() or nil
-    local ok,err=pcall(function()
-        TeleportService:TeleportToPlaceInstance(game.PlaceId,game.JobId,LocalPlayer,data)
-    end)
-    if not ok then notify("Rejoin lỗi: "..tostring(err)) end
-end
-
-local function startAutoHop()
-    Advanced.HopToken+=1
-    local token=Advanced.HopToken
-    task.spawn(function()
-        while Advanced.AutoHop and token==Advanced.HopToken do
-            local seconds=math.max(1,Advanced.HopMinutes*60)
-            for _=1,seconds do
-                if not Advanced.AutoHop or token~=Advanced.HopToken then return end
-                task.wait(1)
-            end
-            if Advanced.AutoHop and token==Advanced.HopToken then
-                notify("Auto Hop: đang chuyển server...")
-                teleportNewServer()
-                return
-            end
-        end
-    end)
-end
-
-local function stopAutoHop()
-    Advanced.HopToken+=1
-end
-
--- Configurable speed inputs: no artificial 500 cap. Roblox/physics may still impose
--- practical limits, so this accepts large numeric values rather than literal infinity.
-add("Tốc độ chạy nâng cao","Movement","🏃‍♂️","Nhập WalkSpeed trực tiếp; không khóa ở 500.","Input",Config.WalkSpeed,nil,nil,nil,
-    function(v) Config.WalkSpeed=v; applyCharacterSettings() end,{"walk","speed","unlimited","max"})
-
-add("Tốc độ bay nâng cao","Fly & Glide","🛩️","Nhập tốc độ bay trực tiếp; không khóa ở 500.","Input",Config.FlySpeed,nil,nil,nil,
-    function(v) Config.FlySpeed=v end,{"fly","speed","unlimited","max"})
-
-add("Target Assist NPC","Combat","🎯","Aim assist có thể tùy chỉnh, chỉ khóa Model được gắn tag ZAKA_Targetable trong experience của bạn.","Toggle",false,nil,nil,nil,
-    function(v)
-        if not advancedGuard() then State["Target Assist NPC"]=false; return end
-        Advanced.TargetAssist=v
-        if v then startTargetAssist() else stopTargetAssist() end
-    end,{"aim","aimbot","target","npc","assist"})
-
-add("Target Assist Range","Combat","📏","Khoảng cách tối đa tới NPC targetable.","Slider",500,25,5000,25,
-    function(v) Advanced.TargetRange=v end,{"aim","range","target"})
-
-add("Target Assist FOV","Combat","⭕","Độ rộng vùng khóa mục tiêu quanh tâm màn hình.","Slider",140,20,600,5,
-    function(v) Advanced.TargetFOV=v end,{"aim","fov","target"})
-
-add("Target Assist Smooth","Combat","🎚️","Độ mượt khi camera hướng tới NPC targetable.","Slider",18,1,100,1,
-    function(v) Advanced.TargetSmooth=v/100 end,{"aim","smooth","target"})
-
-add("Lưu vị trí #1","Locations","📍","Lưu vị trí hiện tại vào slot 1.","Button",false,nil,nil,nil,function() savePosition(1) end,{"save","position","location"})
-add("Lưu vị trí #2","Locations","📍","Lưu vị trí hiện tại vào slot 2.","Button",false,nil,nil,nil,function() savePosition(2) end,{"save","position","location"})
-add("Lưu vị trí #3","Locations","📍","Lưu vị trí hiện tại vào slot 3.","Button",false,nil,nil,nil,function() savePosition(3) end,{"save","position","location"})
-add("Lưu vị trí #4","Locations","📍","Lưu vị trí hiện tại vào slot 4.","Button",false,nil,nil,nil,function() savePosition(4) end,{"save","position","location"})
-add("Lưu vị trí #5","Locations","📍","Lưu vị trí hiện tại vào slot 5.","Button",false,nil,nil,nil,function() savePosition(5) end,{"save","position","location"})
-add("Tele vị trí #1","Locations","🚩","Dịch chuyển tới slot 1.","Button",false,nil,nil,nil,function() teleportToSaved(1) end,{"teleport","position","location"})
-add("Tele vị trí #2","Locations","🚩","Dịch chuyển tới slot 2.","Button",false,nil,nil,nil,function() teleportToSaved(2) end,{"teleport","position","location"})
-add("Tele vị trí #3","Locations","🚩","Dịch chuyển tới slot 3.","Button",false,nil,nil,nil,function() teleportToSaved(3) end,{"teleport","position","location"})
-add("Tele vị trí #4","Locations","🚩","Dịch chuyển tới slot 4.","Button",false,nil,nil,nil,function() teleportToSaved(4) end,{"teleport","position","location"})
-add("Tele vị trí #5","Locations","🚩","Dịch chuyển tới slot 5.","Button",false,nil,nil,nil,function() teleportToSaved(5) end,{"teleport","position","location"})
-
-add("Lưu cấu hình qua server","Server","💾","Giữ các kỹ năng đang bật và vị trí đã lưu khi teleport bằng TeleportData.","Toggle",true,nil,nil,nil,
-    function(v) Advanced.PersistActive=v end,{"save","config","persist","server"})
-
-add("Rejoin Server + giữ kỹ năng","Server","🔄","Vào lại JobId hiện tại và truyền cấu hình sang phiên mới.","Button",false,nil,nil,nil,rejoinCurrentServer,{"rejoin","server","persist"})
-add("New Server + giữ kỹ năng","Server","🚀","Vào server mới và truyền cấu hình sang phiên mới.","Button",false,nil,nil,nil,teleportNewServer,{"new","server","persist","hop"})
-
-add("Auto Hop Server","Server","⏱️","Tự chuyển server sau khoảng thời gian đã chọn.","Toggle",false,nil,nil,nil,
-    function(v)
-        if not advancedGuard() then State["Auto Hop Server"]=false; return end
-        Advanced.AutoHop=v
-        if v then startAutoHop() else stopAutoHop() end
-    end,{"auto","hop","server","timer"})
-
-add("Thời gian Auto Hop","Server","⏰","Số phút chờ trước khi tự chuyển server.","Slider",10,1,120,1,
-    function(v) Advanced.HopMinutes=v; if Advanced.AutoHop then stopAutoHop(); startAutoHop() end end,{"auto","hop","minutes","server"})
-
-add("Tự mở menu sau teleport","Settings","📂","Khôi phục trạng thái mở menu sau khi teleport/rejoin.","Toggle",true,nil,nil,nil,
-    function(v) Advanced.PersistActive=v end,{"menu","open","teleport","persist"})
-
-
---==========================================================
--- RASENGAN DEV SENSOR PACK
--- Visual/debug systems for experiences you own or control.
--- These systems require AdvancedAuthorized (Studio/dev mode).
---==========================================================
-local Sensor = {
-    PlayerESP=false, PlayerSkeleton=false, NPCESP=false, MobESP=false,
-    ItemESP=false, ObjectESP=false, Tracer=false, Distance=true,
-    Health=true, Names=true, Proximity=false, SpawnNotify=false,
-    ItemSpawnNotify=false, ModNotify=false, Fullbright=false,
-    HitboxDebug=false, LookDirection=false, PathDebug=false,
-    AutoScan=false, ScanInterval=2, ProximityRange=80,
-    MaxESPDistance=1500,
-}
-local SensorObjects={}
-local SensorConnections={}
-local SensorLastSeen={}
-local SensorFolder=workspace:FindFirstChild('ZAKA_RASENGAN_DEBUG') or Instance.new('Folder')
-SensorFolder.Name='ZAKA_RASENGAN_DEBUG'; SensorFolder.Parent=workspace
-
-local function sensorGuard()
-    if AdvancedAuthorized then return true end
-    notify('Rasengan Debug: chỉ hoạt động trong Studio/dev mode của experience bạn kiểm soát.')
-    return false
-end
-local function sensorConn(sig,fn)
-    local c=sig:Connect(fn); table.insert(SensorConnections,c); return c
-end
-local function sensorClearBucket(bucket)
-    local t=SensorObjects[bucket]
-    if not t then return end
-    for obj,data in pairs(t) do
-        if typeof(data)=='table' then
-            for _,child in ipairs(data) do if typeof(child)=='Instance' then pcall(function() child:Destroy() end) end end
-        elseif typeof(data)=='Instance' then
-            pcall(function() data:Destroy() end)
-        end
-        t[obj]=nil
-    end
-end
-local function sensorClearAll()
-    for _,bucket in pairs(SensorObjects) do
-        for _,obj in pairs(bucket) do
-            if typeof(obj)=='table' then
-                for _,child in ipairs(obj) do if typeof(child)=='Instance' then pcall(function() child:Destroy() end) end end
-            elseif typeof(obj)=='Instance' then
-                pcall(function() obj:Destroy() end)
-            end
-        end
-    end
-    table.clear(SensorObjects)
-    for _,c in ipairs(SensorConnections) do pcall(function() c:Disconnect() end) end
-    table.clear(SensorConnections)
-end
-local function modelRoot(m)
-    if not m then return nil end
-    return m:FindFirstChild('HumanoidRootPart') or m.PrimaryPart or m:FindFirstChildWhichIsA('BasePart',true)
-end
-local function modelHum(m) return m and m:FindFirstChildOfClass('Humanoid') end
-local function playerCharacter(p) return p and p.Character end
-local function isPlayerModel(m)
-    for _,pl in ipairs(Players:GetPlayers()) do if pl.Character==m then return true end end
-    return false
-end
-local function isLikelyNPC(m)
-    if not m:IsA('Model') or isPlayerModel(m) or not modelHum(m) then return false end
-    return CollectionService:HasTag(m,'ZAKA_NPC') or CollectionService:HasTag(m,'NPC') or CollectionService:HasTag(m,'Mob') or m:GetAttribute('ZAKA_NPC')==true or m:GetAttribute('NPC')==true
-end
-local function isLikelyMob(m)
-    if not m:IsA('Model') or isPlayerModel(m) or not modelHum(m) then return false end
-    local n=m.Name:lower()
-    return CollectionService:HasTag(m,'ZAKA_Mob') or CollectionService:HasTag(m,'Mob') or n:find('mob')~=nil or n:find('enemy')~=nil or n:find('monster')~=nil
-end
-local function isItem(o)
-    if not (o:IsA('Model') or o:IsA('BasePart') or o:IsA('Tool')) then return false end
-    if CollectionService:HasTag(o,'ZAKA_Item') or CollectionService:HasTag(o,'Item') or CollectionService:HasTag(o,'Loot') or o:GetAttribute('ZAKA_Item')==true then return true end
-    local n=o.Name:lower()
-    return n:find('item')~=nil or n:find('loot')~=nil or n:find('drop')~=nil or n:find('coin')~=nil or n:find('chest')~=nil
-end
-local function labelFor(target,kind)
-    local adornee=modelRoot(target) or (target:IsA('BasePart') and target)
-    if not adornee then return nil end
-    local bb=Instance.new('BillboardGui'); bb.Name='RasenganLabel'; bb.Adornee=adornee; bb.Size=UDim2.fromOffset(180,54); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true; bb.MaxDistance=Sensor.MaxESPDistance; bb.Parent=SensorFolder
-    local txt=Instance.new('TextLabel'); txt.BackgroundTransparency=1; txt.Size=UDim2.fromScale(1,1); txt.Font=Enum.Font.GothamBold; txt.TextSize=11; txt.TextStrokeTransparency=.25; txt.TextColor3=Color3.fromRGB(180,235,255); txt.Parent=bb
-    local h=modelHum(target)
-    local function refresh()
-        if not bb.Parent then return end
-        local parts={}
-        if Sensor.Names then table.insert(parts,tostring(target.Name)) end
-        if Sensor.Distance and getRoot() and adornee:IsA('BasePart') then table.insert(parts,string.format('%dm',math.floor((getRoot().Position-adornee.Position).Magnitude))) end
-        if Sensor.Health and h then table.insert(parts,string.format('HP %.0f/%.0f',h.Health,h.MaxHealth)) end
-        txt.Text=table.concat(parts,' • ')
-    end
-    sensorConn(RunService.RenderStepped,refresh)
-    return bb
-end
-local function highlightFor(target,kind)
-    local h=Instance.new('Highlight'); h.Name='RasenganHighlight'; h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop; h.FillTransparency=.78; h.OutlineTransparency=.05
-    h.FillColor=kind=='Player' and Color3.fromRGB(80,170,255) or kind=='NPC' and Color3.fromRGB(255,90,120) or kind=='Mob' and Color3.fromRGB(255,150,50) or Color3.fromRGB(80,255,190); h.OutlineColor=Color3.fromRGB(100,220,255); h.Adornee=target; h.Parent=SensorFolder
-    return h
-end
-local function skeletonFor(char)
-    if not char then return nil end
-    local folder=Instance.new('Folder'); folder.Name='RasenganSkeleton'; folder.Parent=SensorFolder
-    local links={
-        {'Head','UpperTorso'},{'UpperTorso','LowerTorso'},{'UpperTorso','LeftUpperArm'},{'LeftUpperArm','LeftLowerArm'},{'LeftLowerArm','LeftHand'},
-        {'UpperTorso','RightUpperArm'},{'RightUpperArm','RightLowerArm'},{'RightLowerArm','RightHand'},
-        {'LowerTorso','LeftUpperLeg'},{'LeftUpperLeg','LeftLowerLeg'},{'LeftLowerLeg','LeftFoot'},
-        {'LowerTorso','RightUpperLeg'},{'RightUpperLeg','RightLowerLeg'},{'RightLowerLeg','RightFoot'}
-    }
-    local made={}
-    local function part(n) return char:FindFirstChild(n) end
-    for _,pair in ipairs(links) do
-        local a,b=part(pair[1]),part(pair[2])
-        if a and b and a:IsA('BasePart') and b:IsA('BasePart') then
-            local at0=Instance.new('Attachment'); at0.Parent=a
-            local at1=Instance.new('Attachment'); at1.Parent=b
-            local beam=Instance.new('Beam'); beam.Attachment0=at0; beam.Attachment1=at1; beam.Width0=.035; beam.Width1=.035; beam.LightEmission=1; beam.Color=ColorSequence.new(Color3.fromRGB(100,220,255)); beam.FaceCamera=true; beam.Parent=folder
-            table.insert(made,at0); table.insert(made,at1); table.insert(made,beam)
-        end
-    end
-    -- R6 fallback: connect classic body parts.
-    if #made==0 then
-        local r6={{'Head','Torso'},{'Torso','Left Arm'},{'Torso','Right Arm'},{'Torso','Left Leg'},{'Torso','Right Leg'}}
-        for _,pair in ipairs(r6) do
-            local a,b=char:FindFirstChild(pair[1]),char:FindFirstChild(pair[2])
-            if a and b and a:IsA('BasePart') and b:IsA('BasePart') then
-                local x,y=Instance.new('Attachment'),Instance.new('Attachment'); x.Parent=a;y.Parent=b
-                local beam=Instance.new('Beam'); beam.Attachment0=x;beam.Attachment1=y;beam.Width0=.04;beam.Width1=.04;beam.LightEmission=1;beam.Color=ColorSequence.new(Color3.fromRGB(80,200,255));beam.FaceCamera=true;beam.Parent=folder
-            end
-        end
-    end
-    return folder
-end
-local function ensurePlayerESP(p)
-    if not Sensor.PlayerESP or not sensorGuard() or p==LocalPlayer then return end
-    local char=p.Character; if not char then return end
-    SensorObjects.Players=SensorObjects.Players or {}
-    if SensorObjects.Players[p] then return end
-    local h=highlightFor(char,'Player'); local bb=labelFor(char,'Player'); local sk=Sensor.PlayerSkeleton and skeletonFor(char) or nil
-    SensorObjects.Players[p]={h,bb,sk}
-end
-local function removePlayerESP(p)
-    if SensorObjects.Players and SensorObjects.Players[p] then for _,x in ipairs(SensorObjects.Players[p]) do if x then pcall(function() x:Destroy() end) end end; SensorObjects.Players[p]=nil end
-end
-local function scanPlayers()
-    if not sensorGuard() then return end
-    for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer then ensurePlayerESP(p) end end
-end
-local function scanModels()
-    if not sensorGuard() then return end
-    for _,m in ipairs(workspace:GetDescendants()) do
-        if m:IsA('Model') and modelHum(m) and not isPlayerModel(m) then
-            local kind=isLikelyNPC(m) and 'NPC' or isLikelyMob(m) and 'Mob' or nil
-            if kind and ((kind=='NPC' and Sensor.NPCESP) or (kind=='Mob' and Sensor.MobESP)) then
-                SensorObjects[kind]=SensorObjects[kind] or {}
-                if not SensorObjects[kind][m] then SensorObjects[kind][m]={highlightFor(m,kind),labelFor(m,kind)} end
-            end
-        end
-    end
-end
-local function scanItems()
-    if not sensorGuard() or not Sensor.ItemESP then return end
-    SensorObjects.Items=SensorObjects.Items or {}
-    for _,o in ipairs(workspace:GetDescendants()) do
-        if isItem(o) and not SensorObjects.Items[o] then SensorObjects.Items[o]={highlightFor(o,'Item'),labelFor(o,'Item')} end
-    end
-end
-local function proximityTick()
-    if not Sensor.Proximity or not sensorGuard() then return end
-    local r=getRoot(); if not r then return end
-    for _,p in ipairs(Players:GetPlayers()) do
-        if p~=LocalPlayer and p.Character then
-            local pr=modelRoot(p.Character)
-            if pr then
-                local d=(r.Position-pr.Position).Magnitude
-                if d<=Sensor.ProximityRange and not SensorLastSeen[p] then
-                    SensorLastSeen[p]=true; notify('⚡ Người chơi ở gần: '..p.Name..' • '..math.floor(d)..'m')
-                elseif d>Sensor.ProximityRange+12 then SensorLastSeen[p]=nil end
-            end
-        end
-    end
-end
-local function fullScan()
-    scanPlayers(); scanModels(); scanItems(); proximityTick()
-end
-local function watchSpawns()
-    if not sensorGuard() then return end
-    sensorConn(workspace.DescendantAdded,function(o)
-        task.defer(function()
-            if Sensor.SpawnNotify and o:IsA('Model') and modelHum(o) and not isPlayerModel(o) then notify('🔴 NPC/Mob spawn: '..o.Name) end
-            if Sensor.ItemSpawnNotify and isItem(o) then notify('🔵 Item xuất hiện: '..o.Name) end
-            if Sensor.ModNotify and o:IsA('Model') and o:GetAttribute('Moderator')==true then notify('🛡 Moderator object: '..o.Name) end
-        end)
-    end)
-    sensorConn(Players.PlayerAdded,function(p)
-        if Sensor.SpawnNotify then notify('🟢 Người chơi vào server: '..p.Name) end
-        p.CharacterAdded:Connect(function() task.wait(.3); if Sensor.PlayerESP then ensurePlayerESP(p) end; if Sensor.PlayerSkeleton then ensurePlayerESP(p) end end)
-    end)
-    sensorConn(Players.PlayerRemoving,function(p) removePlayerESP(p) end)
-end
-local function setSensorLoop(on)
-    if not on then return end
-    task.spawn(function()
-        while Sensor.AutoScan do
-            fullScan(); task.wait(math.max(.25,Sensor.ScanInterval))
-        end
-    end)
-end
-
-add('ESP Người chơi','ESP / Debug','👤','Highlight người chơi trong experience của bạn.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['ESP Người chơi']=false; return end Sensor.PlayerESP=v; if v then scanPlayers() else sensorClearBucket('Players') end end,{'esp','player','player esp'})
-add('Khung xương Người chơi','ESP / Debug','🦴','Skeleton R6/R15 bằng Beam, dành cho debug.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['Khung xương Người chơi']=false; return end Sensor.PlayerSkeleton=v; sensorClearBucket('Players'); if Sensor.PlayerESP then scanPlayers() end end,{'skeleton','bone','esp'})
-add('ESP NPC','ESP / Debug','🤖','Highlight NPC có tag/attribute ZAKA_NPC hoặc NPC.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['ESP NPC']=false; return end Sensor.NPCESP=v; if v then scanModels() else sensorClearBucket('NPC') end end,{'esp','npc'})
-add('ESP Mob / Enemy','ESP / Debug','👹','Highlight Mob/Enemy/Monster có tag hoặc tên phù hợp.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['ESP Mob / Enemy']=false; return end Sensor.MobESP=v; if v then scanModels() else sensorClearBucket('Mob') end end,{'esp','mob','enemy','monster'})
-add('ESP Item / Loot','ESP / Debug','💎','Highlight item/loot có tag hoặc tên item/loot/drop/coin/chest.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['ESP Item / Loot']=false; return end Sensor.ItemESP=v; if v then scanItems() else sensorClearBucket('Items') end end,{'esp','item','loot','drop'})
-add('Tên trên ESP','ESP / Debug','🏷','Hiện tên object/player trên nhãn.', 'Toggle',true,nil,nil,nil,function(v) Sensor.Names=v end,{'name','esp'})
-add('Khoảng cách trên ESP','ESP / Debug','📏','Hiện khoảng cách đến mục tiêu.', 'Toggle',true,nil,nil,nil,function(v) Sensor.Distance=v end,{'distance','esp'})
-add('Máu trên ESP','ESP / Debug','❤️','Hiện HP/MaxHP của Humanoid.', 'Toggle',true,nil,nil,nil,function(v) Sensor.Health=v end,{'health','hp','esp'})
-add('ESP Max Distance','ESP / Debug','⭕','Khoảng cách tối đa của nhãn/ESP.', 'Slider',1500,50,5000,50,function(v) Sensor.MaxESPDistance=v end,{'esp','distance','range'})
-add('Thông báo người chơi tới','Notifications','🔔','Thông báo khi player vào server.', 'Toggle',false,nil,nil,nil,function(v) Sensor.SpawnNotify=v end,{'notify','player','join'})
-add('Thông báo NPC spawn','Notifications','🚨','Thông báo khi Model có Humanoid xuất hiện.', 'Toggle',false,nil,nil,nil,function(v) Sensor.SpawnNotify=v end,{'notify','npc','spawn'})
-add('Thông báo Item xuất hiện','Notifications','📦','Thông báo khi object được nhận diện là item/loot.', 'Toggle',false,nil,nil,nil,function(v) Sensor.ItemSpawnNotify=v end,{'notify','item','spawn'})
-add('Cảnh báo người chơi gần','Notifications','⚡','Cảnh báo khi người chơi tới gần.', 'Toggle',false,nil,nil,nil,function(v) Sensor.Proximity=v end,{'proximity','player','near'})
-add('Khoảng cách cảnh báo','Notifications','📡','Khoảng cách kích hoạt cảnh báo người chơi.', 'Slider',80,10,500,5,function(v) Sensor.ProximityRange=v end,{'proximity','range'})
-add('Quét tự động','ESP / Debug','🔄','Tự quét object mới theo chu kỳ.', 'Toggle',true,nil,nil,nil,function(v) Sensor.AutoScan=v; if v then setSensorLoop(true) end end,{'scan','auto','debug'})
-add('Chu kỳ quét','ESP / Debug','⏱','Khoảng thời gian giữa các lần quét.', 'Slider',2,.25,15,.25,function(v) Sensor.ScanInterval=v end,{'scan','interval'})
-add('Thông báo Moderator','Notifications','🛡','Chỉ báo object/player có Attribute Moderator=true hoặc tag moderator trong dev experience.', 'Toggle',false,nil,nil,nil,function(v) Sensor.ModNotify=v end,{'moderator','admin','notify'})
-add('Fullbright Debug','World','☀','Đưa Lighting về sáng để kiểm thử map.', 'Toggle',false,nil,nil,nil,function(v) if not sensorGuard() then State['Fullbright Debug']=false; return end if v then Lighting.Brightness=2; Lighting.ClockTime=14; Lighting.FogEnd=100000 else Lighting.Brightness=1 end end,{'fullbright','light','debug'})
-add('Quét ngay','ESP / Debug','🔎','Quét player/NPC/Mob/Item ngay lập tức.', 'Button',false,nil,nil,nil,function() if sensorGuard() then fullScan(); notify('Rasengan Scan hoàn tất') end end,{'scan','esp','debug'})
-add('Xóa toàn bộ ESP','ESP / Debug','🧹','Xóa highlight, label và skeleton do Rasengan tạo.', 'Button',false,nil,nil,nil,function() sensorClearAll(); watchSpawns() end,{'clear','esp','debug'})
-
-if AdvancedAuthorized then watchSpawns() end
-
-add('Rasengan Card Animation','Settings','🌀','Animation chủ đề Rasengan cho tab và card.', 'Toggle',true,nil,nil,nil,function(v) State['Rasengan Card Animation']=v end,{'rasengan','animation','theme'})
-
--- Restore teleport state before the initial UI open.
-local restoredFromTeleport=restoreTeleportData()
-Config.Open=false
-
--- Mirror restored values into the UI registry so toggles/sliders show the
--- same state as the systems that were restored from TeleportData.
-State["Target Assist NPC"]=Advanced.TargetAssist
-State["Target Assist Range"]=Advanced.TargetRange
-State["Target Assist FOV"]=Advanced.TargetFOV
-State["Target Assist Smooth"]=math.floor(Advanced.TargetSmooth*100+0.5)
-State["Auto Hop Server"]=Advanced.AutoHop
-State["Thời gian Auto Hop"]=Advanced.HopMinutes
-State["Lưu cấu hình qua server"]=Advanced.PersistActive
-State["Tự mở menu sau teleport"]=Advanced.PersistActive
-State["Điều khiển bay"]=Config.Fly
-State["Tốc độ bay"]=Config.FlySpeed
-State["Tốc độ bay nâng cao"]=Config.FlySpeed
-State["Tốc độ chạy"]=Config.WalkSpeed
-State["Tốc độ chạy nâng cao"]=Config.WalkSpeed
-
--- Keep restored movement/fly state active after character creation.
-if AdvancedAuthorized then
-    applyCharacterSettings()
-    if Config.Fly then task.defer(startFly) end
-    if Advanced.TargetAssist then task.defer(startTargetAssist) end
-    if Advanced.AutoHop then task.defer(startAutoHop) end
-end
-
---==========================================================
 -- INITIALIZE
 --==========================================================
+Title.Text=uiText("Title")
+Subtitle.Text=uiText("Subtitle")
+Search.PlaceholderText=uiText("Search")
+LangBtn.Text=uiText("Language")
 applyCharacterSettings()
 setGlow(Config.UIGlow)
 showTab("Combat")
@@ -2500,37 +2472,5 @@ refreshCarousel()
 
 task.defer(function()
     task.wait(.25)
-    -- Always show the menu on first load; after teleport the saved active
-    -- systems have already been restored above.
-    openMenu()
-    if not AdvancedAuthorized then
-        notify("V1 • Advanced Dev bị khóa ngoài Studio/Developer allowlist")
-    end
     notify("ZAKA PURE V1 • Đã tải "..tostring(#Features).." chức năng")
-end)
-
-
---==========================================================
--- RASENGAN TAB/CARD ANIMATION
---==========================================================
-task.spawn(function()
-    local phase=0
-    while Gui and Gui.Parent do
-        phase=(phase+3)%360
-        local hue=(phase/360)%1
-        local c=Color3.fromHSV(hue,.65,1)
-        for _,tab in pairs(Runtime.TabButtons) do
-            if tab and tab.Parent then
-                local st=tab:FindFirstChildOfClass('UIStroke')
-                if st then st.Color=c end
-            end
-        end
-        for _,card in ipairs(Runtime.Cards) do
-            if card and card.Parent then
-                local st=card:FindFirstChildOfClass('UIStroke')
-                if st and State['Rasengan Card Animation']~=false then st.Color=Color3.fromHSV((hue+.55)%1,.55,1) end
-            end
-        end
-        task.wait(.06)
-    end
 end)
