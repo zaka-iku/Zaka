@@ -1,9 +1,9 @@
 --[[
 ============================================================
                     ZAKA PURE UI V1.0
-           MOBILE • RED RASENGAN • DEV EDITION
+           MOBILE • RASENGAN • DEV EDITION
 ============================================================
-20 English tabs / Vietnamese feature names.
+6 English tabs / Vietnamese feature names.
 Built for experiences you own or control.
 
 IMPORTANT:
@@ -14,7 +14,7 @@ must be enforced server-side.
 Core goals:
 - Real controls instead of placeholder callbacks
 - Glass UI + animated cards
-- 20-tab vertical carousel
+- 6-tab vertical carousel
 - Mobile touch support
 - Vietnamese feature labels
 - Search: "Gõ vào đây để tìm kiếm kỹ năng"
@@ -23,7 +23,7 @@ Core goals:
 ============================================================
 ]]
 
-local Players = game:GetService("Players")
+local Players = game:GetService("Player")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -128,22 +128,22 @@ local Theme = Themes[Config.Theme]
 local Language = "VI"
 local LangLabels = {
     VI = {
-        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  20 TABS",
+        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  6 TABS",
         Search="🔎  Gõ vào đây để tìm kiếm kỹ năng", Execute="THỰC HIỆN",
         Language="VI / EN", LanguageHint="Ngôn ngữ",
-        Tabs={Combat="Combat", ["Aim Training"]="Luyện tập ngắm", ["ESP / Debug"]="ESP / Debug", Players="Người chơi", NPC="NPC", Mobs="Mob", Items="Vật phẩm", Weapons="Vũ khí", Locations="Vị trí", Movement="Di chuyển", ["Fly & Glide"]="Bay & Lướt", World="Thế giới", Server="Máy chủ", ["Troll / Admin"]="Troll / Admin", Effects="Hiệu ứng", Camera="Camera", Debug="Debug", Stats="Thống kê", ["Game Tools"]="Công cụ game", Settings="Cài đặt"},
+        Tabs={Combat="Combat", Aimbot="Aimbot", Visual="Hiển thị", Player="Người chơi", World="Thế giới", Troll="Troll / Tools"},
     },
     EN = {
-        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  20 TABS",
+        Title="ZAKA PURE", Subtitle="V1.0  •  GLASS  •  6 TABS",
         Search="🔎  Search features", Execute="EXECUTE",
         Language="EN / VI", LanguageHint="Language",
-        Tabs={Combat="Combat", ["Aim Training"]="Aim Training", ["ESP / Debug"]="ESP / Debug", Players="Players", NPC="NPC", Mobs="Mobs", Items="Items", Weapons="Weapons", Locations="Locations", Movement="Movement", ["Fly & Glide"]="Fly & Glide", World="World", Server="Server", ["Troll / Admin"]="Troll / Admin", Effects="Effects", Camera="Camera", Debug="Debug", Stats="Stats", ["Game Tools"]="Game Tools", Settings="Settings"},
+        Tabs={Combat="Combat", Aimbot="Aimbot", Visual="Visual", Player="Player", World="World", Troll="Troll / Tools"},
     },
 }
 local ENName = {
-    ["Chế độ luyện tập"]="Training Mode",["Bộ đếm combo"]="Combo Counter",["Đèn báo thao tác"]="Action Indicator",["Đồng hồ phản xạ"]="Reaction Timer",
-    ["Vòng FOV luyện tập"]="Training FOV Circle",["Kích thước FOV"]="FOV Size",["Tâm ngắm"]="Crosshair",["Kích thước tâm ngắm"]="Crosshair Size",
-    ["Đánh dấu mục tiêu luyện tập"]="Mark Training Targets",["Xóa đánh dấu mục tiêu"]="Clear Target Marks",["Khung debug đối tượng"]="Object Debug Box",["Nhãn khoảng cách debug"]="Debug Distance Label",["Kiểm tra Raycast"]="Raycast Test",["Đếm đối tượng Workspace"]="Count Workspace Objects",
+    ["Chế độ Combat"]="Training Mode",["Bộ đếm combo"]="Combo Counter",["Đèn báo thao tác"]="Action Indicator",["Đồng hồ phản xạ"]="Reaction Timer",
+    ["Vòng FOV Aimbot"]="Aimbot FOV Circle",["Kích thước FOV"]="FOV Size",["Tâm ngắm"]="Crosshair",["Kích thước tâm ngắm"]="Crosshair Size",
+    ["Đánh dấu mục tiêu Aimbot"]="Mark Aimbot Targets",["Xóa đánh dấu Aimbot"]="Clear Target Marks",["Khung debug đối tượng"]="Object Debug Box",["Nhãn khoảng cách debug"]="Debug Distance Label",["Kiểm tra Raycast"]="Raycast Test",["Đếm đối tượng Workspace"]="Count Workspace Objects",
     ["Thông tin người chơi"]="Player Info",["Khoảng cách người chơi"]="Player Distance",["Theo dõi tốc độ"]="Speed Monitor",["Theo dõi máu"]="Health Monitor",["Làm mới danh sách"]="Refresh List",
     ["Đánh dấu NPC có tag"]="Mark Tagged NPCs",["Đếm NPC"]="Count NPCs",["Theo dõi máu NPC"]="NPC Health Monitor",["Đánh dấu Mob"]="Mark Mobs",["Đếm Mob"]="Count Mobs",["Đánh dấu Boss"]="Mark Bosses",
     ["Đánh dấu Item"]="Mark Items",["Đếm Item"]="Count Items",["Đánh dấu Rương"]="Mark Chests",["Đánh dấu vũ khí"]="Mark Weapons",["Đếm vũ khí"]="Count Weapons",["Thông tin Tool đang cầm"]="Held Tool Info",
@@ -156,7 +156,7 @@ local ENName = {
     ["Vòng năng lượng"]="Energy Ring",["Nhịp sáng"]="Light Pulse",["Lightning"]="Lightning",["Flash màn hình"]="Screen Flash",
     ["FOV Camera"]="Camera FOV",["Rung camera"]="Camera Shake",["Thu phóng camera"]="Camera Zoom",["Reset Camera"]="Reset Camera",
     ["FPS"]="FPS",["Tọa độ"]="Coordinates",["Vận tốc"]="Velocity",["Kiểm tra Humanoid"]="Humanoid Check",["Đếm Part"]="Count Parts",["Máu"]="Health",["Tốc độ"]="Speed",["FOV"]="FOV",["Kiểm tra hệ thống"]="System Check",["Thông báo thử"]="Test Notification",["Hiệu ứng thử"]="Test Effect",["Refresh UI"]="Refresh UI",
-    ["Aim Assist luyện tập"]="Training Aim Assist",["Vùng ghim mục tiêu"]="Target Lock Part",["Độ mạnh ghim"]="Lock Strength",["Khoảng cách mục tiêu"]="Target Range",["Kiểm tra xuyên vật thể"]="Line of Sight Check",
+    ["Aimbot"]="Aimbot",["Vùng ghim mục tiêu"]="Target Lock Part",["Độ mạnh ghim"]="Lock Strength",["Khoảng cách mục tiêu"]="Target Range",["Kiểm tra xuyên vật thể"]="Line of Sight Check",
     ["Kích thước UI"]="UI Scale",["Độ trong suốt UI"]="UI Transparency",["Blur"]="Blur",["Animation Speed"]="Animation Speed",["Cyber Theme"]="Cyber Theme",["Purple Theme"]="Purple Theme",["Ice Theme"]="Ice Theme",["Glow UI"]="Glow UI",["Night Vision"]="Night Vision",["Xóa Highlight"]="Clear Highlights",["Xóa hiệu ứng"]="Clear Effects",["Reset nhân vật"]="Reset Character",["Reset chuyển động"]="Reset Movement",["Reset thế giới"]="Reset World",["Anti-Cheat Debug"]="Anti-Cheat Debug",["Ngưỡng tốc độ"]="Speed Threshold",["Ngưỡng dịch chuyển"]="Teleport Threshold",["Reset cảnh báo Security"]="Reset Security Warnings",
 }
 local function featureText(f)
@@ -448,27 +448,22 @@ HUD.ZIndex=70
 --==========================================================
 local TabData={
     {"⚔","Combat"},
-    {"🎯","Aim Training"},
-    {"👁","ESP / Debug"},
-    {"👤","Players"},
-    {"👹","NPC"},
-    {"👾","Mobs"},
-    {"💎","Items"},
-    {"🗡","Weapons"},
-    {"🗺","Locations"},
-    {"🚀","Movement"},
-    {"🪽","Fly & Glide"},
+    {"🎯","Aimbot"},
+    {"👁","Visual"},
+    {"👤","Player"},
     {"🌎","World"},
-    {"🌀","Server"},
-    {"🎭","Troll / Admin"},
-    {"✨","Effects"},
-    {"📷","Camera"},
-    {"🛠","Debug"},
-    {"📊","Stats"},
-    {"🎮","Game Tools"},
-    {"⚙","Settings"},
+    {"🎭","Troll"},
 }
 
+--==========================================================
+-- 6-TAB GROUPING
+-- Combat: combat practice/tools
+-- Aimbot: aim-assist/dev targeting controls
+-- Visual: ESP, camera, effects, debug, stats
+-- Player: movement, fly, player controls
+-- World: NPC/mob/item/location/world/server tools
+-- Troll: local fun/tools/settings
+--==========================================================
 --==========================================================
 -- FEATURE REGISTRY
 --==========================================================
@@ -1037,7 +1032,7 @@ end
 updateAimTouchButton()
 AimTouchButton.Activated:Connect(function()
     if not AimTrainer.Enabled then
-        notify("Hãy bật Aim Assist luyện tập trước")
+        notify("Hãy bật Aimbot trước")
         return
     end
     AimTrainer.Active=not AimTrainer.Active
@@ -1050,7 +1045,7 @@ connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
     AimTouchButton.Visible=UserInputService.TouchEnabled
 end)
 
-add("Aim Assist luyện tập","Aim Training","🎯","Aim assist mạnh cho bộ target ZAKA_Target của experience bạn: chọn vùng Head/Body/Legs, FOV, prediction và sticky lock.","Toggle",false,nil,nil,nil,
+add("Aimbot","Aimbot","🎯","Aim assist mạnh cho bộ target ZAKA_Target của experience bạn: chọn vùng Head/Body/Legs, FOV, prediction và sticky lock.","Toggle",false,nil,nil,nil,
     function(v)
         AimTrainer.Enabled=v
         AimTrainer.Active=v and AimTrainer.Mode=="Toggle"
@@ -1058,13 +1053,13 @@ add("Aim Assist luyện tập","Aim Training","🎯","Aim assist mạnh cho bộ
         if AimTouchButton then updateAimTouchButton() end
     end,{"aimbot","aim assist","target lock","head","body","legs"})
 
-add("Chế độ Aim","Aim Training","🖱","Chuyển giữa Hold và Toggle cho Aim Assist.","Button",false,nil,nil,nil,
+add("Chế độ Aim","Aimbot","🖱","Chuyển giữa Hold và Toggle cho Aim Assist.","Button",false,nil,nil,nil,
     function()
         AimTrainer.Mode=(AimTrainer.Mode=="Hold" and "Toggle" or "Hold")
         notify("Aim mode: "..AimTrainer.Mode)
     end,{"aim mode","hold","toggle"})
 
-add("Vùng ghim mục tiêu","Aim Training","🎯","Chọn Head, Body hoặc Legs cho mục tiêu luyện tập.","Button",false,nil,nil,nil,
+add("Vùng ghim mục tiêu","Aimbot","🎯","Chọn Head, Body hoặc Legs cho mục tiêu Aimbot.","Button",false,nil,nil,nil,
     function()
         local order={"Head","Body","Legs"}
         local idx=1
@@ -1074,16 +1069,16 @@ add("Vùng ghim mục tiêu","Aim Training","🎯","Chọn Head, Body hoặc Leg
         notify("Aim target: "..AimTrainer.Part)
     end,{"head","body","legs","bone","part"})
 
-add("Độ mạnh ghim","Aim Training","⚡","Tăng/giảm độ bám camera vào mục tiêu trong bộ luyện tập Studio.","Input",85,nil,nil,nil,
+add("Độ mạnh ghim","Aimbot","⚡","Tăng/giảm độ bám camera vào mục tiêu trong bộ Aimbot Dev trong Studio.","Input",85,nil,nil,nil,
     function(v) local n=tonumber(v); if n then AimTrainer.Strength=math.clamp(n,0,100) end end,{"strength","smooth","lock"})
 
-add("FOV Aim","Aim Training","⭕","Giới hạn vùng màn hình mà Aim Assist được phép chọn mục tiêu.","Input",180,nil,nil,nil,
+add("FOV Aim","Aimbot","⭕","Giới hạn vùng màn hình mà Aim Assist được phép chọn mục tiêu.","Input",180,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>=1 then AimTrainer.FOV=n end end,{"fov","field of view","screen"})
 
-add("Khoảng cách mục tiêu","Aim Training","📏","Giới hạn khoảng cách chọn mục tiêu trong bộ luyện tập ZAKA_Target.","Input",600,nil,nil,nil,
+add("Khoảng cách mục tiêu","Aimbot","📏","Giới hạn khoảng cách chọn mục tiêu trong bộ Aimbot Dev ZAKA_Target.","Input",600,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>=1 then AimTrainer.MaxDistance=n; AimTrainer.CurrentTarget=nil end end,{"range","distance","target range","max distance"})
 
-add("Ưu tiên mục tiêu","Aim Training","📡","Đổi cách chọn mục tiêu: Screen, Distance hoặc Balanced.","Button",false,nil,nil,nil,
+add("Ưu tiên mục tiêu","Aimbot","📡","Đổi cách chọn mục tiêu: Screen, Distance hoặc Balanced.","Button",false,nil,nil,nil,
     function()
         local order={"Screen","Distance","Balanced"}
         local idx=1
@@ -1093,28 +1088,28 @@ add("Ưu tiên mục tiêu","Aim Training","📡","Đổi cách chọn mục ti�
         notify("Target priority: "..AimTrainer.Priority)
     end,{"priority","screen","distance","balanced"})
 
-add("Prediction","Aim Training","🔮","Bù chuyển động mục tiêu dựa trên vận tốc HumanoidRootPart của target.","Input",0,nil,nil,nil,
+add("Prediction","Aimbot","🔮","Bù chuyển động mục tiêu dựa trên vận tốc HumanoidRootPart của target.","Input",0,nil,nil,nil,
     function(v) local n=tonumber(v); if n then AimTrainer.Prediction=math.clamp(n,0,2) end end,{"prediction","movement","velocity"})
 
-add("Sticky Lock","Aim Training","🔒","Giữ mục tiêu hiện tại nếu mục tiêu vẫn hợp lệ, giúp aim ổn định hơn.","Toggle",true,nil,nil,nil,
+add("Sticky Lock","Aimbot","🔒","Giữ mục tiêu hiện tại nếu mục tiêu vẫn hợp lệ, giúp aim ổn định hơn.","Toggle",true,nil,nil,nil,
     function(v) AimTrainer.Sticky=v; if not v then AimTrainer.CurrentTarget=nil end end,{"sticky","lock","target"})
 
-add("Vùng chết tâm ngắm","Aim Training","⭕","Khoảng cách tối thiểu từ tâm màn hình trước khi khóa mục tiêu, giúp tránh rung khi mục tiêu đi sát tâm.","Input",0,nil,nil,nil,
+add("Vùng chết tâm ngắm","Aimbot","⭕","Khoảng cách tối thiểu từ tâm màn hình trước khi khóa mục tiêu, giúp tránh rung khi mục tiêu đi sát tâm.","Input",0,nil,nil,nil,
     function(v) local n=tonumber(v); if n then AimTrainer.Deadzone=math.max(0,n) end end,{"deadzone","center","aim"})
 
-add("Prediction thích ứng","Aim Training","🧠","Tự tăng prediction theo vận tốc ngang của mục tiêu trong bộ target luyện tập.","Toggle",true,nil,nil,nil,
+add("Prediction thích ứng","Aimbot","🧠","Tự tăng prediction theo vận tốc ngang của mục tiêu trong bộ target Aimbot.","Toggle",true,nil,nil,nil,
     function(v) AimTrainer.AdaptivePrediction=v end,{"adaptive","prediction","velocity"})
 
-add("Giới hạn Prediction","Aim Training","📐","Giới hạn thời gian dự đoán để tránh khóa quá xa vị trí hiện tại.","Input",0.65,nil,nil,nil,
+add("Giới hạn Prediction","Aimbot","📐","Giới hạn thời gian dự đoán để tránh khóa quá xa vị trí hiện tại.","Input",0.65,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>0 then AimTrainer.MaxPrediction=math.clamp(n,0.02,3) end end,{"prediction","limit","max"})
 
-add("Nút Aim trên điện thoại","Aim Training","📱","Hiển thị nút cảm ứng riêng để bật/tắt aim mà không cần bàn phím.","Toggle",true,nil,nil,nil,
+add("Nút Aim trên điện thoại","Aimbot","📱","Hiển thị nút cảm ứng riêng để bật/tắt aim mà không cần bàn phím.","Toggle",true,nil,nil,nil,
     function(v) AimTouchButton.Visible=v and UserInputService.TouchEnabled; if not v then AimTrainer.Active=false; updateAimTouchButton() end end,{"mobile","touch","button","aim"})
 
-add("Reset khóa mục tiêu","Aim Training","♻","Xóa mục tiêu đang giữ và buộc hệ thống chọn lại mục tiêu hợp lệ.","Button",false,nil,nil,nil,
+add("Reset khóa mục tiêu","Aimbot","♻","Xóa mục tiêu đang giữ và buộc hệ thống chọn lại mục tiêu hợp lệ.","Button",false,nil,nil,nil,
     function() AimTrainer.CurrentTarget=nil; notify("Đã reset mục tiêu Aim") end,{"reset","target","lock"})
 
-add("Đánh dấu mục tiêu gần nhất","Aim Training","🎯","Trong Studio, gắn tag ZAKA_Target cho Model người chơi/NPC gần nhất để kiểm thử Aim Assist.","Button",false,nil,nil,nil,
+add("Đánh dấu mục tiêu gần nhất","Aimbot","🎯","Trong Studio, gắn tag ZAKA_Target cho Model người chơi/NPC gần nhất để kiểm thử Aim Assist.","Button",false,nil,nil,nil,
     function()
         if not RunService:IsStudio() then notify("Target helper chỉ dành cho Studio") return end
         local root=getRoot()
@@ -1139,7 +1134,7 @@ add("Đánh dấu mục tiêu gần nhất","Aim Training","🎯","Trong Studio,
         end
     end,{"target","nearest","tag","studio"})
 
-add("Xóa tất cả target test","Aim Training","🧹","Trong Studio, xóa tag ZAKA_Target khỏi các target kiểm thử.","Button",false,nil,nil,nil,
+add("Xóa tất cả target test","Aimbot","🧹","Trong Studio, xóa tag ZAKA_Target khỏi các target kiểm thử.","Button",false,nil,nil,nil,
     function()
         if not RunService:IsStudio() then notify("Target cleanup chỉ dành cho Studio") return end
         local n=0
@@ -1150,16 +1145,16 @@ add("Xóa tất cả target test","Aim Training","🧹","Trong Studio, xóa tag 
         notify("Đã xóa "..n.." target test")
     end,{"target","clear","tag","studio"})
 
-add("Kiểm tra xuyên vật thể","Aim Training","👁","Yêu cầu raycast không bị vật thể che khuất trước khi ghim.","Toggle",true,nil,nil,nil,
+add("Kiểm tra xuyên vật thể","Aimbot","👁","Yêu cầu raycast không bị vật thể che khuất trước khi ghim.","Toggle",true,nil,nil,nil,
     function(v) AimTrainer.RequireLineOfSight=v end,{"raycast","visibility","wall"})
 
 --==========================================================
--- 20 TABS: FUNCTIONAL CORE
+-- 6 TABS: FUNCTIONAL CORE
 --==========================================================
-add("Chế độ luyện tập","Combat","⚔","Bật lớp hiển thị luyện tập cục bộ.","Toggle",false,nil,nil,nil,
-    function(v) setState("Chế độ luyện tập",v) end,{"training","combat","luyen tap"})
+add("Chế độ Combat","Combat","⚔","Bật lớp hiển thị Combat cục bộ.","Toggle",false,nil,nil,nil,
+    function(v) setState("Chế độ Combat",v) end,{"training","combat","luyen tap"})
 
-add("Bộ đếm combo","Combat","🔥","Đếm chuỗi lần nhấn chuột trong phiên luyện tập.","Toggle",false,nil,nil,nil,
+add("Bộ đếm combo","Combat","🔥","Đếm chuỗi lần nhấn chuột trong phiên Combat.","Toggle",false,nil,nil,nil,
     function(v) setState("Bộ đếm combo",v) end,{"combo","dem","chuoi"})
 
 add("Đèn báo thao tác","Combat","💥","Hiệu ứng phản hồi khi nhấn chuột.","Toggle",false,nil,nil,nil,
@@ -1168,27 +1163,27 @@ add("Đèn báo thao tác","Combat","💥","Hiệu ứng phản hồi khi nhấn
 add("Đồng hồ phản xạ","Combat","⏱","Đo thời gian giữa các lần nhấn.","Toggle",false,nil,nil,nil,
     function(v) setState("Đồng hồ phản xạ",v) end,{"reaction","timer","phan xa"})
 
-add("Vòng FOV luyện tập","Aim Training","🎯","Hiển thị vòng FOV để luyện ngắm.","Toggle",false,nil,nil,nil,
+add("Vòng FOV Aimbot","Aimbot","🎯","Hiển thị vòng FOV cho Aimbot.","Toggle",false,nil,nil,nil,
     function(v) makeFOVCircle(v) end,{"fov","vong","aim"})
 
-add("Kích thước FOV","Aim Training","⭕","Điều chỉnh bán kính vòng FOV.","Slider",150,25,500,1,
-    function(v) Config.FOVSize=v; if State["Vòng FOV luyện tập"] then makeFOVCircle(true) end end,{"fov","size","kich thuoc"})
+add("Kích thước FOV","Aimbot","⭕","Điều chỉnh bán kính vòng FOV.","Slider",150,25,500,1,
+    function(v) Config.FOVSize=v; if State["Vòng FOV Aimbot"] then makeFOVCircle(true) end end,{"fov","size","kich thuoc"})
 
-add("Tâm ngắm","Aim Training","⊕","Hiển thị tâm ngắm ở giữa màn hình.","Toggle",false,nil,nil,nil,
+add("Tâm ngắm","Aimbot","⊕","Hiển thị tâm ngắm ở giữa màn hình.","Toggle",false,nil,nil,nil,
     function(v) makeCrosshair(v) end,{"crosshair","tam ngam"})
 
-add("Kích thước tâm ngắm","Aim Training","↔","Điều chỉnh kích thước tâm ngắm.","Slider",9,2,40,1,
+add("Kích thước tâm ngắm","Aimbot","↔","Điều chỉnh kích thước tâm ngắm.","Slider",9,2,40,1,
     function(v) Config.CrosshairSize=v; if State["Tâm ngắm"] then makeCrosshair(true) end end,{"crosshair","size"})
 
-add("Đánh dấu mục tiêu luyện tập","Aim Training","📍","Đánh dấu các đối tượng có tag ZAKA_Target trong experience của bạn.","Button",false,nil,nil,nil,
+add("Đánh dấu mục tiêu Aimbot","Aimbot","📍","Đánh dấu các đối tượng có tag ZAKA_Target trong experience của bạn.","Button",false,nil,nil,nil,
     function()
         for _,x in ipairs(getTagged("ZAKA_Target")) do highlightInstance(x,true,Theme.Accent) end
     end,{"target","marker","muc tieu"})
 
-add("Xóa đánh dấu mục tiêu","Aim Training","🧹","Xóa các đánh dấu luyện tập.","Button",false,nil,nil,nil,
+add("Xóa đánh dấu Aimbot","Aimbot","🧹","Xóa các đánh dấu Aimbot.","Button",false,nil,nil,nil,
     function() clearHighlights() end,{"clear","target"})
 
-add("Khung debug đối tượng","ESP / Debug","▣","Hiển thị Highlight cho tag ZAKA_Debug.","Toggle",false,nil,nil,nil,
+add("Khung debug đối tượng","Visual","▣","Hiển thị Highlight cho tag ZAKA_Debug.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Debug")) do highlightInstance(x,true,Theme.Accent) end
@@ -1197,98 +1192,98 @@ add("Khung debug đối tượng","ESP / Debug","▣","Hiển thị Highlight ch
         end
     end,{"esp","debug","highlight"})
 
-add("Nhãn khoảng cách debug","ESP / Debug","📏","Hiển thị khoảng cách cho đối tượng debug.","Toggle",false,nil,nil,nil,
+add("Nhãn khoảng cách debug","Visual","📏","Hiển thị khoảng cách cho đối tượng debug.","Toggle",false,nil,nil,nil,
     function(v) setState("Nhãn khoảng cách debug",v); if not v then clearDebugLabels() end end,{"distance","label","debug"})
 
-add("Kiểm tra Raycast","ESP / Debug","📡","Bật đường Raycast debug của hệ thống luyện tập.","Toggle",false,nil,nil,nil,
+add("Kiểm tra Raycast","Visual","📡","Bật đường Raycast debug của hệ thống Aimbot Dev.","Toggle",false,nil,nil,nil,
     function(v) setState("Kiểm tra Raycast",v); if not v and Runtime.RayDebugPart then Runtime.RayDebugPart:Destroy(); Runtime.RayDebugPart=nil end end,{"raycast","debug"})
 
-add("Đếm đối tượng Workspace","ESP / Debug","🔢","Đếm Model/Part trong Workspace.","Button",false,nil,nil,nil,
+add("Đếm đối tượng Workspace","Visual","🔢","Đếm Model/Part trong Workspace.","Button",false,nil,nil,nil,
     function() setState("Đếm đối tượng Workspace",scanFolder("Workspace")) end,{"workspace","count","object"})
 
-add("Thông tin người chơi","Players","👤","Hiển thị thông tin nhân vật cục bộ.","Toggle",false,nil,nil,nil,
+add("Thông tin người chơi","Player","👤","Hiển thị thông tin nhân vật cục bộ.","Toggle",false,nil,nil,nil,
     function(v) setState("Thông tin người chơi",v) end,{"player","info"})
 
-add("Khoảng cách người chơi","Players","📏","Hiển thị khoảng cách từ nhân vật tới vị trí gốc.","Toggle",false,nil,nil,nil,
+add("Khoảng cách người chơi","Player","📏","Hiển thị khoảng cách từ nhân vật tới vị trí gốc.","Toggle",false,nil,nil,nil,
     function(v) setState("Khoảng cách người chơi",v) end,{"player","distance"})
 
-add("Theo dõi tốc độ","Players","💨","Hiển thị vận tốc nhân vật.","Toggle",false,nil,nil,nil,
+add("Theo dõi tốc độ","Player","💨","Hiển thị vận tốc nhân vật.","Toggle",false,nil,nil,nil,
     function(v) setState("Theo dõi tốc độ",v) end,{"velocity","speed"})
 
-add("Theo dõi máu","Players","❤️","Hiển thị Health/MaxHealth của Humanoid.","Toggle",false,nil,nil,nil,
+add("Theo dõi máu","Player","❤️","Hiển thị Health/MaxHealth của Humanoid.","Toggle",false,nil,nil,nil,
     function(v) setState("Theo dõi máu",v) end,{"health","hp"})
 
-add("Làm mới danh sách","Players","🔄","Làm mới dữ liệu hiển thị.","Button",false,nil,nil,nil,
+add("Làm mới danh sách","Player","🔄","Làm mới dữ liệu hiển thị.","Button",false,nil,nil,nil,
     function() notify("Đã làm mới dữ liệu người chơi") end,{"refresh","player"})
 
-add("Đánh dấu NPC có tag","NPC","👹","Highlight NPC được gắn tag ZAKA_NPC trong experience của bạn.","Toggle",false,nil,nil,nil,
+add("Đánh dấu NPC có tag","World","👹","Highlight NPC được gắn tag ZAKA_NPC trong experience của bạn.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_NPC")) do highlightInstance(x,true,Color3.fromRGB(255,170,80)) end
         else clearHighlights() end
     end,{"npc","highlight","esp"})
 
-add("Đếm NPC","NPC","🔢","Đếm các đối tượng có tag ZAKA_NPC.","Button",false,nil,nil,nil,
+add("Đếm NPC","World","🔢","Đếm các đối tượng có tag ZAKA_NPC.","Button",false,nil,nil,nil,
     function() setState("Đếm NPC",#getTagged("ZAKA_NPC")) end,{"npc","count"})
 
-add("Theo dõi máu NPC","NPC","❤️","Bật dữ liệu máu NPC trong experience của bạn.","Toggle",false,nil,nil,nil,
+add("Theo dõi máu NPC","World","❤️","Bật dữ liệu máu NPC trong experience của bạn.","Toggle",false,nil,nil,nil,
     function(v) setState("Theo dõi máu NPC",v) end,{"npc","health"})
 
-add("Đánh dấu Mob","Mobs","👾","Highlight Mob có tag ZAKA_Mob.","Toggle",false,nil,nil,nil,
+add("Đánh dấu Mob","World","👾","Highlight Mob có tag ZAKA_Mob.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Mob")) do highlightInstance(x,true,Color3.fromRGB(255,80,110)) end
         else clearHighlights() end
     end,{"mob","highlight"})
 
-add("Đếm Mob","Mobs","🔢","Đếm Mob có tag ZAKA_Mob.","Button",false,nil,nil,nil,
+add("Đếm Mob","World","🔢","Đếm Mob có tag ZAKA_Mob.","Button",false,nil,nil,nil,
     function() setState("Đếm Mob",#getTagged("ZAKA_Mob")) end,{"mob","count"})
 
-add("Đánh dấu Boss","Mobs","👑","Highlight Boss có tag ZAKA_Boss.","Toggle",false,nil,nil,nil,
+add("Đánh dấu Boss","World","👑","Highlight Boss có tag ZAKA_Boss.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Boss")) do highlightInstance(x,true,Color3.fromRGB(255,215,70)) end
         else clearHighlights() end
     end,{"boss","highlight"})
 
-add("Đánh dấu Item","Items","💎","Highlight Item có tag ZAKA_Item.","Toggle",false,nil,nil,nil,
+add("Đánh dấu Item","World","💎","Highlight Item có tag ZAKA_Item.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Item")) do highlightInstance(x,true,Color3.fromRGB(80,255,170)) end
         else clearHighlights() end
     end,{"item","highlight"})
 
-add("Đếm Item","Items","🔢","Đếm Item có tag ZAKA_Item.","Button",false,nil,nil,nil,
+add("Đếm Item","World","🔢","Đếm Item có tag ZAKA_Item.","Button",false,nil,nil,nil,
     function() setState("Đếm Item",#getTagged("ZAKA_Item")) end,{"item","count"})
 
-add("Đánh dấu Rương","Items","📦","Highlight Rương có tag ZAKA_Chest.","Toggle",false,nil,nil,nil,
+add("Đánh dấu Rương","World","📦","Highlight Rương có tag ZAKA_Chest.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Chest")) do highlightInstance(x,true,Color3.fromRGB(255,190,80)) end
         else clearHighlights() end
     end,{"chest","item"})
 
-add("Đánh dấu vũ khí","Weapons","🗡","Highlight vũ khí có tag ZAKA_Weapon.","Toggle",false,nil,nil,nil,
+add("Đánh dấu vũ khí","World","🗡","Highlight vũ khí có tag ZAKA_Weapon.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Weapon")) do highlightInstance(x,true,Color3.fromRGB(255,90,90)) end
         else clearHighlights() end
     end,{"weapon","highlight"})
 
-add("Đếm vũ khí","Weapons","🔢","Đếm vũ khí có tag ZAKA_Weapon.","Button",false,nil,nil,nil,
+add("Đếm vũ khí","World","🔢","Đếm vũ khí có tag ZAKA_Weapon.","Button",false,nil,nil,nil,
     function() setState("Đếm vũ khí",#getTagged("ZAKA_Weapon")) end,{"weapon","count"})
 
-add("Thông tin Tool đang cầm","Weapons","🗡","Hiển thị Tool hiện tại của nhân vật.","Toggle",false,nil,nil,nil,
+add("Thông tin Tool đang cầm","World","🗡","Hiển thị Tool hiện tại của nhân vật.","Toggle",false,nil,nil,nil,
     function(v) setState("Thông tin Tool đang cầm",v) end,{"tool","weapon","equipped"})
 
-add("Đánh dấu điểm quan trọng","Locations","📍","Highlight các điểm có tag ZAKA_Location.","Toggle",false,nil,nil,nil,
+add("Đánh dấu điểm quan trọng","World","📍","Highlight các điểm có tag ZAKA_Location.","Toggle",false,nil,nil,nil,
     function(v)
         if v then
             for _,x in ipairs(getTagged("ZAKA_Location")) do highlightInstance(x,true,Theme.Accent) end
         else clearHighlights() end
     end,{"location","marker"})
 
-add("Đặt mốc vị trí","Locations","🚩","Lưu vị trí hiện tại trong phiên.","Button",false,nil,nil,nil,
+add("Đặt mốc vị trí","World","🚩","Lưu vị trí hiện tại trong phiên.","Button",false,nil,nil,nil,
     function()
         local root=getRoot()
         if root then
@@ -1298,25 +1293,25 @@ add("Đặt mốc vị trí","Locations","🚩","Lưu vị trí hiện tại tro
         end
     end,{"bookmark","save","location"})
 
-add("Xóa mốc vị trí","Locations","🧹","Xóa mốc vị trí hiện tại.","Button",false,nil,nil,nil,
+add("Xóa mốc vị trí","World","🧹","Xóa mốc vị trí hiện tại.","Button",false,nil,nil,nil,
     function() Runtime.Bookmark=nil; if Runtime.BookmarkMarker then Runtime.BookmarkMarker:Destroy(); Runtime.BookmarkMarker=nil end; notify("Đã xóa mốc") end,{"bookmark","clear"})
 
-add("Tốc độ chạy","Movement","🏃","Điều chỉnh WalkSpeed cục bộ. Nhập số tùy ý, không đặt trần trong UI.","Input",16,nil,nil,nil,
+add("Tốc độ chạy","Player","🏃","Điều chỉnh WalkSpeed cục bộ. Nhập số tùy ý, không đặt trần trong UI.","Input",16,nil,nil,nil,
     function(v) local n=tonumber(v); if n then Config.WalkSpeed=n; applyCharacterSettings() end end,{"walk","speed","unlimited"})
 
-add("Lực nhảy","Movement","⬆","Điều chỉnh JumpPower cục bộ.","Slider",50,0,500,1,
+add("Lực nhảy","Player","⬆","Điều chỉnh JumpPower cục bộ.","Slider",50,0,500,1,
     function(v) Config.JumpPower=v; applyCharacterSettings() end,{"jump","power"})
 
-add("Tự xoay nhân vật","Movement","🔄","Bật/tắt Humanoid AutoRotate.","Toggle",true,nil,nil,nil,
+add("Tự xoay nhân vật","Player","🔄","Bật/tắt Humanoid AutoRotate.","Toggle",true,nil,nil,nil,
     function(v) local h=getHumanoid(); if h then h.AutoRotate=v end end,{"rotate"})
 
-add("Nhảy hai lần","Movement","🦘","Cho phép cú nhảy thứ hai khi đang rơi.","Toggle",false,nil,nil,nil,
+add("Nhảy hai lần","Player","🦘","Cho phép cú nhảy thứ hai khi đang rơi.","Toggle",false,nil,nil,nil,
     function(v) Config.DoubleJump=v end,{"double","jump"})
 
-add("Lướt nhẹ","Movement","🪽","Giảm tốc độ rơi khi đang rơi.","Toggle",false,nil,nil,nil,
+add("Lướt nhẹ","Player","🪽","Giảm tốc độ rơi khi đang rơi.","Toggle",false,nil,nil,nil,
     function(v) Config.Glide=v end,{"glide","fall"})
 
-add("Tăng tốc tạm thời","Movement","🚀","Tăng tốc chạy trong 5 giây.","Button",false,nil,nil,nil,
+add("Tăng tốc tạm thời","Player","🚀","Tăng tốc chạy trong 5 giây.","Button",false,nil,nil,nil,
     function()
         local h=getHumanoid()
         if not h then return end
@@ -1325,19 +1320,19 @@ add("Tăng tốc tạm thời","Movement","🚀","Tăng tốc chạy trong 5 gi�
         task.delay(5,function() if h.Parent then h.WalkSpeed=Config.WalkSpeed end end)
     end,{"boost","speed"})
 
-add("Điều khiển bay","Fly & Glide","🪽","Bộ điều khiển bay cục bộ cho experience bạn kiểm soát.","Toggle",false,nil,nil,nil,
+add("Điều khiển bay","Player","🪽","Bộ điều khiển bay cục bộ cho experience bạn kiểm soát.","Toggle",false,nil,nil,nil,
     function(v)
         Config.Fly=v
         if v then startFly() else stopFly() end
     end,{"fly","flight"})
 
-add("Tốc độ bay","Fly & Glide","⚡","Nhập tốc độ bay tùy ý, không đặt trần trong UI.","Input",80,nil,nil,nil,
+add("Tốc độ bay","Player","⚡","Nhập tốc độ bay tùy ý, không đặt trần trong UI.","Input",80,nil,nil,nil,
     function(v) local n=tonumber(v); if n then Config.FlySpeed=n end end,{"fly","speed","unlimited"})
 
-add("Tốc độ bay dọc","Fly & Glide","↕","Nhập tốc độ lên/xuống tùy ý, không đặt trần trong UI.","Input",60,nil,nil,nil,
+add("Tốc độ bay dọc","Player","↕","Nhập tốc độ lên/xuống tùy ý, không đặt trần trong UI.","Input",60,nil,nil,nil,
     function(v) local n=tonumber(v); if n then Config.FlyVertical=n end end,{"fly","vertical","unlimited"})
 
-add("Tốc độ lướt","Fly & Glide","🌬","Điều chỉnh tốc độ rơi khi lướt.","Slider",18,1,100,1,
+add("Tốc độ lướt","Player","🌬","Điều chỉnh tốc độ rơi khi lướt.","Slider",18,1,100,1,
     function(v) Runtime.GlideFallSpeed=v end,{"glide","speed"})
 
 add("Trọng lực","World","🌎","Điều chỉnh Gravity của Workspace.","Slider",workspace.Gravity,0,500,1,
@@ -1355,33 +1350,33 @@ add("Độ sáng","World","💡","Điều chỉnh Brightness của Lighting.","S
 add("Sương mù","World","🌫","Điều chỉnh FogEnd của Lighting.","Slider",1000,50,10000,50,
     function(v) Lighting.FogEnd=v end,{"fog","world"})
 
-add("Thông tin Server","Server","🌀","Hiển thị PlaceId, JobId và số người chơi.","Button",false,nil,nil,nil,
+add("Thông tin Server","World","🌀","Hiển thị PlaceId, JobId và số người chơi.","Button",false,nil,nil,nil,
     function()
         notify(string.format("Place %s • Players %d",tostring(game.PlaceId),#Players:GetPlayers()))
     end,{"server","info"})
 
-add("Vào lại Server hiện tại","Server","🔄","Yêu cầu Roblox vào lại JobId hiện tại.","Button",false,nil,nil,nil,
+add("Vào lại Server hiện tại","World","🔄","Yêu cầu Roblox vào lại JobId hiện tại.","Button",false,nil,nil,nil,
     function() TeleportService:TeleportToPlaceInstance(game.PlaceId,game.JobId,LocalPlayer) end,{"rejoin","server"})
 
-add("Vào Server mới","Server","🚀","Yêu cầu Roblox tạo phiên mới cho Place hiện tại.","Button",false,nil,nil,nil,
+add("Vào Server mới","World","🚀","Yêu cầu Roblox tạo phiên mới cho Place hiện tại.","Button",false,nil,nil,nil,
     function() TeleportService:Teleport(game.PlaceId,LocalPlayer) end,{"new","server"})
 
-add("Hiển thị JobId","Server","🆔","Hiển thị JobId trong thông báo.","Button",false,nil,nil,nil,
+add("Hiển thị JobId","World","🆔","Hiển thị JobId trong thông báo.","Button",false,nil,nil,nil,
     function() notify("JobId: "..tostring(game.JobId)) end,{"jobid","server"})
 
-add("Xoay nhân vật","Troll / Admin","🌀","Hiệu ứng xoay cục bộ trên nhân vật.","Toggle",false,nil,nil,nil,
+add("Xoay nhân vật","Troll","🌀","Hiệu ứng xoay cục bộ trên nhân vật.","Toggle",false,nil,nil,nil,
     function(v) setState("Xoay nhân vật",v) end,{"spin","local"})
 
-add("Ngồi","Troll / Admin","🪑","Cho nhân vật ngồi cục bộ.","Button",false,nil,nil,nil,
+add("Ngồi","Troll","🪑","Cho nhân vật ngồi cục bộ.","Button",false,nil,nil,nil,
     function() local h=getHumanoid(); if h then h.Sit=true end end,{"sit"})
 
-add("Ragdoll thử nghiệm","Troll / Admin","🧍","Đưa Humanoid vào trạng thái Physics để thử nghiệm.","Button",false,nil,nil,nil,
+add("Ragdoll thử nghiệm","Troll","🧍","Đưa Humanoid vào trạng thái Physics để thử nghiệm.","Button",false,nil,nil,nil,
     function() local h=getHumanoid(); if h then h:ChangeState(Enum.HumanoidStateType.Physics) end end,{"ragdoll","physics"})
 
-add("Phóng nhân vật","Troll / Admin","🚀","Hiệu ứng đẩy cục bộ để thử nghiệm vật lý.","Slider",80,0,500,5,
+add("Phóng nhân vật","Troll","🚀","Hiệu ứng đẩy cục bộ để thử nghiệm vật lý.","Slider",80,0,500,5,
     function(v) Runtime.LaunchPower=v end,{"launch","physics"})
 
-add("Phóng ngay","Troll / Admin","💨","Áp dụng lực đẩy hiện tại cho nhân vật local trong môi trường thử nghiệm.","Button",false,nil,nil,nil,
+add("Phóng ngay","Troll","💨","Áp dụng lực đẩy hiện tại cho nhân vật local trong môi trường thử nghiệm.","Button",false,nil,nil,nil,
     function()
         local root=getRoot()
         if root then
@@ -1390,16 +1385,16 @@ add("Phóng ngay","Troll / Admin","💨","Áp dụng lực đẩy hiện tại c
         end
     end,{"launch","now","physics"})
 
-add("Confetti","Troll / Admin","🎊","Hiệu ứng confetti cục bộ.","Button",false,nil,nil,nil,
+add("Confetti","Troll","🎊","Hiệu ứng confetti cục bộ.","Button",false,nil,nil,nil,
     function() confetti() end,{"confetti","fun"})
 
-add("Vòng năng lượng","Effects","⭕","Hiệu ứng vòng năng lượng quanh giao diện.","Toggle",false,nil,nil,nil,
+add("Vòng năng lượng","Visual","⭕","Hiệu ứng vòng năng lượng quanh giao diện.","Toggle",false,nil,nil,nil,
     function(v) setState("Vòng năng lượng",v) end,{"energy","ring"})
 
-add("Nhịp sáng","Effects","💫","Hiệu ứng pulse trên giao diện.","Toggle",false,nil,nil,nil,
+add("Nhịp sáng","Visual","💫","Hiệu ứng pulse trên giao diện.","Toggle",false,nil,nil,nil,
     function(v) setState("Nhịp sáng",v) end,{"pulse","glow"})
 
-add("Lightning","Effects","⚡","Hiệu ứng lightning cục bộ.","Button",false,nil,nil,nil,
+add("Lightning","Visual","⚡","Hiệu ứng lightning cục bộ.","Button",false,nil,nil,nil,
     function()
         for i=1,8 do
             local l=Instance.new("Frame")
@@ -1419,34 +1414,34 @@ add("Lightning","Effects","⚡","Hiệu ứng lightning cục bộ.","Button",fa
         end
     end,{"lightning","effect"})
 
-add("Flash màn hình","Effects","✨","Flash màn hình cục bộ.","Button",false,nil,nil,nil,
+add("Flash màn hình","Visual","✨","Flash màn hình cục bộ.","Button",false,nil,nil,nil,
     function() screenFlash() end,{"flash","screen"})
 
-add("FOV Camera","Camera","🔭","Điều chỉnh FieldOfView.","Slider",70,30,120,1,
+add("FOV Camera","Visual","🔭","Điều chỉnh FieldOfView.","Slider",70,30,120,1,
     function(v) Config.FOV=v; Camera.FieldOfView=v end,{"fov","camera"})
 
-add("Rung camera","Camera","📳","Bật hiệu ứng rung nhẹ cục bộ.","Toggle",false,nil,nil,nil,
+add("Rung camera","Visual","📳","Bật hiệu ứng rung nhẹ cục bộ.","Toggle",false,nil,nil,nil,
     function(v) Config.CameraShake=v end,{"shake","camera"})
 
-add("Thu phóng camera","Camera","🔎","Điều chỉnh FOV nhanh bằng slider.","Slider",70,30,120,1,
+add("Thu phóng camera","Visual","🔎","Điều chỉnh FOV nhanh bằng slider.","Slider",70,30,120,1,
     function(v) Camera.FieldOfView=v end,{"zoom","camera"})
 
-add("Reset Camera","Camera","♻","Đưa camera về Custom và FOV 70.","Button",false,nil,nil,nil,
+add("Reset Camera","Visual","♻","Đưa camera về Custom và FOV 70.","Button",false,nil,nil,nil,
     function() Camera.CameraType=Enum.CameraType.Custom; Camera.FieldOfView=70 end,{"reset","camera"})
 
-add("FPS","Debug","📊","Hiển thị FPS ở HUD.","Toggle",true,nil,nil,nil,
+add("FPS","Visual","📊","Hiển thị FPS ở HUD.","Toggle",true,nil,nil,nil,
     function(v) Config.FPS=v end,{"fps"})
 
-add("Tọa độ","Debug","📍","Hiển thị XYZ nhân vật.","Toggle",true,nil,nil,nil,
+add("Tọa độ","Visual","📍","Hiển thị XYZ nhân vật.","Toggle",true,nil,nil,nil,
     function(v) Config.Coordinates=v end,{"coordinates","xyz"})
 
-add("Vận tốc","Debug","💨","Hiển thị vận tốc nhân vật.","Toggle",true,nil,nil,nil,
+add("Vận tốc","Visual","💨","Hiển thị vận tốc nhân vật.","Toggle",true,nil,nil,nil,
     function(v) Config.Velocity=v end,{"velocity","speed"})
 
-add("Kiểm tra Humanoid","Debug","🧪","Hiển thị trạng thái Humanoid.","Toggle",false,nil,nil,nil,
+add("Kiểm tra Humanoid","Visual","🧪","Hiển thị trạng thái Humanoid.","Toggle",false,nil,nil,nil,
     function(v) setState("Kiểm tra Humanoid",v) end,{"humanoid","state"})
 
-add("Đếm Part","Debug","🔢","Đếm BasePart trong Workspace.","Button",false,nil,nil,nil,
+add("Đếm Part","Visual","🔢","Đếm BasePart trong Workspace.","Button",false,nil,nil,nil,
     function()
         local n=0
         for _,x in ipairs(workspace:GetDescendants()) do
@@ -1455,74 +1450,74 @@ add("Đếm Part","Debug","🔢","Đếm BasePart trong Workspace.","Button",fal
         notify("BasePart: "..n)
     end,{"part","count"})
 
-add("Máu","Stats","❤️","Hiển thị Health/MaxHealth.","Toggle",true,nil,nil,nil,
+add("Máu","Visual","❤️","Hiển thị Health/MaxHealth.","Toggle",true,nil,nil,nil,
     function(v) setState("Máu",v) end,{"health","hp"})
 
-add("Tốc độ","Stats","🏃","Hiển thị WalkSpeed.","Toggle",true,nil,nil,nil,
+add("Tốc độ","Visual","🏃","Hiển thị WalkSpeed.","Toggle",true,nil,nil,nil,
     function(v) setState("Tốc độ",v) end,{"speed","walk"})
 
-add("Trọng lực","Stats","🌎","Hiển thị Gravity.","Toggle",true,nil,nil,nil,
+add("Trọng lực","Visual","🌎","Hiển thị Gravity.","Toggle",true,nil,nil,nil,
     function(v) setState("Trọng lực",v) end,{"gravity"})
 
-add("FOV","Stats","🔭","Hiển thị FOV hiện tại.","Toggle",true,nil,nil,nil,
+add("FOV","Visual","🔭","Hiển thị FOV hiện tại.","Toggle",true,nil,nil,nil,
     function(v) setState("FOV",v) end,{"fov","camera"})
 
-add("Kiểm tra hệ thống","Stats","🧪","Hiển thị trạng thái các hệ thống chính.","Button",false,nil,nil,nil,
+add("Kiểm tra hệ thống","Visual","🧪","Hiển thị trạng thái các hệ thống chính.","Button",false,nil,nil,nil,
     function()
         notify(string.format("UI %.2f • Features %d • FPS %.0f",Config.UIScale,#Features,1/RunService.RenderStepped:Wait()))
     end,{"diagnostic","stats"})
 
-add("Thông báo thử","Game Tools","🔔","Kiểm tra hệ thống thông báo.","Button",false,nil,nil,nil,
+add("Thông báo thử","Troll","🔔","Kiểm tra hệ thống thông báo.","Button",false,nil,nil,nil,
     function() notify("Thông báo ZAKA đang hoạt động") end,{"notification","test"})
 
-add("Hiệu ứng thử","Game Tools","✨","Kiểm tra hiệu ứng card.","Button",false,nil,nil,nil,
+add("Hiệu ứng thử","Troll","✨","Kiểm tra hiệu ứng card.","Button",false,nil,nil,nil,
     function() screenFlash(); confetti() end,{"effect","test"})
 
-add("Refresh UI","Game Tools","🔄","Làm mới trang hiện tại.","Button",false,nil,nil,nil,
+add("Refresh UI","Troll","🔄","Làm mới trang hiện tại.","Button",false,nil,nil,nil,
     function() end,{"refresh","ui"})
 
-add("Kích thước UI","Settings","🔎","Điều chỉnh kích thước toàn bộ menu.","Slider",1,.65,1.5,.05,
+add("Kích thước UI","Troll","🔎","Điều chỉnh kích thước toàn bộ menu.","Slider",1,.65,1.5,.05,
     function(v) Config.UIScale=v; UIScale.Scale=v end,{"scale","size","ui"})
 
-add("Độ trong suốt UI","Settings","🫧","Điều chỉnh độ trong suốt của menu.","Slider",.28,.05,.80,.01,
+add("Độ trong suốt UI","Troll","🫧","Điều chỉnh độ trong suốt của menu.","Slider",.28,.05,.80,.01,
     function(v) Config.UITransparency=v; Main.BackgroundTransparency=v end,{"transparent","glass"})
 
-add("Blur","Settings","🌫","Điều chỉnh blur nền.","Slider",10,0,24,1,
+add("Blur","Troll","🌫","Điều chỉnh blur nền.","Slider",10,0,24,1,
     function(v) Config.Blur=v; if Config.Open then Blur.Size=v end end,{"blur"})
 
-add("Animation Speed","Settings","⚡","Điều chỉnh tốc độ animation.","Slider",1,.5,2.5,.05,
+add("Animation Speed","Troll","⚡","Điều chỉnh tốc độ animation.","Slider",1,.5,2.5,.05,
     function(v) Config.AnimationSpeed=v end,{"animation","speed"})
 
-add("Cyber Theme","Settings","🔵","Chuyển sang theme Cyber.","Button",false,nil,nil,nil,
+add("Cyber Theme","Troll","🔵","Chuyển sang theme Cyber.","Button",false,nil,nil,nil,
     function() Config.Theme="Cyber" end,{"theme","cyber"})
 
-add("Purple Theme","Settings","🟣","Chuyển sang theme Purple.","Button",false,nil,nil,nil,
+add("Purple Theme","Troll","🟣","Chuyển sang theme Purple.","Button",false,nil,nil,nil,
     function() Config.Theme="Purple" end,{"theme","purple"})
 
-add("Ice Theme","Settings","❄","Chuyển sang theme Ice.","Button",false,nil,nil,nil,
+add("Ice Theme","Troll","❄","Chuyển sang theme Ice.","Button",false,nil,nil,nil,
     function() Config.Theme="Ice" end,{"theme","ice"})
 
-add("Glow UI","Settings","✨","Bật/tắt Bloom glow.","Toggle",true,nil,nil,nil,
+add("Glow UI","Troll","✨","Bật/tắt Bloom glow.","Toggle",true,nil,nil,nil,
     function(v) Config.UIGlow=v; setGlow(v) end,{"glow","bloom"})
 
-add("Night Vision","Settings","🌙","Bật ColorCorrection nhìn đêm cục bộ.","Toggle",false,nil,nil,nil,
+add("Night Vision","Troll","🌙","Bật ColorCorrection nhìn đêm cục bộ.","Toggle",false,nil,nil,nil,
     function(v) Config.NightVision=v; setNightVision(v) end,{"night","vision"})
 
 --==========================================================
 -- EXTRA REAL CONTROLS: derived diagnostics, not fake skills
 --==========================================================
-add("Xóa Highlight","ESP / Debug","🧹","Xóa toàn bộ Highlight do ZAKA tạo.","Button",false,nil,nil,nil,
+add("Xóa Highlight","Visual","🧹","Xóa toàn bộ Highlight do ZAKA tạo.","Button",false,nil,nil,nil,
     function() clearHighlights() end,{"clear","highlight"})
 
-add("Xóa hiệu ứng","Effects","🧹","Xóa hiệu ứng UI do ZAKA tạo.","Button",false,nil,nil,nil,
+add("Xóa hiệu ứng","Visual","🧹","Xóa hiệu ứng UI do ZAKA tạo.","Button",false,nil,nil,nil,
     function()
         for _,x in ipairs(FX:GetChildren()) do x:Destroy() end
     end,{"clear","effects"})
 
-add("Reset nhân vật","Players","♻","Respawn nhân vật hiện tại.","Button",false,nil,nil,nil,
+add("Reset nhân vật","Player","♻","Respawn nhân vật hiện tại.","Button",false,nil,nil,nil,
     function() LocalPlayer:LoadCharacter() end,{"reset","character"})
 
-add("Reset chuyển động","Movement","♻","Khôi phục WalkSpeed/JumpPower.","Button",false,nil,nil,nil,
+add("Reset chuyển động","Player","♻","Khôi phục WalkSpeed/JumpPower.","Button",false,nil,nil,nil,
     function()
         Config.WalkSpeed=16
         Config.JumpPower=50
@@ -1568,13 +1563,13 @@ local function securityStart()
         Security.LastTime=now
     end)
 end
-add("Anti-Cheat Debug","Debug","🛡","Bật bộ giám sát chuyển động để test trong experience bạn kiểm soát. Đây không phải bypass anti-cheat.","Toggle",false,nil,nil,nil,
+add("Anti-Cheat Debug","Visual","🛡","Bật bộ giám sát chuyển động để test trong experience bạn kiểm soát. Đây không phải bypass anti-cheat.","Toggle",false,nil,nil,nil,
     function(v) Security.Enabled=v; if v then securityStart() else securityStop() end end,{"anti","cheat","security","debug"})
-add("Ngưỡng tốc độ","Debug","🏃","Ngưỡng tốc độ dùng cho kiểm thử phát hiện chuyển động bất thường.","Input",40,nil,nil,nil,
+add("Ngưỡng tốc độ","Visual","🏃","Ngưỡng tốc độ dùng cho kiểm thử phát hiện chuyển động bất thường.","Input",40,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>=0 then Security.MaxSpeed=n end end,{"anti","speed","threshold"})
-add("Ngưỡng dịch chuyển","Debug","📡","Khoảng cách tối thiểu để phân biệt bước di chuyển lớn khi kiểm thử.","Input",120,nil,nil,nil,
+add("Ngưỡng dịch chuyển","Visual","📡","Khoảng cách tối thiểu để phân biệt bước di chuyển lớn khi kiểm thử.","Input",120,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>=0 then Security.MaxTeleport=n end end,{"anti","teleport","threshold"})
-add("Reset cảnh báo Security","Debug","♻","Xóa bộ đếm cảnh báo của phiên debug.","Button",false,nil,nil,nil,
+add("Reset cảnh báo Security","Visual","♻","Xóa bộ đếm cảnh báo của phiên debug.","Button",false,nil,nil,nil,
     function() Security.Violations=0; notify(Language=="EN" and "Security violations reset" or "Đã reset cảnh báo Security") end,{"anti","reset","security"})
 
 --==========================================================
@@ -1607,7 +1602,7 @@ local function applyTheme()
     end
 
     if State["Tâm ngắm"] then makeCrosshair(true) end
-    if State["Vòng FOV luyện tập"] then makeFOVCircle(true) end
+    if State["Vòng FOV Aimbot"] then makeFOVCircle(true) end
     setGlow(Config.UIGlow)
     setNightVision(Config.NightVision)
 end
@@ -1921,15 +1916,13 @@ local function buildPage(tabName)
     page.ScrollBarThickness=2
     page.ScrollBarImageTransparency=.28
     page.ZIndex=26
-    hookScrollBoost(page)
-    page:GetPropertyChangedSignal("CanvasPosition"):Connect(function() refreshPageAvoidance(page) end)
     page.AutomaticCanvasSize=Enum.AutomaticSize.Y
     page.CanvasSize=UDim2.new()
     page.Parent=PageArea
 
     local padding=Instance.new("UIPadding")
-    padding.PaddingLeft=UDim.new(0,44)
-    padding.PaddingRight=UDim.new(0,44)
+    padding.PaddingLeft=UDim.new(0,8)
+    padding.PaddingRight=UDim.new(0,8)
     padding.PaddingBottom=UDim.new(0,18)
     padding.Parent=page
 
@@ -1970,7 +1963,6 @@ local function showTab(tabName)
     for _,p in pairs(Runtime.Pages) do p.Visible=false end
     local page=Runtime.Pages[tabName] or buildPage(tabName)
     page.Visible=true
-    task.defer(function() refreshPageAvoidance(page) end)
 end
 
 RefreshLanguage=function()
@@ -2004,15 +1996,13 @@ local function buildSearch()
     page.ScrollBarThickness=2
     page.ScrollBarImageTransparency=.28
     page.ZIndex=26
-    hookScrollBoost(page)
-    page:GetPropertyChangedSignal("CanvasPosition"):Connect(function() refreshPageAvoidance(page) end)
     page.AutomaticCanvasSize=Enum.AutomaticSize.Y
     page.CanvasSize=UDim2.new()
     page.Parent=PageArea
 
     local padding=Instance.new("UIPadding")
-    padding.PaddingLeft=UDim.new(0,44)
-    padding.PaddingRight=UDim.new(0,44)
+    padding.PaddingLeft=UDim.new(0,8)
+    padding.PaddingRight=UDim.new(0,8)
     padding.PaddingBottom=UDim.new(0,18)
     padding.Parent=page
 
@@ -2039,7 +2029,6 @@ local function buildSearch()
     for i,r in ipairs(results) do
         makeCard(page,r.f,i)
     end
-    task.defer(function() refreshPageAvoidance(page) end)
 
     Runtime.Pages.__SEARCH=page
 end
@@ -2049,15 +2038,9 @@ end
 --==========================================================
 local function refreshPageAvoidance(page)
     if not page or not page.Parent then return end
-    local centerY=page.AbsolutePosition.Y+page.AbsoluteSize.Y*.50
-    local half=math.max(page.AbsoluteSize.Y*.50,1)
     for _,card in ipairs(page:GetChildren()) do
         if card:IsA("Frame") and card:GetAttribute("ZakaFeatureCard") then
-            local cy=card.AbsolutePosition.Y+card.AbsoluteSize.Y*.5
-            local n=math.clamp(math.abs(cy-centerY)/half,0,1)
-            local inward=math.floor((1-n)*14)
-            card:SetAttribute("ZakaAvoidOffset",inward)
-            card.Size=UDim2.new(1,-(88+inward*2),0,82)
+            card.Size=UDim2.new(1,-4,0,82)
         end
     end
 end
@@ -2177,8 +2160,7 @@ local function openMenu()
     t.Completed:Connect(function()
         refreshCarousel()
         refreshAllPageAvoidance()
-        positionSideEyes()
-    end)
+        end)
 end
 
 local function closeMenu()
@@ -2377,14 +2359,10 @@ for _,f in ipairs(Features) do
             if Runtime.Pages[tab] then Runtime.Pages[tab]:Destroy(); Runtime.Pages[tab]=nil end
             showTab(tab)
         end
-    elseif f.Name=="Chế độ luyện tập" then
+    elseif f.Name=="Chế độ Combat" then
         f.Handler=function(v) State[f.Name]=v end
     end
 end
-
-connect(Main:GetPropertyChangedSignal("AbsoluteSize"),function()
-    task.defer(positionSideEyes)
-end)
 
 connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
     if Config.Open then Main.Size=menuSize() end
@@ -2400,105 +2378,6 @@ connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
     refreshCarousel()
 end)
 
-
---==========================================================
--- SIDE RASENGAN EYES: RED, FIXED STYLE, SCROLL BOOST
---==========================================================
-local SideEyeBoostUntil=0
-local SideEyes={}
-
-local function makeSideEye(name,side)
-    local holder=Instance.new("TextButton")
-    holder.Name=name
-    holder.Size=UDim2.fromOffset(52,52)
-    holder.AnchorPoint=Vector2.new(0,.5)
-    holder.Position=side=="Left" and UDim2.new(0,4,.5,22) or UDim2.new(1,-56,.5,22)
-    holder.BackgroundTransparency=1
-    holder.Text=""
-    holder.AutoButtonColor=false
-    holder.ZIndex=75
-    holder.Parent=Main
-
-    local outer=Instance.new("Frame")
-    outer.AnchorPoint=Vector2.new(.5,.5)
-    outer.Position=UDim2.fromScale(.5,.5)
-    outer.Size=UDim2.fromScale(.94,.94)
-    outer.BackgroundColor3=Color3.fromRGB(18,0,3)
-    outer.BorderSizePixel=0
-    outer.ZIndex=76
-    outer.Parent=holder
-    local oc=Instance.new("UICorner"); oc.CornerRadius=UDim.new(1,0); oc.Parent=outer
-    local os=Instance.new("UIStroke"); os.Color=Color3.fromRGB(255,40,55); os.Thickness=1.7; os.Parent=outer
-
-    local ring=Instance.new("Frame")
-    ring.AnchorPoint=Vector2.new(.5,.5); ring.Position=UDim2.fromScale(.5,.5)
-    ring.Size=UDim2.fromScale(.67,.67); ring.BackgroundColor3=Color3.fromRGB(205,8,24)
-    ring.BorderSizePixel=0; ring.ZIndex=77; ring.Parent=outer
-    local rc=Instance.new("UICorner"); rc.CornerRadius=UDim.new(1,0); rc.Parent=ring
-    local rs=Instance.new("UIStroke"); rs.Color=Color3.fromRGB(255,80,85); rs.Thickness=1; rs.Parent=ring
-
-    local iris=Instance.new("Frame")
-    iris.AnchorPoint=Vector2.new(.5,.5); iris.Position=UDim2.fromScale(.5,.5)
-    iris.Size=UDim2.fromScale(.40,.40); iris.BackgroundColor3=Color3.fromRGB(245,22,35)
-    iris.BorderSizePixel=0; iris.ZIndex=78; iris.Parent=ring
-    local ic=Instance.new("UICorner"); ic.CornerRadius=UDim.new(1,0); ic.Parent=iris
-
-    local detailRing=Instance.new("Frame")
-    detailRing.AnchorPoint=Vector2.new(.5,.5); detailRing.Position=UDim2.fromScale(.5,.5)
-    detailRing.Size=UDim2.fromScale(.52,.52); detailRing.BackgroundTransparency=1
-    detailRing.ZIndex=78; detailRing.Parent=ring
-    local drs=Instance.new("UIStroke"); drs.Color=Color3.fromRGB(255,120,125); drs.Thickness=1; drs.Transparency=.18; drs.Parent=detailRing
-    local drc=Instance.new("UICorner"); drc.CornerRadius=UDim.new(1,0); drc.Parent=detailRing
-
-    local shine=Instance.new("Frame")
-    shine.AnchorPoint=Vector2.new(.5,.5); shine.Position=UDim2.fromScale(.36,.32)
-    shine.Size=UDim2.fromOffset(4,4); shine.BackgroundColor3=Color3.fromRGB(255,235,235)
-    shine.BorderSizePixel=0; shine.ZIndex=82; shine.Parent=iris
-    local shc=Instance.new("UICorner"); shc.CornerRadius=UDim.new(1,0); shc.Parent=shine
-
-    local pupil=Instance.new("Frame")
-    pupil.AnchorPoint=Vector2.new(.5,.5); pupil.Position=UDim2.fromScale(.5,.5)
-    pupil.Size=UDim2.fromScale(.24,.24); pupil.BackgroundColor3=Color3.fromRGB(3,0,0)
-    pupil.BorderSizePixel=0; pupil.ZIndex=80; pupil.Parent=iris
-    local pc=Instance.new("UICorner"); pc.CornerRadius=UDim.new(1,0); pc.Parent=pupil
-
-    -- Three small tomoe-like marks, always crimson/red.
-    for i=1,3 do
-        local a=math.rad((i-1)*120)
-        local mark=Instance.new("Frame")
-        mark.AnchorPoint=Vector2.new(.5,.5)
-        mark.Position=UDim2.fromScale(.5+math.cos(a)*.25,.5+math.sin(a)*.25)
-        mark.Size=UDim2.fromOffset(5,9)
-        mark.Rotation=math.deg(a)+35
-        mark.BackgroundColor3=Color3.fromRGB(255,45,55)
-        mark.BorderSizePixel=0
-        mark.ZIndex=79
-        mark.Parent=iris
-        local mc=Instance.new("UICorner"); mc.CornerRadius=UDim.new(1,0); mc.Parent=mark
-    end
-    return {Holder=holder,Outer=outer,Ring=ring,Iris=iris,Pupil=pupil,Angle=0}
-end
-
-SideEyes.Left=makeSideEye("ZakaRasenganEyeLeft","Left")
-SideEyes.Right=makeSideEye("ZakaRasenganEyeRight","Right")
-positionSideEyes()
-
-local function boostSideEyes()
-    SideEyeBoostUntil=os.clock()+.72
-end
-
-local function positionSideEyes()
-    local y=math.max(94,math.min(Main.AbsoluteSize.Y*.52,Main.AbsoluteSize.Y-94))
-    for side,eye in pairs(SideEyes) do
-        eye.Holder.Position=side=="Left" and UDim2.new(0,4,0,y) or UDim2.new(1,-56,0,y)
-    end
-end
-
-local function hookScrollBoost(sf)
-    if not sf or not sf:IsA("ScrollingFrame") then return end
-    sf:GetPropertyChangedSignal("CanvasPosition"):Connect(boostSideEyes)
-end
-hookScrollBoost(Tabs)
 
 --==========================================================
 -- V1 VISUAL UPGRADE: RAINBOW BORDER + ANIME EYE
@@ -2671,14 +2550,6 @@ V1VisualConn=RunService.RenderStepped:Connect(function(dt)
     local c=Color3.fromHSV(V1RainbowHue,.92,1)
     V1RainbowStroke.Color=c
     if not EyeOpen then OpenButton.TextColor3=c end
-    local fast=os.clock()<SideEyeBoostUntil
-    local speed=fast and 145 or 18
-    for _,eye in pairs(SideEyes) do
-        eye.Angle=(eye.Angle+dt*speed)%360
-        eye.Outer.Rotation=eye.Angle
-        eye.Ring.Rotation=-eye.Angle*1.35
-        eye.Iris.Rotation=eye.Angle*1.9
-    end
 end)
 
 -- Poll Config.Open so the existing menu event handlers remain untouched.
@@ -2738,8 +2609,8 @@ local function cleanupLocalVisuals()
     setGlow(false)
 end
 
-add("Kiểm tra toàn bộ UI","Game Tools","🧪","Kiểm tra nhanh trạng thái UI, tag target, touch và môi trường Studio.","Button",false,nil,nil,nil,runSystemCheck,{"system","check","diagnostic","ui"})
-add("Dọn hiệu ứng an toàn","Game Tools","🧹","Tắt các hiệu ứng/đánh dấu do ZAKA tạo mà không tác động logic game.","Button",false,nil,nil,nil,cleanupLocalVisuals,{"cleanup","clear","effects","safe"})
+add("Kiểm tra toàn bộ UI","Troll","🧪","Kiểm tra nhanh trạng thái UI, tag target, touch và môi trường Studio.","Button",false,nil,nil,nil,runSystemCheck,{"system","check","diagnostic","ui"})
+add("Dọn hiệu ứng an toàn","Troll","🧹","Tắt các hiệu ứng/đánh dấu do ZAKA tạo mà không tác động logic game.","Button",false,nil,nil,nil,cleanupLocalVisuals,{"cleanup","clear","effects","safe"})
 
 --==========================================================
 -- INITIALIZE
