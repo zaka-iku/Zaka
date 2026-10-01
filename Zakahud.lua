@@ -1,376 +1,908 @@
---[[
-    ZAKA PURE UI V1
-    MENU VISUAL UPGRADE ONLY
-    - Keeps the original Zakahud.lua
-    - Replaces the Z button look with an anime eye
-    - Eye has layered iris, rings, tomoe-style marks, glow and rotation
-    - Open: Z -> eye, eye expands/glows/rotates while menu opens
-    - Close: eye contracts/fades -> Z
-    - No feature logic is changed in this addon
-]]
+--==============================================================
+-- ZAKA PURE UI V1
+-- ANIME EYE MENU ANIMATION
+--==============================================================
 
 local SOURCE = "https://raw.githubusercontent.com/zaka-iku/Zaka/main/Zakahud.lua"
 
--- Load the current ZAKA menu first.
-local ok, err = pcall(function()
+--==============================================================
+-- LOAD ZAKA MENU GỐC
+--==============================================================
+
+local success, err = pcall(function()
     loadstring(game:HttpGet(SOURCE))()
 end)
 
-if not ok then
-    warn("[ZAKA V1] Failed to load Zakahud.lua:", err)
+if not success then
+    warn("[ZAKA V1] Load failed:", err)
     return
 end
+
+--==============================================================
+-- SERVICES
+--==============================================================
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
-local player = Players.LocalPlayer
-local gui = player:WaitForChild("PlayerGui")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Wait for the original menu to finish creating its UI.
-local ScreenGui = gui:WaitForChild("ZakaPureUI", 10)
-if not ScreenGui then
-    warn("[ZAKA V1] ZakaPureUI was not found.")
-    return
-end
+-- Đợi menu gốc tạo xong
+local ZakaGui
 
-local ToggleBtn = ScreenGui:WaitForChild("TextButton", 10)
+repeat
+    ZakaGui = PlayerGui:FindFirstChild("ZakaPureUI")
+    task.wait()
+until ZakaGui
+
+-- Nút Z và Main của code gốc
+local ToggleBtn = ZakaGui:FindFirstChildWhichIsA("TextButton")
+local Main = ZakaGui:FindFirstChild("Frame")
+
 if not ToggleBtn then
-    warn("[ZAKA V1] Toggle button was not found.")
+    warn("[ZAKA V1] Không tìm thấy nút Z.")
     return
 end
 
-local Main = ScreenGui:FindFirstChild("Frame")
 if not Main then
-    warn("[ZAKA V1] Main menu was not found.")
+    warn("[ZAKA V1] Không tìm thấy Main.")
     return
 end
 
--- Find the red close button from the header.
-local CloseBtn
-for _, obj in ipairs(Main:GetDescendants()) do
-    if obj:IsA("TextButton") and obj.Text == "×" then
-        CloseBtn = obj
-        break
-    end
+--==============================================================
+-- XÓA EYE CŨ NẾU RELOAD
+--==============================================================
+
+local OldEye = ToggleBtn:FindFirstChild("ZAKA_ANIME_EYE")
+
+if OldEye then
+    OldEye:Destroy()
 end
 
--- Clean old addon if reloaded.
-local old = ScreenGui:FindFirstChild("ZakaEyeV1")
-if old then old:Destroy() end
+--==============================================================
+-- CẤU HÌNH
+--==============================================================
 
--- Hide the original Z text/stroke while the eye is active.
 ToggleBtn.Text = ""
-ToggleBtn.TextTransparency = 1
 
-local oldStroke = ToggleBtn:FindFirstChildOfClass("UIStroke")
-if oldStroke then
-    oldStroke.Transparency = 1
-end
+local EYE_Z = ToggleBtn.ZIndex + 10
 
--- ============================================================
--- EYE CONTAINER
--- ============================================================
+local Purple = Color3.fromRGB(155, 40, 255)
+local BrightPurple = Color3.fromRGB(235, 90, 255)
+local PinkPurple = Color3.fromRGB(255, 120, 255)
+local DarkPurple = Color3.fromRGB(28, 0, 48)
+local Black = Color3.fromRGB(3, 0, 8)
+
+--==============================================================
+-- EYE ROOT
+--==============================================================
 
 local Eye = Instance.new("Frame")
-Eye.Name = "ZakaEyeV1"
+Eye.Name = "ZAKA_ANIME_EYE"
 Eye.AnchorPoint = Vector2.new(0.5, 0.5)
 Eye.Position = UDim2.fromScale(0.5, 0.5)
-Eye.Size = UDim2.fromScale(0.82, 0.82)
+Eye.Size = UDim2.fromScale(0.86, 0.86)
 Eye.BackgroundTransparency = 1
-Eye.ZIndex = ToggleBtn.ZIndex + 5
+Eye.ZIndex = EYE_Z
 Eye.Parent = ToggleBtn
 
-local function circle(name, size, color, transparency, z)
-    local f = Instance.new("Frame")
-    f.Name = name
-    f.AnchorPoint = Vector2.new(0.5, 0.5)
-    f.Position = UDim2.fromScale(0.5, 0.5)
-    f.Size = UDim2.fromScale(size, size)
-    f.BackgroundColor3 = color
-    f.BackgroundTransparency = transparency or 0
-    f.BorderSizePixel = 0
-    f.ZIndex = z or Eye.ZIndex
-    f.Parent = Eye
+--==============================================================
+-- HELPER
+--==============================================================
 
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(1, 0)
-    c.Parent = f
-    return f
+local function MakeCircle(name, size, color, transparency, z)
+    local obj = Instance.new("Frame")
+
+    obj.Name = name
+    obj.AnchorPoint = Vector2.new(0.5, 0.5)
+    obj.Position = UDim2.fromScale(0.5, 0.5)
+    obj.Size = UDim2.fromScale(size, size)
+
+    obj.BackgroundColor3 = color
+    obj.BackgroundTransparency = transparency or 0
+    obj.BorderSizePixel = 0
+
+    obj.ZIndex = z or EYE_Z
+    obj.Parent = Eye
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = obj
+
+    return obj
 end
 
-local function stroke(parent, thickness, color, transparency)
+local function MakeStroke(parent, thickness, color, transparency)
     local s = Instance.new("UIStroke")
+
     s.Thickness = thickness
     s.Color = color
     s.Transparency = transparency or 0
+
     s.Parent = parent
+
     return s
 end
 
--- Soft aura layers.
-local Glow3 = circle("GlowOuter", 1.20, Color3.fromRGB(145, 20, 255), 0.90, Eye.ZIndex)
-local Glow2 = circle("GlowMid",   1.06, Color3.fromRGB(95, 0, 255), 0.84, Eye.ZIndex + 1)
-local Glow1 = circle("GlowCore",  0.96, Color3.fromRGB(35, 0, 80), 0.60, Eye.ZIndex + 2)
+local function Tween(obj, duration, easing, direction, properties)
+    local info = TweenInfo.new(
+        duration,
+        easing or Enum.EasingStyle.Quint,
+        direction or Enum.EasingDirection.Out
+    )
 
--- Outer rings.
-local RingOuter = circle("RingOuter", 0.92, Color3.fromRGB(8, 4, 18), 0.30, Eye.ZIndex + 3)
-stroke(RingOuter, 2.0, Color3.fromRGB(190, 70, 255), 0.12)
+    local tw = TweenService:Create(obj, info, properties)
+    tw:Play()
 
-local RingMiddle = circle("RingMiddle", 0.77, Color3.fromRGB(15, 5, 30), 0.18, Eye.ZIndex + 4)
-stroke(RingMiddle, 1.4, Color3.fromRGB(105, 30, 255), 0.15)
+    return tw
+end
 
-local Iris = circle("Iris", 0.60, Color3.fromRGB(42, 5, 75), 0.02, Eye.ZIndex + 5)
-stroke(Iris, 1.2, Color3.fromRGB(220, 80, 255), 0.10)
+--==============================================================
+-- OUTER GLOW
+--==============================================================
 
--- Inner ring.
-local InnerRing = circle("InnerRing", 0.42, Color3.fromRGB(18, 2, 35), 0.05, Eye.ZIndex + 6)
-stroke(InnerRing, 1.5, Color3.fromRGB(255, 105, 255), 0.05)
+local GlowBig = MakeCircle(
+    "GlowBig",
+    1.18,
+    Purple,
+    1,
+    EYE_Z
+)
 
--- Pupil.
-local Pupil = circle("Pupil", 0.20, Color3.fromRGB(2, 0, 8), 0, Eye.ZIndex + 8)
-stroke(Pupil, 1.0, Color3.fromRGB(255, 150, 255), 0.12)
+local GlowMedium = MakeCircle(
+    "GlowMedium",
+    1.05,
+    BrightPurple,
+    1,
+    EYE_Z + 1
+)
 
--- Small central glow.
-local Core = circle("Core", 0.075, Color3.fromRGB(255, 235, 255), 0.02, Eye.ZIndex + 9)
+local GlowSmall = MakeCircle(
+    "GlowSmall",
+    0.94,
+    Purple,
+    1,
+    EYE_Z + 2
+)
 
--- ============================================================
--- TOMOE-STYLE MARKS
--- Decorative anime-inspired marks, not a character image.
--- ============================================================
+--==============================================================
+-- OUTER RING
+--==============================================================
 
-local TomoeFolder = Instance.new("Frame")
-TomoeFolder.Name = "TomoeRing"
-TomoeFolder.AnchorPoint = Vector2.new(0.5, 0.5)
-TomoeFolder.Position = UDim2.fromScale(0.5, 0.5)
-TomoeFolder.Size = UDim2.fromScale(0.70, 0.70)
-TomoeFolder.BackgroundTransparency = 1
-TomoeFolder.ZIndex = Eye.ZIndex + 7
-TomoeFolder.Parent = Eye
+local OuterRing = MakeCircle(
+    "OuterRing",
+    0.91,
+    Black,
+    0.18,
+    EYE_Z + 3
+)
 
-local Tomoe = {}
+MakeStroke(
+    OuterRing,
+    2.3,
+    BrightPurple,
+    0.1
+)
+
+--==============================================================
+-- SECOND RING
+--==============================================================
+
+local SecondRing = MakeCircle(
+    "SecondRing",
+    0.76,
+    DarkPurple,
+    0.05,
+    EYE_Z + 4
+)
+
+MakeStroke(
+    SecondRing,
+    1.5,
+    Purple,
+    0.05
+)
+
+--==============================================================
+-- IRIS
+--==============================================================
+
+local Iris = MakeCircle(
+    "Iris",
+    0.60,
+    Color3.fromRGB(65, 5, 105),
+    0,
+    EYE_Z + 5
+)
+
+MakeStroke(
+    Iris,
+    1.7,
+    PinkPurple,
+    0.08
+)
+
+--==============================================================
+-- IRIS INNER RING
+--==============================================================
+
+local IrisInner = MakeCircle(
+    "IrisInner",
+    0.43,
+    Color3.fromRGB(25, 0, 42),
+    0,
+    EYE_Z + 6
+)
+
+MakeStroke(
+    IrisInner,
+    1.2,
+    BrightPurple,
+    0.1
+)
+
+--==============================================================
+-- PUPIL
+--==============================================================
+
+local Pupil = MakeCircle(
+    "Pupil",
+    0.19,
+    Black,
+    0,
+    EYE_Z + 9
+)
+
+MakeStroke(
+    Pupil,
+    1.2,
+    PinkPurple,
+    0.05
+)
+
+--==============================================================
+-- PUPIL CORE
+--==============================================================
+
+local Core = MakeCircle(
+    "Core",
+    0.065,
+    Color3.fromRGB(255, 225, 255),
+    0.05,
+    EYE_Z + 10
+)
+
+--==============================================================
+-- TOMOE RING
+--==============================================================
+
+local TomoeRing = Instance.new("Frame")
+
+TomoeRing.Name = "TomoeRing"
+TomoeRing.AnchorPoint = Vector2.new(0.5, 0.5)
+TomoeRing.Position = UDim2.fromScale(0.5, 0.5)
+TomoeRing.Size = UDim2.fromScale(0.72, 0.72)
+TomoeRing.BackgroundTransparency = 1
+TomoeRing.ZIndex = EYE_Z + 8
+TomoeRing.Parent = Eye
+
+--==============================================================
+-- TOMOE CREATOR
+--==============================================================
+
+local Tomoes = {}
 
 for i = 1, 3 do
+
     local holder = Instance.new("Frame")
-    holder.Name = "Mark" .. i
+
+    holder.Name = "TomoeHolder_" .. i
     holder.AnchorPoint = Vector2.new(0.5, 0.5)
     holder.Position = UDim2.fromScale(0.5, 0.5)
     holder.Size = UDim2.fromScale(1, 1)
     holder.BackgroundTransparency = 1
     holder.Rotation = (i - 1) * 120
-    holder.ZIndex = TomoeFolder.ZIndex
-    holder.Parent = TomoeFolder
+    holder.ZIndex = EYE_Z + 8
+    holder.Parent = TomoeRing
 
-    local mark = Instance.new("Frame")
-    mark.Name = "Tomoe"
-    mark.AnchorPoint = Vector2.new(0.5, 0.5)
-    mark.Position = UDim2.fromScale(0.5, 0.17)
-    mark.Size = UDim2.fromScale(0.13, 0.21)
-    mark.BackgroundColor3 = Color3.fromRGB(235, 90, 255)
-    mark.BackgroundTransparency = 0.05
-    mark.BorderSizePixel = 0
-    mark.Rotation = 25
-    mark.ZIndex = holder.ZIndex + 1
-    mark.Parent = holder
+    local tomoe = Instance.new("Frame")
+
+    tomoe.Name = "Tomoe"
+    tomoe.AnchorPoint = Vector2.new(0.5, 0.5)
+
+    tomoe.Position = UDim2.fromScale(
+        0.5,
+        0.16
+    )
+
+    tomoe.Size = UDim2.fromScale(
+        0.13,
+        0.22
+    )
+
+    tomoe.BackgroundColor3 = BrightPurple
+    tomoe.BackgroundTransparency = 1
+    tomoe.BorderSizePixel = 0
+    tomoe.Rotation = 25
+    tomoe.ZIndex = EYE_Z + 9
+    tomoe.Parent = holder
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = mark
+    corner.Parent = tomoe
 
-    local markStroke = Instance.new("UIStroke")
-    markStroke.Color = Color3.fromRGB(255, 185, 255)
-    markStroke.Thickness = 0.8
-    markStroke.Transparency = 0.20
-    markStroke.Parent = mark
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = PinkPurple
+    stroke.Thickness = 1
+    stroke.Transparency = 1
+    stroke.Parent = tomoe
 
-    table.insert(Tomoe, holder)
+    table.insert(Tomoes, tomoe)
 end
 
--- Small orbiting dots add depth while the eye rotates.
-local Dots = {}
+--==============================================================
+-- ORBIT DOTS
+--==============================================================
+
+local OrbitDots = {}
+
 for i = 1, 6 do
-    local dot = circle("OrbitDot" .. i, 0.045, Color3.fromRGB(255, 180, 255), 0.10, Eye.ZIndex + 8)
-    dot.Position = UDim2.fromScale(
-        0.5 + math.cos(math.rad(i * 60)) * 0.40,
-        0.5 + math.sin(math.rad(i * 60)) * 0.40
+
+    local dot = MakeCircle(
+        "OrbitDot_" .. i,
+        0.045,
+        PinkPurple,
+        1,
+        EYE_Z + 9
     )
-    table.insert(Dots, dot)
+
+    local angle = math.rad((i - 1) * 60)
+
+    dot.Position = UDim2.fromScale(
+        0.5 + math.cos(angle) * 0.39,
+        0.5 + math.sin(angle) * 0.39
+    )
+
+    table.insert(OrbitDots, dot)
 end
 
--- ============================================================
--- ANIMATION
--- ============================================================
+--==============================================================
+-- EYE LID EFFECT
+--==============================================================
 
-local eyeOpen = false
-local rotationConnection
-local pulseConnection
+local TopLid = Instance.new("Frame")
 
-local function tween(obj, info, props)
-    local t = TweenService:Create(obj, info, props)
-    t:Play()
-    return t
-end
+TopLid.Name = "TopLid"
+TopLid.AnchorPoint = Vector2.new(0.5, 1)
+TopLid.Position = UDim2.fromScale(0.5, 0)
+TopLid.Size = UDim2.fromScale(1.15, 0.48)
+TopLid.BackgroundColor3 = Color3.fromRGB(5, 1, 10)
+TopLid.BackgroundTransparency = 0.1
+TopLid.BorderSizePixel = 0
+TopLid.ZIndex = EYE_Z + 20
+TopLid.Parent = Eye
 
-local function setGlowVisible(visible, fast)
-    local d = fast and 0.18 or 0.32
-    local info = TweenInfo.new(d, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(1, 0)
+TopCorner.Parent = TopLid
 
-    tween(Glow3, info, {BackgroundTransparency = visible and 0.78 or 1})
-    tween(Glow2, info, {BackgroundTransparency = visible and 0.70 or 1})
-    tween(Glow1, info, {BackgroundTransparency = visible and 0.48 or 1})
+-- Vì là hiệu ứng overlay nên ban đầu ẩn.
+TopLid.Visible = false
 
-    for _, h in ipairs(Tomoe) do
-        local mark = h:FindFirstChild("Tomoe")
-        if mark then
-            tween(mark, info, {
-                BackgroundTransparency = visible and 0.05 or 1
-            })
-        end
+--==============================================================
+-- ROTATION STATE
+--==============================================================
+
+local EyeOpen = false
+local RotationConnection
+local PulseConnection
+
+--==============================================================
+-- START ROTATION
+--==============================================================
+
+local function StartRotation()
+
+    if RotationConnection then
+        RotationConnection:Disconnect()
     end
 
-    for _, d in ipairs(Dots) do
-        tween(d, info, {BackgroundTransparency = visible and 0.10 or 1})
-    end
-end
-
-local function stopRotation()
-    if rotationConnection then
-        rotationConnection:Disconnect()
-        rotationConnection = nil
-    end
-end
-
-local function stopPulse()
-    if pulseConnection then
-        pulseConnection:Disconnect()
-        pulseConnection = nil
-    end
-end
-
-local function startRotation()
-    stopRotation()
     local last = os.clock()
 
-    rotationConnection = RunService.RenderStepped:Connect(function()
+    RotationConnection = RunService.RenderStepped:Connect(function()
+
+        if not EyeOpen then
+            return
+        end
+
         local now = os.clock()
         local dt = now - last
+
         last = now
 
-        -- Opposite rotations make the eye feel layered.
-        RingOuter.Rotation = (RingOuter.Rotation + dt * 75) % 360
-        RingMiddle.Rotation = (RingMiddle.Rotation - dt * 115) % 360
-        TomoeFolder.Rotation = (TomoeFolder.Rotation + dt * 55) % 360
-        InnerRing.Rotation = (InnerRing.Rotation - dt * 145) % 360
+        -- Ngoài quay một chiều
+        OuterRing.Rotation =
+            (OuterRing.Rotation + dt * 70) % 360
+
+        -- Vòng giữa quay ngược
+        SecondRing.Rotation =
+            (SecondRing.Rotation - dt * 110) % 360
+
+        -- Tomoe quay
+        TomoeRing.Rotation =
+            (TomoeRing.Rotation + dt * 55) % 360
+
+        -- Inner ring quay nhanh
+        IrisInner.Rotation =
+            (IrisInner.Rotation - dt * 150) % 360
+
     end)
 end
 
-local function startPulse()
-    stopPulse()
-    pulseConnection = RunService.RenderStepped:Connect(function()
-        if not eyeOpen then return end
+--==============================================================
+-- STOP ROTATION
+--==============================================================
 
-        local pulse = 0.5 + math.sin(os.clock() * 3.5) * 0.5
-        local s = 0.96 + pulse * 0.045
+local function StopRotation()
 
-        Glow1.Size = UDim2.fromScale(s, s)
-        Core.Size = UDim2.fromScale(0.065 + pulse * 0.025, 0.065 + pulse * 0.025)
-    end)
-end
-
-local function showEye()
-    eyeOpen = true
-    stopRotation()
-    stopPulse()
-
-    -- Start tiny, then bloom into the full eye.
-    Eye.Size = UDim2.fromScale(0.06, 0.06)
-
-    for _, obj in ipairs({Glow3, Glow2, Glow1, RingOuter, RingMiddle, Iris, InnerRing, Pupil, Core}) do
-        obj.Visible = true
+    if RotationConnection then
+        RotationConnection:Disconnect()
+        RotationConnection = nil
     end
 
-    setGlowVisible(false, true)
-
-    local bloom = TweenInfo.new(0.62, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    tween(Eye, bloom, {Size = UDim2.fromScale(0.82, 0.82)})
-
-    tween(RingOuter, bloom, {Size = UDim2.fromScale(0.92, 0.92)})
-    tween(RingMiddle, bloom, {Size = UDim2.fromScale(0.77, 0.77)})
-    tween(Iris, bloom, {Size = UDim2.fromScale(0.60, 0.60)})
-    tween(InnerRing, bloom, {Size = UDim2.fromScale(0.42, 0.42)})
-    tween(Pupil, bloom, {Size = UDim2.fromScale(0.20, 0.20)})
-    tween(Core, bloom, {Size = UDim2.fromScale(0.075, 0.075)})
-
-    task.delay(0.05, function()
-        setGlowVisible(true, false)
-    end)
-
-    task.delay(0.25, startRotation)
-    task.delay(0.35, startPulse)
 end
 
-local function hideEye()
-    eyeOpen = false
-    stopPulse()
-    stopRotation()
+--==============================================================
+-- PULSE
+--==============================================================
 
-    local info = TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+local function StartPulse()
 
-    -- Spin down first.
-    tween(RingOuter, info, {Rotation = RingOuter.Rotation + 70})
-    tween(RingMiddle, info, {Rotation = RingMiddle.Rotation - 95})
-    tween(TomoeFolder, info, {Rotation = TomoeFolder.Rotation + 80})
+    if PulseConnection then
+        PulseConnection:Disconnect()
+    end
 
-    setGlowVisible(false, false)
+    PulseConnection = RunService.RenderStepped:Connect(function()
 
-    -- Everything collapses toward the pupil.
-    tween(Eye, TweenInfo.new(0.42, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Size = UDim2.fromScale(0.045, 0.045)
-    })
+        if not EyeOpen then
+            return
+        end
 
+        local pulse =
+            (math.sin(os.clock() * 3.5) + 1) / 2
+
+        GlowSmall.Size =
+            UDim2.fromScale(
+                0.94 + pulse * 0.06,
+                0.94 + pulse * 0.06
+            )
+
+        Core.Size =
+            UDim2.fromScale(
+                0.06 + pulse * 0.025,
+                0.06 + pulse * 0.025
+            )
+
+    end)
+
+end
+
+local function StopPulse()
+
+    if PulseConnection then
+        PulseConnection:Disconnect()
+        PulseConnection = nil
+    end
+
+end
+
+--==============================================================
+-- SHOW EYE
+--==============================================================
+
+local function OpenEye()
+
+    if EyeOpen then
+        return
+    end
+
+    EyeOpen = true
+
+    StopRotation()
+    StopPulse()
+
+    -- Thu nhỏ trước
+    Eye.Size = UDim2.fromScale(
+        0.04,
+        0.04
+    )
+
+    -- Tất cả hiện
+    GlowBig.BackgroundTransparency = 1
+    GlowMedium.BackgroundTransparency = 1
+    GlowSmall.BackgroundTransparency = 1
+
+    OuterRing.BackgroundTransparency = 0.2
+    SecondRing.BackgroundTransparency = 0.05
+    Iris.BackgroundTransparency = 0
+    IrisInner.BackgroundTransparency = 0
+    Pupil.BackgroundTransparency = 0
+    Core.BackgroundTransparency = 0.05
+
+    -- Tomoe ẩn
+    for _, tomoe in ipairs(Tomoes) do
+        tomoe.BackgroundTransparency = 1
+
+        local st = tomoe:FindFirstChildOfClass("UIStroke")
+
+        if st then
+            st.Transparency = 1
+        end
+    end
+
+    -- Orbit dots ẩn
+    for _, dot in ipairs(OrbitDots) do
+        dot.BackgroundTransparency = 1
+    end
+
+    --==========================================================
+    -- EYE BLOOM
+    --==========================================================
+
+    Tween(
+        Eye,
+        0.60,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.Out,
+        {
+            Size = UDim2.fromScale(
+                0.86,
+                0.86
+            )
+        }
+    )
+
+    Tween(
+        GlowBig,
+        0.45,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.Out,
+        {
+            BackgroundTransparency = 0.82
+        }
+    )
+
+    Tween(
+        GlowMedium,
+        0.42,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.Out,
+        {
+            BackgroundTransparency = 0.70
+        }
+    )
+
+    Tween(
+        GlowSmall,
+        0.38,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.Out,
+        {
+            BackgroundTransparency = 0.50
+        }
+    )
+
+    --==========================================================
+    -- TOMOE APPEAR
+    --==========================================================
+
+    task.delay(0.16, function()
+
+        for index, tomoe in ipairs(Tomoes) do
+
+            task.delay(
+                (index - 1) * 0.07,
+                function()
+
+                    Tween(
+                        tomoe,
+                        0.28,
+                        Enum.EasingStyle.Back,
+                        Enum.EasingDirection.Out,
+                        {
+                            BackgroundTransparency = 0.03
+                        }
+                    )
+
+                    local st =
+                        tomoe:FindFirstChildOfClass("UIStroke")
+
+                    if st then
+
+                        Tween(
+                            st,
+                            0.28,
+                            Enum.EasingStyle.Quint,
+                            Enum.EasingDirection.Out,
+                            {
+                                Transparency = 0.10
+                            }
+                        )
+
+                    end
+
+                end
+            )
+
+        end
+
+    end)
+
+    --==========================================================
+    -- ORBIT DOTS
+    --==========================================================
+
+    task.delay(0.22, function()
+
+        for _, dot in ipairs(OrbitDots) do
+
+            Tween(
+                dot,
+                0.30,
+                Enum.EasingStyle.Quint,
+                Enum.EasingDirection.Out,
+                {
+                    BackgroundTransparency = 0.08
+                }
+            )
+
+        end
+
+    end)
+
+    -- Bắt đầu quay
     task.delay(0.30, function()
-        if not eyeOpen then
-            Eye.Size = UDim2.fromScale(0.045, 0.045)
+
+        if EyeOpen then
+            StartRotation()
+            StartPulse()
         end
+
     end)
+
 end
 
--- The original script opens/closes Main. Watching Visible keeps this addon
--- synchronized without replacing the original menu logic.
-local lastVisible = Main.Visible
+--==============================================================
+-- HIDE EYE
+--==============================================================
 
-local function sync()
-    local visible = Main.Visible
+local function CloseEye()
 
-    if visible ~= lastVisible then
-        lastVisible = visible
-        if visible then
-            showEye()
-        else
-            hideEye()
-        end
+    if not EyeOpen then
+        return
     end
+
+    EyeOpen = false
+
+    StopPulse()
+    StopRotation()
+
+    -- Quay thêm một đoạn trước khi biến mất
+    Tween(
+        OuterRing,
+        0.30,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            Rotation = OuterRing.Rotation + 100
+        }
+    )
+
+    Tween(
+        SecondRing,
+        0.30,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            Rotation = SecondRing.Rotation - 130
+        }
+    )
+
+    Tween(
+        TomoeRing,
+        0.30,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            Rotation = TomoeRing.Rotation + 90
+        }
+    )
+
+    -- Tomoe biến mất
+    for _, tomoe in ipairs(Tomoes) do
+
+        Tween(
+            tomoe,
+            0.20,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.In,
+            {
+                BackgroundTransparency = 1
+            }
+        )
+
+        local st =
+            tomoe:FindFirstChildOfClass("UIStroke")
+
+        if st then
+            Tween(
+                st,
+                0.20,
+                Enum.EasingStyle.Quint,
+                Enum.EasingDirection.In,
+                {
+                    Transparency = 1
+                }
+            )
+        end
+
+    end
+
+    -- Glow tắt
+    Tween(
+        GlowBig,
+        0.28,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            BackgroundTransparency = 1
+        }
+    )
+
+    Tween(
+        GlowMedium,
+        0.25,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            BackgroundTransparency = 1
+        }
+    )
+
+    Tween(
+        GlowSmall,
+        0.22,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.In,
+        {
+            BackgroundTransparency = 1
+        }
+    )
+
+    for _, dot in ipairs(OrbitDots) do
+
+        Tween(
+            dot,
+            0.18,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.In,
+            {
+                BackgroundTransparency = 1
+            }
+        )
+
+    end
+
+    --==========================================================
+    -- EYE COLLAPSE
+    --==========================================================
+
+    Tween(
+        Eye,
+        0.42,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.In,
+        {
+            Size = UDim2.fromScale(
+                0.035,
+                0.035
+            )
+        }
+    )
+
 end
 
-Main:GetPropertyChangedSignal("Visible"):Connect(sync)
+--==============================================================
+-- BẮT ĐẦU TRẠNG THÁI
+--==============================================================
 
--- If the original menu starts open after its startup delay.
-task.defer(function()
-    task.wait(0.65)
-    sync()
+local VisualOpen = false
+
+-- Menu gốc tự mở sau 0.5 giây.
+task.delay(0.75, function()
+
+    if Main.Visible and not VisualOpen then
+
+        VisualOpen = true
+        OpenEye()
+
+    end
+
 end)
 
--- Also animate immediately after the button is clicked. The deferred call
--- lets the original Zakahud callback update Main.Visible first.
+--==============================================================
+-- NÚT Z
+--==============================================================
+
 ToggleBtn.MouseButton1Click:Connect(function()
-    task.defer(sync)
+
+    -- Chờ code gốc xử lý OpenMenu / CloseMenu
+    task.delay(0.05, function()
+
+        if Main.Visible then
+
+            if not VisualOpen then
+
+                VisualOpen = true
+                OpenEye()
+
+            end
+
+        else
+
+            if VisualOpen then
+
+                VisualOpen = false
+                CloseEye()
+
+            end
+
+        end
+
+    end)
+
 end)
+
+--==============================================================
+-- NÚT X ĐÓNG MENU
+--==============================================================
+
+local CloseBtn
+
+for _, obj in ipairs(Main:GetDescendants()) do
+
+    if obj:IsA("TextButton") and obj.Text == "×" then
+
+        CloseBtn = obj
+        break
+
+    end
+
+end
 
 if CloseBtn then
+
     CloseBtn.MouseButton1Click:Connect(function()
-        task.defer(sync)
+
+        task.delay(0.05, function()
+
+            if not Main.Visible and VisualOpen then
+
+                VisualOpen = false
+                CloseEye()
+
+            end
+
+        end)
+
     end)
+
 end
 
-print("[ZAKA PURE UI V1] Eye menu animation loaded.")
+--==============================================================
+-- THE END
+--==============================================================
+
+print("🔥 ZAKA PURE UI V1 - ANIME EYE MENU LOADED")
