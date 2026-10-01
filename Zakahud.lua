@@ -1,7 +1,7 @@
 --[[
 ============================================================
                     ZAKA PURE UI V1.0
-              VIETNAMESE FEATURE EDITION
+           MOBILE • RED RASENGAN • DEV EDITION
 ============================================================
 20 English tabs / Vietnamese feature names.
 Built for experiences you own or control.
@@ -197,6 +197,12 @@ local Runtime = {
     TabButtons={},
     Pages={},
     CurrentTab="Combat",
+    Bookmark=nil,
+    BookmarkMarker=nil,
+    DebugLabels={},
+    RayDebugPart=nil,
+    ReactionLast=nil,
+    ReactionMs=nil,
 }
 
 local function connect(signal, fn)
@@ -416,6 +422,7 @@ Search.TextColor3=Theme.Text
 Search.TextSize=13
 Search.Font=Enum.Font.Gotham
 Search.ClearTextOnFocus=false
+Search.ZIndex=30
 Search.Parent=Pages
 corner(Search,14)
 stroke(Search,.62)
@@ -424,6 +431,7 @@ local PageArea=Instance.new("Frame")
 PageArea.Position=UDim2.new(0,0,0,50)
 PageArea.Size=UDim2.new(1,0,1,-50)
 PageArea.BackgroundTransparency=1
+PageArea.ZIndex=25
 PageArea.Parent=Pages
 
 local HUD=label(Gui,"",11,false)
@@ -725,6 +733,123 @@ local function clearHighlights()
     end
 end
 
+local function clearDebugLabels()
+    for inst,labelGui in pairs(Runtime.DebugLabels) do
+        if labelGui and labelGui.Parent then labelGui:Destroy() end
+        Runtime.DebugLabels[inst]=nil
+    end
+end
+
+local function getInstancePosition(inst)
+    if inst:IsA("BasePart") then return inst.Position end
+    if inst:IsA("Model") then
+        local p=inst.PrimaryPart or inst:FindFirstChild("HumanoidRootPart")
+        if p and p:IsA("BasePart") then return p.Position end
+    end
+    return nil
+end
+
+local function ensureDistanceLabel(inst)
+    if not inst or not inst.Parent then return end
+    local adornee=inst:IsA("Model") and (inst.PrimaryPart or inst:FindFirstChildWhichIsA("BasePart")) or inst:IsA("BasePart") and inst
+    if not adornee then return end
+    local old=Runtime.DebugLabels[inst]
+    if old and old.Parent then return old end
+    local g=Instance.new("BillboardGui")
+    g.Name="ZAKA_DebugDistance"
+    g.Size=UDim2.fromOffset(150,28)
+    g.StudsOffset=Vector3.new(0,3,0)
+    g.AlwaysOnTop=true
+    g.MaxDistance=5000
+    g.Adornee=adornee
+    g.Parent=Gui
+    local t=Instance.new("TextLabel")
+    t.Name="Distance"
+    t.Size=UDim2.fromScale(1,1)
+    t.BackgroundColor3=Color3.fromRGB(5,10,18)
+    t.BackgroundTransparency=.25
+    t.TextColor3=Theme.Accent2
+    t.TextSize=11
+    t.Font=Enum.Font.GothamBold
+    t.TextStrokeTransparency=.55
+    t.Text="DEBUG"
+    t.Parent=g
+    corner(t,8)
+    Runtime.DebugLabels[inst]=g
+    return g
+end
+
+local function updateDebugLabels()
+    if not State["Nhãn khoảng cách debug"] then
+        clearDebugLabels()
+        return
+    end
+    local origin=getRoot()
+    if not origin then return end
+    for _,inst in ipairs(getTagged("ZAKA_Debug")) do
+        local pos=getInstancePosition(inst)
+        if pos then
+            local g=ensureDistanceLabel(inst)
+            local t=g and g:FindFirstChild("Distance")
+            if t then t.Text=string.format("%s • %.0f studs",inst.Name,(pos-origin.Position).Magnitude) end
+        end
+    end
+end
+
+local function updateRayDebug()
+    if not State["Kiểm tra Raycast"] then
+        if Runtime.RayDebugPart then Runtime.RayDebugPart:Destroy(); Runtime.RayDebugPart=nil end
+        return
+    end
+    local target=Runtime.AimDebugTarget
+    if not target then return end
+    local a=Camera.CFrame.Position
+    local b=target.Position
+    local mid=(a+b)*.5
+    local length=(b-a).Magnitude
+    local part=Runtime.RayDebugPart
+    if not part then
+        part=Instance.new("Part")
+        part.Name="ZAKA_Raycast_Debug"
+        part.Anchored=true
+        part.CanCollide=false
+        part.CanQuery=false
+        part.CanTouch=false
+        part.Material=Enum.Material.Neon
+        part.Transparency=.25
+        part.Size=Vector3.new(.08,.08,1)
+        part.Parent=workspace
+        Runtime.RayDebugPart=part
+    end
+    local params=RaycastParams.new()
+    params.FilterType=Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances={LocalPlayer.Character}
+    local hit=workspace:Raycast(a,b-a,params)
+    local model=target:FindFirstAncestorOfClass("Model")
+    local clear=not hit or (model and hit.Instance:IsDescendantOf(model))
+    part.Color=clear and Color3.fromRGB(80,255,150) or Color3.fromRGB(255,60,80)
+    part.Size=Vector3.new(.08,.08,math.max(length,.05))
+    part.CFrame=CFrame.lookAt(mid,b)
+end
+
+local function setBookmarkMarker(position)
+    if Runtime.BookmarkMarker then Runtime.BookmarkMarker:Destroy(); Runtime.BookmarkMarker=nil end
+    if not position then return end
+    local p=Instance.new("Part")
+    p.Name="ZAKA_Bookmark_Marker"
+    p.Anchored=true
+    p.CanCollide=false
+    p.CanTouch=false
+    p.CanQuery=false
+    p.Shape=Enum.PartType.Ball
+    p.Material=Enum.Material.Neon
+    p.Color=Theme.Accent
+    p.Size=Vector3.new(1.5,1.5,1.5)
+    p.Position=position+Vector3.new(0,2,0)
+    p.Parent=workspace
+    Runtime.BookmarkMarker=p
+end
+
 local function scanFolder(folderName)
     local folder=workspace:FindFirstChild(folderName)
     local count=0
@@ -874,6 +999,7 @@ local function startAimTrainer()
     AimConn=RunService.RenderStepped:Connect(function(dt)
         if not AimTrainer.Enabled or not AimTrainer.Active then return end
         local target=findTrainingTarget()
+        Runtime.AimDebugTarget=target
         if not target then return end
         local camPos=Camera.CFrame.Position
         local desired=CFrame.lookAt(camPos,predictedPosition(target))
@@ -954,6 +1080,9 @@ add("Độ mạnh ghim","Aim Training","⚡","Tăng/giảm độ bám camera và
 add("FOV Aim","Aim Training","⭕","Giới hạn vùng màn hình mà Aim Assist được phép chọn mục tiêu.","Input",180,nil,nil,nil,
     function(v) local n=tonumber(v); if n and n>=1 then AimTrainer.FOV=n end end,{"fov","field of view","screen"})
 
+add("Khoảng cách mục tiêu","Aim Training","📏","Giới hạn khoảng cách chọn mục tiêu trong bộ luyện tập ZAKA_Target.","Input",600,nil,nil,nil,
+    function(v) local n=tonumber(v); if n and n>=1 then AimTrainer.MaxDistance=n; AimTrainer.CurrentTarget=nil end end,{"range","distance","target range","max distance"})
+
 add("Ưu tiên mục tiêu","Aim Training","📡","Đổi cách chọn mục tiêu: Screen, Distance hoặc Balanced.","Button",false,nil,nil,nil,
     function()
         local order={"Screen","Distance","Balanced"}
@@ -984,6 +1113,42 @@ add("Nút Aim trên điện thoại","Aim Training","📱","Hiển thị nút c�
 
 add("Reset khóa mục tiêu","Aim Training","♻","Xóa mục tiêu đang giữ và buộc hệ thống chọn lại mục tiêu hợp lệ.","Button",false,nil,nil,nil,
     function() AimTrainer.CurrentTarget=nil; notify("Đã reset mục tiêu Aim") end,{"reset","target","lock"})
+
+add("Đánh dấu mục tiêu gần nhất","Aim Training","🎯","Trong Studio, gắn tag ZAKA_Target cho Model người chơi/NPC gần nhất để kiểm thử Aim Assist.","Button",false,nil,nil,nil,
+    function()
+        if not RunService:IsStudio() then notify("Target helper chỉ dành cho Studio") return end
+        local root=getRoot()
+        if not root then return end
+        local best,bestDist
+        for _,model in ipairs(workspace:GetChildren()) do
+            if model:IsA("Model") and model~=LocalPlayer.Character then
+                local hum=model:FindFirstChildOfClass("Humanoid")
+                local r=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+                if hum and hum.Health>0 and r then
+                    local d=(r.Position-root.Position).Magnitude
+                    if not bestDist or d<bestDist then best,bestDist=model,d end
+                end
+            end
+        end
+        if best then
+            CollectionService:AddTag(best,"ZAKA_Target")
+            highlightInstance(best,true,Color3.fromRGB(255,35,55))
+            notify("Đã đánh dấu target: "..best.Name)
+        else
+            notify("Không tìm thấy target hợp lệ")
+        end
+    end,{"target","nearest","tag","studio"})
+
+add("Xóa tất cả target test","Aim Training","🧹","Trong Studio, xóa tag ZAKA_Target khỏi các target kiểm thử.","Button",false,nil,nil,nil,
+    function()
+        if not RunService:IsStudio() then notify("Target cleanup chỉ dành cho Studio") return end
+        local n=0
+        for _,obj in ipairs(CollectionService:GetTagged("ZAKA_Target")) do
+            if obj and obj.Parent then CollectionService:RemoveTag(obj,"ZAKA_Target"); n+=1 end
+        end
+        AimTrainer.CurrentTarget=nil
+        notify("Đã xóa "..n.." target test")
+    end,{"target","clear","tag","studio"})
 
 add("Kiểm tra xuyên vật thể","Aim Training","👁","Yêu cầu raycast không bị vật thể che khuất trước khi ghim.","Toggle",true,nil,nil,nil,
     function(v) AimTrainer.RequireLineOfSight=v end,{"raycast","visibility","wall"})
@@ -1033,10 +1198,10 @@ add("Khung debug đối tượng","ESP / Debug","▣","Hiển thị Highlight ch
     end,{"esp","debug","highlight"})
 
 add("Nhãn khoảng cách debug","ESP / Debug","📏","Hiển thị khoảng cách cho đối tượng debug.","Toggle",false,nil,nil,nil,
-    function(v) setState("Nhãn khoảng cách debug",v) end,{"distance","label","debug"})
+    function(v) setState("Nhãn khoảng cách debug",v); if not v then clearDebugLabels() end end,{"distance","label","debug"})
 
 add("Kiểm tra Raycast","ESP / Debug","📡","Bật đường Raycast debug của hệ thống luyện tập.","Toggle",false,nil,nil,nil,
-    function(v) setState("Kiểm tra Raycast",v) end,{"raycast","debug"})
+    function(v) setState("Kiểm tra Raycast",v); if not v and Runtime.RayDebugPart then Runtime.RayDebugPart:Destroy(); Runtime.RayDebugPart=nil end end,{"raycast","debug"})
 
 add("Đếm đối tượng Workspace","ESP / Debug","🔢","Đếm Model/Part trong Workspace.","Button",false,nil,nil,nil,
     function() setState("Đếm đối tượng Workspace",scanFolder("Workspace")) end,{"workspace","count","object"})
@@ -1128,12 +1293,13 @@ add("Đặt mốc vị trí","Locations","🚩","Lưu vị trí hiện tại tro
         local root=getRoot()
         if root then
             Runtime.Bookmark=root.Position
+            setBookmarkMarker(Runtime.Bookmark)
             notify("Đã lưu mốc vị trí")
         end
     end,{"bookmark","save","location"})
 
 add("Xóa mốc vị trí","Locations","🧹","Xóa mốc vị trí hiện tại.","Button",false,nil,nil,nil,
-    function() Runtime.Bookmark=nil; notify("Đã xóa mốc") end,{"bookmark","clear"})
+    function() Runtime.Bookmark=nil; if Runtime.BookmarkMarker then Runtime.BookmarkMarker:Destroy(); Runtime.BookmarkMarker=nil end; notify("Đã xóa mốc") end,{"bookmark","clear"})
 
 add("Tốc độ chạy","Movement","🏃","Điều chỉnh WalkSpeed cục bộ. Nhập số tùy ý, không đặt trần trong UI.","Input",16,nil,nil,nil,
     function(v) local n=tonumber(v); if n then Config.WalkSpeed=n; applyCharacterSettings() end end,{"walk","speed","unlimited"})
@@ -1155,7 +1321,7 @@ add("Tăng tốc tạm thời","Movement","🚀","Tăng tốc chạy trong 5 gi�
         local h=getHumanoid()
         if not h then return end
         local old=h.WalkSpeed
-        h.WalkSpeed=math.min(500,old*2)
+        h.WalkSpeed=old*2
         task.delay(5,function() if h.Parent then h.WalkSpeed=Config.WalkSpeed end end)
     end,{"boost","speed"})
 
@@ -1214,6 +1380,15 @@ add("Ragdoll thử nghiệm","Troll / Admin","🧍","Đưa Humanoid vào trạng
 
 add("Phóng nhân vật","Troll / Admin","🚀","Hiệu ứng đẩy cục bộ để thử nghiệm vật lý.","Slider",80,0,500,5,
     function(v) Runtime.LaunchPower=v end,{"launch","physics"})
+
+add("Phóng ngay","Troll / Admin","💨","Áp dụng lực đẩy hiện tại cho nhân vật local trong môi trường thử nghiệm.","Button",false,nil,nil,nil,
+    function()
+        local root=getRoot()
+        if root then
+            local power=tonumber(Runtime.LaunchPower) or 80
+            root.AssemblyLinearVelocity=root.AssemblyLinearVelocity+Camera.CFrame.LookVector*power+Vector3.new(0,power*.35,0)
+        end
+    end,{"launch","now","physics"})
 
 add("Confetti","Troll / Admin","🎊","Hiệu ứng confetti cục bộ.","Button",false,nil,nil,nil,
     function() confetti() end,{"confetti","fun"})
@@ -1590,7 +1765,9 @@ local function makeCard(parent,feature,index)
     card.BackgroundColor3=Theme.Card
     card.BackgroundTransparency=.38
     card.BorderSizePixel=0
+    card.ZIndex=27
     card.LayoutOrder=index
+    card:SetAttribute("ZakaFeatureCard",true)
     card.Parent=parent
     corner(card,16)
     stroke(card,.64)
@@ -1742,19 +1919,29 @@ local function buildPage(tabName)
     page.BackgroundTransparency=1
     page.BorderSizePixel=0
     page.ScrollBarThickness=2
+    page.ScrollBarImageTransparency=.28
+    page.ZIndex=26
     hookScrollBoost(page)
+    page:GetPropertyChangedSignal("CanvasPosition"):Connect(function() refreshPageAvoidance(page) end)
     page.AutomaticCanvasSize=Enum.AutomaticSize.Y
     page.CanvasSize=UDim2.new()
     page.Parent=PageArea
 
     local padding=Instance.new("UIPadding")
-    padding.PaddingBottom=UDim.new(0,10)
+    padding.PaddingLeft=UDim.new(0,44)
+    padding.PaddingRight=UDim.new(0,44)
+    padding.PaddingBottom=UDim.new(0,18)
     padding.Parent=page
 
     local layout=Instance.new("UIListLayout")
     layout.Padding=UDim.new(0,9)
     layout.SortOrder=Enum.SortOrder.LayoutOrder
     layout.Parent=page
+    connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"),function()
+        if page.Parent then
+            page.CanvasSize=UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+24)
+        end
+    end)
 
     local i=0
     for _,f in ipairs(Features) do
@@ -1770,7 +1957,11 @@ local function buildPage(tabName)
             end)
         end
     end
+    page.Visible=true
     Runtime.Pages[tabName]=page
+    task.defer(function()
+        if page.Parent and layout then page.CanvasSize=UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+24) end
+    end)
     return page
 end
 
@@ -1779,6 +1970,7 @@ local function showTab(tabName)
     for _,p in pairs(Runtime.Pages) do p.Visible=false end
     local page=Runtime.Pages[tabName] or buildPage(tabName)
     page.Visible=true
+    task.defer(function() refreshPageAvoidance(page) end)
 end
 
 RefreshLanguage=function()
@@ -1810,13 +2002,26 @@ local function buildSearch()
     page.BackgroundTransparency=1
     page.BorderSizePixel=0
     page.ScrollBarThickness=2
+    page.ScrollBarImageTransparency=.28
+    page.ZIndex=26
+    hookScrollBoost(page)
+    page:GetPropertyChangedSignal("CanvasPosition"):Connect(function() refreshPageAvoidance(page) end)
     page.AutomaticCanvasSize=Enum.AutomaticSize.Y
     page.CanvasSize=UDim2.new()
     page.Parent=PageArea
 
+    local padding=Instance.new("UIPadding")
+    padding.PaddingLeft=UDim.new(0,44)
+    padding.PaddingRight=UDim.new(0,44)
+    padding.PaddingBottom=UDim.new(0,18)
+    padding.Parent=page
+
     local layout=Instance.new("UIListLayout")
     layout.Padding=UDim.new(0,9)
     layout.Parent=page
+    connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"),function()
+        if page.Parent then page.CanvasSize=UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+24) end
+    end)
 
     local q=normalize(Search.Text)
     local results={}
@@ -1834,6 +2039,7 @@ local function buildSearch()
     for i,r in ipairs(results) do
         makeCard(page,r.f,i)
     end
+    task.defer(function() refreshPageAvoidance(page) end)
 
     Runtime.Pages.__SEARCH=page
 end
@@ -1841,6 +2047,25 @@ end
 --==========================================================
 -- CAROUSEL
 --==========================================================
+local function refreshPageAvoidance(page)
+    if not page or not page.Parent then return end
+    local centerY=page.AbsolutePosition.Y+page.AbsoluteSize.Y*.50
+    local half=math.max(page.AbsoluteSize.Y*.50,1)
+    for _,card in ipairs(page:GetChildren()) do
+        if card:IsA("Frame") and card:GetAttribute("ZakaFeatureCard") then
+            local cy=card.AbsolutePosition.Y+card.AbsoluteSize.Y*.5
+            local n=math.clamp(math.abs(cy-centerY)/half,0,1)
+            local inward=math.floor((1-n)*14)
+            card:SetAttribute("ZakaAvoidOffset",inward)
+            card.Size=UDim2.new(1,-(88+inward*2),0,82)
+        end
+    end
+end
+
+local function refreshAllPageAvoidance()
+    for _,page in pairs(Runtime.Pages) do refreshPageAvoidance(page) end
+end
+
 local function refreshCarousel()
     local center=Tabs.AbsolutePosition.Y+Tabs.AbsoluteSize.Y/2
     local half=math.max(Tabs.AbsoluteSize.Y/2,1)
@@ -1951,6 +2176,8 @@ local function openMenu()
     local t=tween(Main,.42,{Size=menuSize()},Enum.EasingStyle.Back)
     t.Completed:Connect(function()
         refreshCarousel()
+        refreshAllPageAvoidance()
+        positionSideEyes()
     end)
 end
 
@@ -2027,6 +2254,7 @@ connect(UserInputService.InputBegan,function(input,gp)
             else
                 Runtime.Combo=1
             end
+            if Runtime.LastClick>0 then Runtime.ReactionMs=(now-Runtime.LastClick)*1000 end
             Runtime.LastClick=now
             if State["Đèn báo thao tác"] then screenFlash() end
         end
@@ -2089,6 +2317,15 @@ connect(RunService.RenderStepped,function(dt)
     if State["FOV"] then table.insert(lines,string.format("FOV %.0f",Camera.FieldOfView)) end
     if State["Bộ đếm combo"] then table.insert(lines,"COMBO "..Runtime.Combo) end
     if State["Kiểm tra Humanoid"] and hum then table.insert(lines,"STATE "..hum:GetState().Name) end
+    if State["Thông tin Tool đang cầm"] then
+        local tool=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        table.insert(lines,"TOOL "..(tool and tool.Name or "NONE"))
+    end
+    if State["Đồng hồ phản xạ"] and Runtime.ReactionMs then table.insert(lines,string.format("REACTION %.0fms",Runtime.ReactionMs)) end
+    if State["Kiểm tra hệ thống"] then table.insert(lines,"FEATURES "..#Features) end
+
+    if State["Nhãn khoảng cách debug"] and accumulator>.20 then updateDebugLabels() end
+    if State["Kiểm tra Raycast"] and accumulator>.08 then updateRayDebug() end
 
     HUD.Text=table.concat(lines,"  |  ")
 
@@ -2145,6 +2382,10 @@ for _,f in ipairs(Features) do
     end
 end
 
+connect(Main:GetPropertyChangedSignal("AbsoluteSize"),function()
+    task.defer(positionSideEyes)
+end)
+
 connect(Camera:GetPropertyChangedSignal("ViewportSize"),function()
     if Config.Open then Main.Size=menuSize() end
     if Camera.ViewportSize.X<720 then
@@ -2169,8 +2410,9 @@ local SideEyes={}
 local function makeSideEye(name,side)
     local holder=Instance.new("TextButton")
     holder.Name=name
-    holder.Size=UDim2.fromOffset(38,38)
-    holder.Position=side=="Left" and UDim2.new(0,-43,.5,-19) or UDim2.new(1,5,.5,-19)
+    holder.Size=UDim2.fromOffset(52,52)
+    holder.AnchorPoint=Vector2.new(0,.5)
+    holder.Position=side=="Left" and UDim2.new(0,4,.5,22) or UDim2.new(1,-56,.5,22)
     holder.BackgroundTransparency=1
     holder.Text=""
     holder.AutoButtonColor=false
@@ -2180,7 +2422,7 @@ local function makeSideEye(name,side)
     local outer=Instance.new("Frame")
     outer.AnchorPoint=Vector2.new(.5,.5)
     outer.Position=UDim2.fromScale(.5,.5)
-    outer.Size=UDim2.fromScale(.9,.9)
+    outer.Size=UDim2.fromScale(.94,.94)
     outer.BackgroundColor3=Color3.fromRGB(18,0,3)
     outer.BorderSizePixel=0
     outer.ZIndex=76
@@ -2239,9 +2481,17 @@ end
 
 SideEyes.Left=makeSideEye("ZakaRasenganEyeLeft","Left")
 SideEyes.Right=makeSideEye("ZakaRasenganEyeRight","Right")
+positionSideEyes()
 
 local function boostSideEyes()
-    SideEyeBoostUntil=os.clock()+.65
+    SideEyeBoostUntil=os.clock()+.72
+end
+
+local function positionSideEyes()
+    local y=math.max(94,math.min(Main.AbsoluteSize.Y*.52,Main.AbsoluteSize.Y-94))
+    for side,eye in pairs(SideEyes) do
+        eye.Holder.Position=side=="Left" and UDim2.new(0,4,0,y) or UDim2.new(1,-56,0,y)
+    end
 end
 
 local function hookScrollBoost(sf)
@@ -2312,16 +2562,16 @@ local EyeRingStroke=Instance.new('UIStroke'); EyeRingStroke.Thickness=1.5; EyeRi
 
 local EyeMarks={}
 local EyeTypes={
-    {Name='Sharingan',Main=Color3.fromRGB(235,25,40),Dark=Color3.fromRGB(35,0,5),Kind='Tomoe'},
-    {Name='Rinnegan',Main=Color3.fromRGB(175,125,255),Dark=Color3.fromRGB(35,15,70),Kind='Rings'},
-    {Name='Mangekyo',Main=Color3.fromRGB(255,35,45),Dark=Color3.fromRGB(35,0,5),Kind='Star'},
-    {Name='TriBlade',Main=Color3.fromRGB(255,55,45),Dark=Color3.fromRGB(35,0,5),Kind='Tri'},
-    {Name='Crimson6',Main=Color3.fromRGB(255,20,30),Dark=Color3.fromRGB(25,0,0),Kind='Star6'},
-    {Name='Cosmic',Main=Color3.fromRGB(70,170,255),Dark=Color3.fromRGB(10,30,70),Kind='Cosmic'},
-    {Name='Violet',Main=Color3.fromRGB(180,60,255),Dark=Color3.fromRGB(35,5,65),Kind='Hex'},
-    {Name='Orange',Main=Color3.fromRGB(255,100,25),Dark=Color3.fromRGB(50,15,0),Kind='Triple'},
-    {Name='Void',Main=Color3.fromRGB(110,100,140),Dark=Color3.fromRGB(8,8,15),Kind='Void'},
-    {Name='Spiral',Main=Color3.fromRGB(255,40,100),Dark=Color3.fromRGB(40,0,15),Kind='Spiral'},
+    {Name='Crimson Tomoe',Main=Color3.fromRGB(245,24,38),Dark=Color3.fromRGB(35,0,5),Kind='Tomoe'},
+    {Name='Crimson Rings',Main=Color3.fromRGB(255,45,55),Dark=Color3.fromRGB(35,0,5),Kind='Rings'},
+    {Name='Crimson Star',Main=Color3.fromRGB(255,30,45),Dark=Color3.fromRGB(35,0,5),Kind='Star'},
+    {Name='Crimson Tri',Main=Color3.fromRGB(255,55,55),Dark=Color3.fromRGB(35,0,5),Kind='Tri'},
+    {Name='Crimson Six',Main=Color3.fromRGB(255,20,30),Dark=Color3.fromRGB(25,0,0),Kind='Star6'},
+    {Name='Crimson Orbit',Main=Color3.fromRGB(255,38,48),Dark=Color3.fromRGB(20,0,0),Kind='Cosmic'},
+    {Name='Crimson Hex',Main=Color3.fromRGB(255,35,50),Dark=Color3.fromRGB(35,0,5),Kind='Hex'},
+    {Name='Crimson Triple',Main=Color3.fromRGB(255,50,45),Dark=Color3.fromRGB(35,0,5),Kind='Triple'},
+    {Name='Crimson Void',Main=Color3.fromRGB(230,25,40),Dark=Color3.fromRGB(8,0,2),Kind='Void'},
+    {Name='Crimson Spiral',Main=Color3.fromRGB(255,40,60),Dark=Color3.fromRGB(40,0,10),Kind='Spiral'},
 }
 local EyeIndex=1
 local EyeBusy=false
@@ -2457,6 +2707,39 @@ OpenButton.BackgroundTransparency=.04
 OpenButton.Size=UDim2.fromOffset(64,64)
 corner(OpenButton,999)
 
+
+--==========================================================
+-- FINAL DEV QUALITY / CLEANUP API
+--==========================================================
+local function runSystemCheck()
+    local checks={
+        "Gui="..tostring(Gui.Parent~=nil),
+        "Main="..tostring(Main.Parent~=nil),
+        "Features="..tostring(#Features),
+        "Tabs="..tostring(#Runtime.TabButtons),
+        "AimTags="..tostring(#CollectionService:GetTagged("ZAKA_Target")),
+        "Studio="..tostring(RunService:IsStudio()),
+        "Touch="..tostring(UserInputService.TouchEnabled),
+    }
+    notify(table.concat(checks,"  •  "))
+end
+
+local function cleanupLocalVisuals()
+    stopAimTrainer()
+    securityStop()
+    clearHighlights()
+    if Runtime.Crosshair then Runtime.Crosshair:Destroy(); Runtime.Crosshair=nil end
+    if Runtime.FOVCircle then Runtime.FOVCircle:Destroy(); Runtime.FOVCircle=nil end
+    if Runtime.BookmarkMarker then Runtime.BookmarkMarker:Destroy(); Runtime.BookmarkMarker=nil end
+    clearDebugLabels()
+    if Runtime.RayDebugPart then Runtime.RayDebugPart:Destroy(); Runtime.RayDebugPart=nil end
+    for _,x in ipairs(FX:GetChildren()) do x:Destroy() end
+    setNightVision(false)
+    setGlow(false)
+end
+
+add("Kiểm tra toàn bộ UI","Game Tools","🧪","Kiểm tra nhanh trạng thái UI, tag target, touch và môi trường Studio.","Button",false,nil,nil,nil,runSystemCheck,{"system","check","diagnostic","ui"})
+add("Dọn hiệu ứng an toàn","Game Tools","🧹","Tắt các hiệu ứng/đánh dấu do ZAKA tạo mà không tác động logic game.","Button",false,nil,nil,nil,cleanupLocalVisuals,{"cleanup","clear","effects","safe"})
 
 --==========================================================
 -- INITIALIZE
