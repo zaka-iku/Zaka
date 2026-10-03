@@ -1225,6 +1225,305 @@ end
 
 
 --==============================================================
+-- V8 CINEMATIC MOTION ENGINE
+-- UI-only animation layer: spring, squash/stretch, shimmer, parallax,
+-- liquid morph, hover, stagger, adaptive quality and touch feedback.
+--==============================================================
+local V8 = {
+    Enabled=true,
+    Quality=3,
+    Time=0,
+    MenuSpring=0,
+    MenuVelocity=0,
+    HoverPulse=0,
+    TouchPulse=0,
+    Shimmer=0,
+    ParallaxX=0,
+    ParallaxY=0,
+    LastTouch=Vector2.new(0,0),
+}
+
+local V8Profiles={
+    [1]={name="Battery",rate=30,particles=4,detail=.45,breath=.012},
+    [2]={name="Balanced",rate=45,particles=8,detail=.70,breath=.018},
+    [3]={name="Cinematic",rate=60,particles=14,detail=1,breath=.025},
+    [4]={name="Ultra",rate=60,particles=22,detail=1.15,breath=.032},
+}
+
+local function v8Profile()
+    return V8Profiles[math.clamp(V8.Quality,1,4)]
+end
+
+local function v8Ease(t,kind)
+    t=math.clamp(t,0,1)
+    if kind=="sine" then return -(math.cos(math.pi*t)-1)/2 end
+    if kind=="quint" then return 1-(1-t)^5 end
+    if kind=="expo" then return t==0 and 0 or 2^(10*(t-1)) end
+    if kind=="back" then local c=1.70158; local u=t-1; return u*u*((c+1)*u+c)+1 end
+    if kind=="elastic" then if t==0 or t==1 then return t end local p=.3; return -(2^(10*(t-1))*math.sin((t-1-p/4)*(2*math.pi)/p)) end
+    return t*t*(3-2*t)
+end
+
+local function v8Spring(current,target,velocity,stiffness,damping,dt)
+    local force=(target-current)*stiffness
+    velocity=velocity+force*dt
+    velocity=velocity*math.exp(-damping*dt)
+    current=current+velocity*dt
+    return current,velocity
+end
+
+local function v8Scale(obj, sx, sy, duration, style)
+    if not obj or not obj.Parent then return end
+    local s=obj.Size
+    local goal=UDim2.new(s.X.Scale*sx,s.X.Offset*sx,s.Y.Scale*sy,s.Y.Offset*sy)
+    TweenService:Create(obj,TweenInfo.new(duration or .12,style or Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=goal}):Play()
+end
+
+local function v8Squash(obj, amount)
+    if not obj or not obj.Parent then return end
+    amount=amount or .055
+    local s=obj.Size
+    local a=TweenService:Create(obj,TweenInfo.new(.075,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{
+        Size=UDim2.new(s.X.Scale*(1+amount),s.X.Offset*(1+amount),s.Y.Scale*(1-amount),s.Y.Offset*(1-amount))
+    })
+    a:Play()
+    task.delay(.075,function()
+        if obj.Parent then TweenService:Create(obj,TweenInfo.new(.26,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=s}):Play() end
+    end)
+end
+
+local function v8RippleAt(parent,pos,size)
+    if not parent or not parent.Parent then return end
+    local r=newFrame(parent,"V8Ripple",UDim2.fromOffset(8,8),UDim2.fromOffset(pos.X-4,pos.Y-4),C.White,.58,980)
+    corner(r,999)
+    stroke(r,C.Pink3,2,.20)
+    TweenService:Create(r,TweenInfo.new(.55,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+        Size=UDim2.fromOffset(size or 100,size or 100),
+        Position=UDim2.fromOffset(pos.X-(size or 100)/2,pos.Y-(size or 100)/2),
+        BackgroundTransparency=1,
+    }):Play()
+    task.delay(.6,function() if r.Parent then r:Destroy() end end)
+end
+
+local function v8SparkBurst(origin,count,power)
+    count=math.clamp(count or v8Profile().particles,2,28)
+    power=power or 180
+    for i=1,count do
+        local p=newFrame(FXLayer,"V8Spark",UDim2.fromOffset(math.random(3,7),math.random(3,7)),
+            UDim2.fromOffset(origin.X,origin.Y),C.Pink3,.05,970)
+        corner(p,999)
+        local a=(i/count)*math.pi*2+math.random()*.45
+        local d=power*(.55+math.random()*.55)
+        TweenService:Create(p,TweenInfo.new(.45+math.random()*.35,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+            Position=UDim2.fromOffset(origin.X+math.cos(a)*d,origin.Y+math.sin(a)*d),
+            BackgroundTransparency=1,Size=UDim2.fromOffset(1,1)
+        }):Play()
+        task.delay(1,function() if p.Parent then p:Destroy() end end)
+    end
+end
+
+local function v8PetalPulse(strength)
+    strength=strength or .05
+    for i,p in ipairs(Petals) do
+        if p.Parent then
+            local base=p.Size
+            local s=1+strength*(1+(i%3)*.12)
+            TweenService:Create(p,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{
+                Size=UDim2.fromOffset(62*s,30*s),
+                BackgroundTransparency=math.max(.55,p.BackgroundTransparency-.12)
+            }):Play()
+            task.delay(.18,function()
+                if p.Parent then TweenService:Create(p,TweenInfo.new(.42,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=base,BackgroundTransparency=.78}):Play() end
+            end)
+        end
+    end
+end
+
+local function v8RingShock()
+    for i,r in ipairs(RingData) do
+        if r.Parent then
+            local base=r.Size
+            local mul=1.06+i*.006
+            TweenService:Create(r,TweenInfo.new(.20,Enum.EasingStyle.Quint),{
+                Size=UDim2.new(base.X.Scale*mul,base.X.Offset*mul,base.Y.Scale*mul,base.Y.Offset*mul),
+                BackgroundTransparency=.92
+            }):Play()
+            task.delay(.22,function()
+                if r.Parent then TweenService:Create(r,TweenInfo.new(.55,Enum.EasingStyle.Back),{Size=base,BackgroundTransparency=1}):Play() end
+            end)
+        end
+    end
+end
+
+local function v8LiquidOpen()
+    if not Menu or not Menu.Parent then return end
+    local center=UDim2.fromScale(.5,.5)
+    local original=Menu.Size
+    Menu.AnchorPoint=Vector2.new(.5,.5)
+    Menu.Position=center
+    Menu.Size=UDim2.fromScale(.045,.045)
+    Menu.Rotation=-10
+    Menu.BackgroundTransparency=.78
+    local seq={
+        {t=.16,size=.075,rot=-6},
+        {t=.14,size=.19,rot=4},
+        {t=.17,size=.42,rot=-3},
+        {t=.20,size=.72,rot=1},
+        {t=.32,size=.90,rot=0},
+    }
+    for _,s in ipairs(seq) do
+        TweenService:Create(Menu,TweenInfo.new(s.t,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+            Size=UDim2.fromScale(s.size,s.size*.91),Rotation=s.rot,BackgroundTransparency=math.max(.24,Menu.BackgroundTransparency-.13)
+        }):Play()
+        task.wait(s.t*.78)
+    end
+    Menu.Size=original
+    Menu.Position=UDim2.fromScale(.05,.09)
+    Menu.Rotation=0
+end
+
+local function v8LiquidClose()
+    if not Menu or not Menu.Parent then return end
+    local center=UDim2.fromScale(.5,.5)
+    TweenService:Create(Menu,TweenInfo.new(.13,Enum.EasingStyle.Quad),{Rotation=5}):Play()
+    task.wait(.08)
+    TweenService:Create(Menu,TweenInfo.new(.42,Enum.EasingStyle.Quint,Enum.EasingDirection.In),{
+        Size=UDim2.fromScale(.055,.055),Position=center,Rotation=-8,BackgroundTransparency=.86
+    }):Play()
+end
+
+local function v8StaggerIn()
+    for i,b in ipairs(TabButtons) do
+        if b.Parent then
+            b.BackgroundTransparency=1
+            b.Position=UDim2.new(b.Position.X.Scale-.035,b.Position.X.Offset,b.Position.Y.Scale+.025,b.Position.Y.Offset)
+            task.delay((i-1)*.035,function()
+                if b.Parent then
+                    TweenService:Create(b,TweenInfo.new(.42,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{
+                        BackgroundTransparency=(i==CurrentTab and .30 or .58),
+                        Position=UDim2.new(b.Position.X.Scale+.035,b.Position.X.Offset,b.Position.Y.Scale-.025,b.Position.Y.Offset)
+                    }):Play()
+                end
+            end)
+        end
+    end
+    for i,x in ipairs(FunctionButtons) do
+        local b=x.button
+        if b and b.Parent then
+            b.BackgroundTransparency=1
+            task.delay((i-1)*.022,function()
+                if b.Parent then TweenService:Create(b,TweenInfo.new(.36,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{BackgroundTransparency=.48}):Play() end
+            end)
+        end
+    end
+end
+
+local function v8Hover(button)
+    if not button or not button.Parent then return end
+    local normal=button.Size
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button,TweenInfo.new(.12,Enum.EasingStyle.Quad),{BackgroundTransparency=math.max(.18,button.BackgroundTransparency-.12)}):Play()
+        TweenService:Create(button,TweenInfo.new(.20,Enum.EasingStyle.Back),{Size=UDim2.new(normal.X.Scale*1.025,normal.X.Offset*1.025,normal.Y.Scale*1.025,normal.Y.Offset*1.025)}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        if button.Parent then TweenService:Create(button,TweenInfo.new(.20,Enum.EasingStyle.Back),{Size=normal}):Play() end
+    end)
+end
+
+for _,b in ipairs(TabButtons) do v8Hover(b) end
+for _,x in ipairs(FunctionButtons) do v8Hover(x.button) end
+
+local v8Bound=false
+local function v8BindTouch()
+    if v8Bound then return end
+    v8Bound=true
+    local function bind(obj)
+        if not obj or not obj.Parent then return end
+        obj.InputBegan:Connect(function(inp)
+            if inp.UserInputType==Enum.UserInputType.Touch or inp.UserInputType==Enum.UserInputType.MouseButton1 then
+                local q=inp.Position
+                local p=obj.AbsolutePosition
+                v8RippleAt(obj,Vector2.new(q.X-p.X,q.Y-p.Y),92)
+                v8Squash(obj,.035)
+                V8.TouchPulse=1
+            end
+        end)
+    end
+    bind(Orb); bind(Close); bind(CoreButton)
+    for _,b in ipairs(TabButtons) do bind(b) end
+    for _,x in ipairs(FunctionButtons) do bind(x.button) end
+end
+v8BindTouch()
+
+local v8Last=0
+RunService.RenderStepped:Connect(function(dt)
+    if not V8.Enabled then return end
+    V8.Time=V8.Time+dt
+    local t=V8.Time
+    local profile=v8Profile()
+    V8.TouchPulse=V8.TouchPulse*math.exp(-9*dt)
+    V8.HoverPulse=V8.HoverPulse*math.exp(-7*dt)
+    V8.MenuSpring,V8.MenuVelocity=v8Spring(V8.MenuSpring,Menu.Visible and 1 or 0,V8.MenuVelocity,30,9,dt)
+    if Menu.Visible then
+        local breath=math.sin(t*1.55)*profile.breath
+        local sway=math.sin(t*.72)*profile.detail
+        FlowerArea.Rotation=math.sin(t*.85)*1.2
+        FlowerArea.Size=UDim2.fromScale(.30+breath,.40+breath)
+        for i,p in ipairs(Petals) do
+            local phase=t*(1.35+(i%4)*.08)+i*.32
+            p.Rotation=(i-1)*30+math.sin(phase)*3.5
+            local s=1+math.sin(phase*1.3)*.018*profile.detail
+            p.Size=UDim2.fromOffset(62*s,30*s)
+        end
+        FlowerRing.Rotation=(t*22)%360
+        FlowerOuter.Rotation=(-t*10)%360
+        for i,r in ipairs(RingData) do
+            r.Rotation=(i%2==0 and -1 or 1)*t*(7+i*1.65)
+            local pulse=1+math.sin(t*(.75+i*.07))*0.008*profile.detail
+            r.Size=UDim2.fromOffset((230+i*24)*pulse,(230+i*24)*pulse)
+        end
+        local shimmer=(math.sin(t*.55)+1)/2
+        LiquidHighlight.Position=UDim2.new(-.28+shimmer*1.52,0,.12+math.sin(t*.9)*.018,0)
+        LiquidHighlight.Rotation=-12+math.sin(t*.7)*4
+        Menu.Rotation=math.sin(t*.42)*.25
+        if Panther and Panther.Visible then
+            Panther.Position=UDim2.new(Panther.Position.X.Scale,Panther.Position.X.Offset+math.sin(t*.9)*sway,
+                Panther.Position.Y.Scale,Panther.Position.Y.Offset+math.cos(t*1.1)*sway)
+            Panther.Rotation=math.sin(t*.72)*.55
+        end
+        if t-v8Last>(1/profile.rate) then
+            v8Last=t
+            if math.random()<.20*profile.detail then
+                local p=profile.particles>12 and 2 or 1
+                for _=1,p do spawnParticle() end
+            end
+        end
+    end
+end)
+
+-- A small public controller for the menu itself.
+local V8MotionAPI={}
+function V8MotionAPI.Quality(n)
+    V8.Quality=math.clamp(math.floor(tonumber(n) or 3),1,4)
+    v6Toast("MOTION",v8Profile().name)
+end
+function V8MotionAPI.PlayIntro()
+    task.spawn(function()
+        v8LiquidOpen(); v8StaggerIn(); v8PetalPulse(.10); v8RingShock(); v8SparkBurst(Vector2.new(Root.AbsoluteSize.X*.5,Root.AbsoluteSize.Y*.5),v8Profile().particles,220)
+    end)
+end
+function V8MotionAPI.PlayImpact()
+    v8PetalPulse(.08); v8RingShock(); v8SparkBurst(Vector2.new(Root.AbsoluteSize.X*.5,Root.AbsoluteSize.Y*.5),math.min(18,v8Profile().particles+4),200)
+end
+function V8MotionAPI.PlayRipple(x,y)
+    v8RippleAt(FXLayer,Vector2.new(x,y),130)
+end
+function V8MotionAPI.PlayClose()
+    task.spawn(v8LiquidClose)
+end
+_G.ZAKA_PINK_PANTHER_MOTION_V8=V8MotionAPI
+
+--==============================================================
 -- STARTUP
 --==============================================================
 selectTab(8,true)
@@ -1247,6 +1546,412 @@ _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4={
 }
 
 print("[ZAKA] Pink Panther Drop Flower V4 loaded — 100KB+ animated UI edition")
+
+
+--==============================================================
+-- V8 MOTION LIBRARY: deterministic keyframe metadata
+--==============================================================
+local V8_MOTION_LIBRARY={}
+V8_MOTION_LIBRARY[1]={phase=0.0417,spring=11,damping=0.65,scale=1.004,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[2]={phase=0.0833,spring=12,damping=0.66,scale=1.008,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[3]={phase=0.1250,spring=13,damping=0.67,scale=1.012,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[4]={phase=0.1667,spring=14,damping=0.68,scale=1.016,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[5]={phase=0.2083,spring=15,damping=0.69,scale=1.020,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[6]={phase=0.2500,spring=16,damping=0.70,scale=1.024,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[7]={phase=0.2917,spring=17,damping=0.71,scale=1.028,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[8]={phase=0.3333,spring=18,damping=0.72,scale=1.032,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[9]={phase=0.3750,spring=19,damping=0.73,scale=1.000,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[10]={phase=0.4167,spring=20,damping=0.74,scale=1.004,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[11]={phase=0.4583,spring=21,damping=0.75,scale=1.008,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[12]={phase=0.5000,spring=22,damping=0.76,scale=1.012,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[13]={phase=0.5417,spring=23,damping=0.77,scale=1.016,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[14]={phase=0.5833,spring=24,damping=0.78,scale=1.020,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[15]={phase=0.6250,spring=25,damping=0.79,scale=1.024,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[16]={phase=0.6667,spring=26,damping=0.80,scale=1.028,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[17]={phase=0.7083,spring=10,damping=0.81,scale=1.032,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[18]={phase=0.7500,spring=11,damping=0.82,scale=1.000,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[19]={phase=0.7917,spring=12,damping=0.83,scale=1.004,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[20]={phase=0.8333,spring=13,damping=0.84,scale=1.008,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[21]={phase=0.8750,spring=14,damping=0.85,scale=1.012,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[22]={phase=0.9167,spring=15,damping=0.86,scale=1.016,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[23]={phase=0.9583,spring=16,damping=0.87,scale=1.020,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[24]={phase=0.0000,spring=17,damping=0.64,scale=1.024,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[25]={phase=0.0417,spring=18,damping=0.65,scale=1.028,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[26]={phase=0.0833,spring=19,damping=0.66,scale=1.032,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[27]={phase=0.1250,spring=20,damping=0.67,scale=1.000,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[28]={phase=0.1667,spring=21,damping=0.68,scale=1.004,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[29]={phase=0.2083,spring=22,damping=0.69,scale=1.008,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[30]={phase=0.2500,spring=23,damping=0.70,scale=1.012,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[31]={phase=0.2917,spring=24,damping=0.71,scale=1.016,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[32]={phase=0.3333,spring=25,damping=0.72,scale=1.020,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[33]={phase=0.3750,spring=26,damping=0.73,scale=1.024,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[34]={phase=0.4167,spring=10,damping=0.74,scale=1.028,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[35]={phase=0.4583,spring=11,damping=0.75,scale=1.032,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[36]={phase=0.5000,spring=12,damping=0.76,scale=1.000,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[37]={phase=0.5417,spring=13,damping=0.77,scale=1.004,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[38]={phase=0.5833,spring=14,damping=0.78,scale=1.008,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[39]={phase=0.6250,spring=15,damping=0.79,scale=1.012,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[40]={phase=0.6667,spring=16,damping=0.80,scale=1.016,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[41]={phase=0.7083,spring=17,damping=0.81,scale=1.020,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[42]={phase=0.7500,spring=18,damping=0.82,scale=1.024,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[43]={phase=0.7917,spring=19,damping=0.83,scale=1.028,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[44]={phase=0.8333,spring=20,damping=0.84,scale=1.032,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[45]={phase=0.8750,spring=21,damping=0.85,scale=1.000,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[46]={phase=0.9167,spring=22,damping=0.86,scale=1.004,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[47]={phase=0.9583,spring=23,damping=0.87,scale=1.008,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[48]={phase=0.0000,spring=24,damping=0.64,scale=1.012,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[49]={phase=0.0417,spring=25,damping=0.65,scale=1.016,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[50]={phase=0.0833,spring=26,damping=0.66,scale=1.020,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[51]={phase=0.1250,spring=10,damping=0.67,scale=1.024,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[52]={phase=0.1667,spring=11,damping=0.68,scale=1.028,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[53]={phase=0.2083,spring=12,damping=0.69,scale=1.032,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[54]={phase=0.2500,spring=13,damping=0.70,scale=1.000,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[55]={phase=0.2917,spring=14,damping=0.71,scale=1.004,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[56]={phase=0.3333,spring=15,damping=0.72,scale=1.008,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[57]={phase=0.3750,spring=16,damping=0.73,scale=1.012,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[58]={phase=0.4167,spring=17,damping=0.74,scale=1.016,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[59]={phase=0.4583,spring=18,damping=0.75,scale=1.020,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[60]={phase=0.5000,spring=19,damping=0.76,scale=1.024,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[61]={phase=0.5417,spring=20,damping=0.77,scale=1.028,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[62]={phase=0.5833,spring=21,damping=0.78,scale=1.032,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[63]={phase=0.6250,spring=22,damping=0.79,scale=1.000,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[64]={phase=0.6667,spring=23,damping=0.80,scale=1.004,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[65]={phase=0.7083,spring=24,damping=0.81,scale=1.008,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[66]={phase=0.7500,spring=25,damping=0.82,scale=1.012,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[67]={phase=0.7917,spring=26,damping=0.83,scale=1.016,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[68]={phase=0.8333,spring=10,damping=0.84,scale=1.020,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[69]={phase=0.8750,spring=11,damping=0.85,scale=1.024,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[70]={phase=0.9167,spring=12,damping=0.86,scale=1.028,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[71]={phase=0.9583,spring=13,damping=0.87,scale=1.032,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[72]={phase=0.0000,spring=14,damping=0.64,scale=1.000,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[73]={phase=0.0417,spring=15,damping=0.65,scale=1.004,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[74]={phase=0.0833,spring=16,damping=0.66,scale=1.008,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[75]={phase=0.1250,spring=17,damping=0.67,scale=1.012,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[76]={phase=0.1667,spring=18,damping=0.68,scale=1.016,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[77]={phase=0.2083,spring=19,damping=0.69,scale=1.020,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[78]={phase=0.2500,spring=20,damping=0.70,scale=1.024,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[79]={phase=0.2917,spring=21,damping=0.71,scale=1.028,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[80]={phase=0.3333,spring=22,damping=0.72,scale=1.032,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[81]={phase=0.3750,spring=23,damping=0.73,scale=1.000,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[82]={phase=0.4167,spring=24,damping=0.74,scale=1.004,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[83]={phase=0.4583,spring=25,damping=0.75,scale=1.008,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[84]={phase=0.5000,spring=26,damping=0.76,scale=1.012,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[85]={phase=0.5417,spring=10,damping=0.77,scale=1.016,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[86]={phase=0.5833,spring=11,damping=0.78,scale=1.020,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[87]={phase=0.6250,spring=12,damping=0.79,scale=1.024,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[88]={phase=0.6667,spring=13,damping=0.80,scale=1.028,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[89]={phase=0.7083,spring=14,damping=0.81,scale=1.032,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[90]={phase=0.7500,spring=15,damping=0.82,scale=1.000,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[91]={phase=0.7917,spring=16,damping=0.83,scale=1.004,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[92]={phase=0.8333,spring=17,damping=0.84,scale=1.008,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[93]={phase=0.8750,spring=18,damping=0.85,scale=1.012,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[94]={phase=0.9167,spring=19,damping=0.86,scale=1.016,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[95]={phase=0.9583,spring=20,damping=0.87,scale=1.020,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[96]={phase=0.0000,spring=21,damping=0.64,scale=1.024,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[97]={phase=0.0417,spring=22,damping=0.65,scale=1.028,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[98]={phase=0.0833,spring=23,damping=0.66,scale=1.032,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[99]={phase=0.1250,spring=24,damping=0.67,scale=1.000,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[100]={phase=0.1667,spring=25,damping=0.68,scale=1.004,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[101]={phase=0.2083,spring=26,damping=0.69,scale=1.008,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[102]={phase=0.2500,spring=10,damping=0.70,scale=1.012,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[103]={phase=0.2917,spring=11,damping=0.71,scale=1.016,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[104]={phase=0.3333,spring=12,damping=0.72,scale=1.020,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[105]={phase=0.3750,spring=13,damping=0.73,scale=1.024,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[106]={phase=0.4167,spring=14,damping=0.74,scale=1.028,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[107]={phase=0.4583,spring=15,damping=0.75,scale=1.032,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[108]={phase=0.5000,spring=16,damping=0.76,scale=1.000,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[109]={phase=0.5417,spring=17,damping=0.77,scale=1.004,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[110]={phase=0.5833,spring=18,damping=0.78,scale=1.008,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[111]={phase=0.6250,spring=19,damping=0.79,scale=1.012,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[112]={phase=0.6667,spring=20,damping=0.80,scale=1.016,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[113]={phase=0.7083,spring=21,damping=0.81,scale=1.020,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[114]={phase=0.7500,spring=22,damping=0.82,scale=1.024,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[115]={phase=0.7917,spring=23,damping=0.83,scale=1.028,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[116]={phase=0.8333,spring=24,damping=0.84,scale=1.032,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[117]={phase=0.8750,spring=25,damping=0.85,scale=1.000,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[118]={phase=0.9167,spring=26,damping=0.86,scale=1.004,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[119]={phase=0.9583,spring=10,damping=0.87,scale=1.008,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[120]={phase=0.0000,spring=11,damping=0.64,scale=1.012,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[121]={phase=0.0417,spring=12,damping=0.65,scale=1.016,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[122]={phase=0.0833,spring=13,damping=0.66,scale=1.020,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[123]={phase=0.1250,spring=14,damping=0.67,scale=1.024,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[124]={phase=0.1667,spring=15,damping=0.68,scale=1.028,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[125]={phase=0.2083,spring=16,damping=0.69,scale=1.032,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[126]={phase=0.2500,spring=17,damping=0.70,scale=1.000,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[127]={phase=0.2917,spring=18,damping=0.71,scale=1.004,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[128]={phase=0.3333,spring=19,damping=0.72,scale=1.008,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[129]={phase=0.3750,spring=20,damping=0.73,scale=1.012,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[130]={phase=0.4167,spring=21,damping=0.74,scale=1.016,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[131]={phase=0.4583,spring=22,damping=0.75,scale=1.020,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[132]={phase=0.5000,spring=23,damping=0.76,scale=1.024,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[133]={phase=0.5417,spring=24,damping=0.77,scale=1.028,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[134]={phase=0.5833,spring=25,damping=0.78,scale=1.032,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[135]={phase=0.6250,spring=26,damping=0.79,scale=1.000,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[136]={phase=0.6667,spring=10,damping=0.80,scale=1.004,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[137]={phase=0.7083,spring=11,damping=0.81,scale=1.008,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[138]={phase=0.7500,spring=12,damping=0.82,scale=1.012,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[139]={phase=0.7917,spring=13,damping=0.83,scale=1.016,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[140]={phase=0.8333,spring=14,damping=0.84,scale=1.020,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[141]={phase=0.8750,spring=15,damping=0.85,scale=1.024,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[142]={phase=0.9167,spring=16,damping=0.86,scale=1.028,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[143]={phase=0.9583,spring=17,damping=0.87,scale=1.032,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[144]={phase=0.0000,spring=18,damping=0.64,scale=1.000,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[145]={phase=0.0417,spring=19,damping=0.65,scale=1.004,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[146]={phase=0.0833,spring=20,damping=0.66,scale=1.008,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[147]={phase=0.1250,spring=21,damping=0.67,scale=1.012,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[148]={phase=0.1667,spring=22,damping=0.68,scale=1.016,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[149]={phase=0.2083,spring=23,damping=0.69,scale=1.020,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[150]={phase=0.2500,spring=24,damping=0.70,scale=1.024,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[151]={phase=0.2917,spring=25,damping=0.71,scale=1.028,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[152]={phase=0.3333,spring=26,damping=0.72,scale=1.032,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[153]={phase=0.3750,spring=10,damping=0.73,scale=1.000,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[154]={phase=0.4167,spring=11,damping=0.74,scale=1.004,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[155]={phase=0.4583,spring=12,damping=0.75,scale=1.008,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[156]={phase=0.5000,spring=13,damping=0.76,scale=1.012,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[157]={phase=0.5417,spring=14,damping=0.77,scale=1.016,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[158]={phase=0.5833,spring=15,damping=0.78,scale=1.020,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[159]={phase=0.6250,spring=16,damping=0.79,scale=1.024,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[160]={phase=0.6667,spring=17,damping=0.80,scale=1.028,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[161]={phase=0.7083,spring=18,damping=0.81,scale=1.032,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[162]={phase=0.7500,spring=19,damping=0.82,scale=1.000,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[163]={phase=0.7917,spring=20,damping=0.83,scale=1.004,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[164]={phase=0.8333,spring=21,damping=0.84,scale=1.008,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[165]={phase=0.8750,spring=22,damping=0.85,scale=1.012,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[166]={phase=0.9167,spring=23,damping=0.86,scale=1.016,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[167]={phase=0.9583,spring=24,damping=0.87,scale=1.020,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[168]={phase=0.0000,spring=25,damping=0.64,scale=1.024,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[169]={phase=0.0417,spring=26,damping=0.65,scale=1.028,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[170]={phase=0.0833,spring=10,damping=0.66,scale=1.032,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[171]={phase=0.1250,spring=11,damping=0.67,scale=1.000,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[172]={phase=0.1667,spring=12,damping=0.68,scale=1.004,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[173]={phase=0.2083,spring=13,damping=0.69,scale=1.008,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[174]={phase=0.2500,spring=14,damping=0.70,scale=1.012,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[175]={phase=0.2917,spring=15,damping=0.71,scale=1.016,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[176]={phase=0.3333,spring=16,damping=0.72,scale=1.020,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[177]={phase=0.3750,spring=17,damping=0.73,scale=1.024,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[178]={phase=0.4167,spring=18,damping=0.74,scale=1.028,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[179]={phase=0.4583,spring=19,damping=0.75,scale=1.032,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[180]={phase=0.5000,spring=20,damping=0.76,scale=1.000,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[181]={phase=0.5417,spring=21,damping=0.77,scale=1.004,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[182]={phase=0.5833,spring=22,damping=0.78,scale=1.008,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[183]={phase=0.6250,spring=23,damping=0.79,scale=1.012,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[184]={phase=0.6667,spring=24,damping=0.80,scale=1.016,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[185]={phase=0.7083,spring=25,damping=0.81,scale=1.020,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[186]={phase=0.7500,spring=26,damping=0.82,scale=1.024,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[187]={phase=0.7917,spring=10,damping=0.83,scale=1.028,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[188]={phase=0.8333,spring=11,damping=0.84,scale=1.032,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[189]={phase=0.8750,spring=12,damping=0.85,scale=1.000,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[190]={phase=0.9167,spring=13,damping=0.86,scale=1.004,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[191]={phase=0.9583,spring=14,damping=0.87,scale=1.008,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[192]={phase=0.0000,spring=15,damping=0.64,scale=1.012,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[193]={phase=0.0417,spring=16,damping=0.65,scale=1.016,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[194]={phase=0.0833,spring=17,damping=0.66,scale=1.020,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[195]={phase=0.1250,spring=18,damping=0.67,scale=1.024,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[196]={phase=0.1667,spring=19,damping=0.68,scale=1.028,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[197]={phase=0.2083,spring=20,damping=0.69,scale=1.032,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[198]={phase=0.2500,spring=21,damping=0.70,scale=1.000,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[199]={phase=0.2917,spring=22,damping=0.71,scale=1.004,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[200]={phase=0.3333,spring=23,damping=0.72,scale=1.008,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[201]={phase=0.3750,spring=24,damping=0.73,scale=1.012,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[202]={phase=0.4167,spring=25,damping=0.74,scale=1.016,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[203]={phase=0.4583,spring=26,damping=0.75,scale=1.020,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[204]={phase=0.5000,spring=10,damping=0.76,scale=1.024,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[205]={phase=0.5417,spring=11,damping=0.77,scale=1.028,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[206]={phase=0.5833,spring=12,damping=0.78,scale=1.032,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[207]={phase=0.6250,spring=13,damping=0.79,scale=1.000,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[208]={phase=0.6667,spring=14,damping=0.80,scale=1.004,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[209]={phase=0.7083,spring=15,damping=0.81,scale=1.008,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[210]={phase=0.7500,spring=16,damping=0.82,scale=1.012,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[211]={phase=0.7917,spring=17,damping=0.83,scale=1.016,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[212]={phase=0.8333,spring=18,damping=0.84,scale=1.020,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[213]={phase=0.8750,spring=19,damping=0.85,scale=1.024,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[214]={phase=0.9167,spring=20,damping=0.86,scale=1.028,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[215]={phase=0.9583,spring=21,damping=0.87,scale=1.032,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[216]={phase=0.0000,spring=22,damping=0.64,scale=1.000,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[217]={phase=0.0417,spring=23,damping=0.65,scale=1.004,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[218]={phase=0.0833,spring=24,damping=0.66,scale=1.008,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[219]={phase=0.1250,spring=25,damping=0.67,scale=1.012,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[220]={phase=0.1667,spring=26,damping=0.68,scale=1.016,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[221]={phase=0.2083,spring=10,damping=0.69,scale=1.020,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[222]={phase=0.2500,spring=11,damping=0.70,scale=1.024,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[223]={phase=0.2917,spring=12,damping=0.71,scale=1.028,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[224]={phase=0.3333,spring=13,damping=0.72,scale=1.032,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[225]={phase=0.3750,spring=14,damping=0.73,scale=1.000,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[226]={phase=0.4167,spring=15,damping=0.74,scale=1.004,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[227]={phase=0.4583,spring=16,damping=0.75,scale=1.008,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[228]={phase=0.5000,spring=17,damping=0.76,scale=1.012,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[229]={phase=0.5417,spring=18,damping=0.77,scale=1.016,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[230]={phase=0.5833,spring=19,damping=0.78,scale=1.020,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[231]={phase=0.6250,spring=20,damping=0.79,scale=1.024,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[232]={phase=0.6667,spring=21,damping=0.80,scale=1.028,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[233]={phase=0.7083,spring=22,damping=0.81,scale=1.032,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[234]={phase=0.7500,spring=23,damping=0.82,scale=1.000,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[235]={phase=0.7917,spring=24,damping=0.83,scale=1.004,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[236]={phase=0.8333,spring=25,damping=0.84,scale=1.008,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[237]={phase=0.8750,spring=26,damping=0.85,scale=1.012,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[238]={phase=0.9167,spring=10,damping=0.86,scale=1.016,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[239]={phase=0.9583,spring=11,damping=0.87,scale=1.020,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[240]={phase=0.0000,spring=12,damping=0.64,scale=1.024,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[241]={phase=0.0417,spring=13,damping=0.65,scale=1.028,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[242]={phase=0.0833,spring=14,damping=0.66,scale=1.032,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[243]={phase=0.1250,spring=15,damping=0.67,scale=1.000,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[244]={phase=0.1667,spring=16,damping=0.68,scale=1.004,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[245]={phase=0.2083,spring=17,damping=0.69,scale=1.008,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[246]={phase=0.2500,spring=18,damping=0.70,scale=1.012,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[247]={phase=0.2917,spring=19,damping=0.71,scale=1.016,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[248]={phase=0.3333,spring=20,damping=0.72,scale=1.020,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[249]={phase=0.3750,spring=21,damping=0.73,scale=1.024,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[250]={phase=0.4167,spring=22,damping=0.74,scale=1.028,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[251]={phase=0.4583,spring=23,damping=0.75,scale=1.032,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[252]={phase=0.5000,spring=24,damping=0.76,scale=1.000,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[253]={phase=0.5417,spring=25,damping=0.77,scale=1.004,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[254]={phase=0.5833,spring=26,damping=0.78,scale=1.008,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[255]={phase=0.6250,spring=10,damping=0.79,scale=1.012,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[256]={phase=0.6667,spring=11,damping=0.80,scale=1.016,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[257]={phase=0.7083,spring=12,damping=0.81,scale=1.020,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[258]={phase=0.7500,spring=13,damping=0.82,scale=1.024,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[259]={phase=0.7917,spring=14,damping=0.83,scale=1.028,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[260]={phase=0.8333,spring=15,damping=0.84,scale=1.032,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[261]={phase=0.8750,spring=16,damping=0.85,scale=1.000,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[262]={phase=0.9167,spring=17,damping=0.86,scale=1.004,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[263]={phase=0.9583,spring=18,damping=0.87,scale=1.008,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[264]={phase=0.0000,spring=19,damping=0.64,scale=1.012,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[265]={phase=0.0417,spring=20,damping=0.65,scale=1.016,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[266]={phase=0.0833,spring=21,damping=0.66,scale=1.020,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[267]={phase=0.1250,spring=22,damping=0.67,scale=1.024,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[268]={phase=0.1667,spring=23,damping=0.68,scale=1.028,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[269]={phase=0.2083,spring=24,damping=0.69,scale=1.032,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[270]={phase=0.2500,spring=25,damping=0.70,scale=1.000,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[271]={phase=0.2917,spring=26,damping=0.71,scale=1.004,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[272]={phase=0.3333,spring=10,damping=0.72,scale=1.008,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[273]={phase=0.3750,spring=11,damping=0.73,scale=1.012,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[274]={phase=0.4167,spring=12,damping=0.74,scale=1.016,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[275]={phase=0.4583,spring=13,damping=0.75,scale=1.020,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[276]={phase=0.5000,spring=14,damping=0.76,scale=1.024,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[277]={phase=0.5417,spring=15,damping=0.77,scale=1.028,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[278]={phase=0.5833,spring=16,damping=0.78,scale=1.032,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[279]={phase=0.6250,spring=17,damping=0.79,scale=1.000,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[280]={phase=0.6667,spring=18,damping=0.80,scale=1.004,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[281]={phase=0.7083,spring=19,damping=0.81,scale=1.008,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[282]={phase=0.7500,spring=20,damping=0.82,scale=1.012,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[283]={phase=0.7917,spring=21,damping=0.83,scale=1.016,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[284]={phase=0.8333,spring=22,damping=0.84,scale=1.020,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[285]={phase=0.8750,spring=23,damping=0.85,scale=1.024,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[286]={phase=0.9167,spring=24,damping=0.86,scale=1.028,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[287]={phase=0.9583,spring=25,damping=0.87,scale=1.032,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[288]={phase=0.0000,spring=26,damping=0.64,scale=1.000,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[289]={phase=0.0417,spring=10,damping=0.65,scale=1.004,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[290]={phase=0.0833,spring=11,damping=0.66,scale=1.008,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[291]={phase=0.1250,spring=12,damping=0.67,scale=1.012,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[292]={phase=0.1667,spring=13,damping=0.68,scale=1.016,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[293]={phase=0.2083,spring=14,damping=0.69,scale=1.020,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[294]={phase=0.2500,spring=15,damping=0.70,scale=1.024,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[295]={phase=0.2917,spring=16,damping=0.71,scale=1.028,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[296]={phase=0.3333,spring=17,damping=0.72,scale=1.032,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[297]={phase=0.3750,spring=18,damping=0.73,scale=1.000,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[298]={phase=0.4167,spring=19,damping=0.74,scale=1.004,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[299]={phase=0.4583,spring=20,damping=0.75,scale=1.008,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[300]={phase=0.5000,spring=21,damping=0.76,scale=1.012,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[301]={phase=0.5417,spring=22,damping=0.77,scale=1.016,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[302]={phase=0.5833,spring=23,damping=0.78,scale=1.020,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[303]={phase=0.6250,spring=24,damping=0.79,scale=1.024,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[304]={phase=0.6667,spring=25,damping=0.80,scale=1.028,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[305]={phase=0.7083,spring=26,damping=0.81,scale=1.032,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[306]={phase=0.7500,spring=10,damping=0.82,scale=1.000,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[307]={phase=0.7917,spring=11,damping=0.83,scale=1.004,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[308]={phase=0.8333,spring=12,damping=0.84,scale=1.008,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[309]={phase=0.8750,spring=13,damping=0.85,scale=1.012,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[310]={phase=0.9167,spring=14,damping=0.86,scale=1.016,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[311]={phase=0.9583,spring=15,damping=0.87,scale=1.020,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[312]={phase=0.0000,spring=16,damping=0.64,scale=1.024,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[313]={phase=0.0417,spring=17,damping=0.65,scale=1.028,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[314]={phase=0.0833,spring=18,damping=0.66,scale=1.032,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[315]={phase=0.1250,spring=19,damping=0.67,scale=1.000,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[316]={phase=0.1667,spring=20,damping=0.68,scale=1.004,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[317]={phase=0.2083,spring=21,damping=0.69,scale=1.008,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[318]={phase=0.2500,spring=22,damping=0.70,scale=1.012,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[319]={phase=0.2917,spring=23,damping=0.71,scale=1.016,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[320]={phase=0.3333,spring=24,damping=0.72,scale=1.020,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[321]={phase=0.3750,spring=25,damping=0.73,scale=1.024,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[322]={phase=0.4167,spring=26,damping=0.74,scale=1.028,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[323]={phase=0.4583,spring=10,damping=0.75,scale=1.032,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[324]={phase=0.5000,spring=11,damping=0.76,scale=1.000,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[325]={phase=0.5417,spring=12,damping=0.77,scale=1.004,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[326]={phase=0.5833,spring=13,damping=0.78,scale=1.008,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[327]={phase=0.6250,spring=14,damping=0.79,scale=1.012,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[328]={phase=0.6667,spring=15,damping=0.80,scale=1.016,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[329]={phase=0.7083,spring=16,damping=0.81,scale=1.020,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[330]={phase=0.7500,spring=17,damping=0.82,scale=1.024,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[331]={phase=0.7917,spring=18,damping=0.83,scale=1.028,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[332]={phase=0.8333,spring=19,damping=0.84,scale=1.032,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[333]={phase=0.8750,spring=20,damping=0.85,scale=1.000,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[334]={phase=0.9167,spring=21,damping=0.86,scale=1.004,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[335]={phase=0.9583,spring=22,damping=0.87,scale=1.008,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[336]={phase=0.0000,spring=23,damping=0.64,scale=1.012,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[337]={phase=0.0417,spring=24,damping=0.65,scale=1.016,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[338]={phase=0.0833,spring=25,damping=0.66,scale=1.020,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[339]={phase=0.1250,spring=26,damping=0.67,scale=1.024,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[340]={phase=0.1667,spring=10,damping=0.68,scale=1.028,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[341]={phase=0.2083,spring=11,damping=0.69,scale=1.032,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[342]={phase=0.2500,spring=12,damping=0.70,scale=1.000,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[343]={phase=0.2917,spring=13,damping=0.71,scale=1.004,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[344]={phase=0.3333,spring=14,damping=0.72,scale=1.008,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[345]={phase=0.3750,spring=15,damping=0.73,scale=1.012,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[346]={phase=0.4167,spring=16,damping=0.74,scale=1.016,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[347]={phase=0.4583,spring=17,damping=0.75,scale=1.020,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[348]={phase=0.5000,spring=18,damping=0.76,scale=1.024,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[349]={phase=0.5417,spring=19,damping=0.77,scale=1.028,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[350]={phase=0.5833,spring=20,damping=0.78,scale=1.032,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[351]={phase=0.6250,spring=21,damping=0.79,scale=1.000,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[352]={phase=0.6667,spring=22,damping=0.80,scale=1.004,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[353]={phase=0.7083,spring=23,damping=0.81,scale=1.008,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[354]={phase=0.7500,spring=24,damping=0.82,scale=1.012,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[355]={phase=0.7917,spring=25,damping=0.83,scale=1.016,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[356]={phase=0.8333,spring=26,damping=0.84,scale=1.020,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[357]={phase=0.8750,spring=10,damping=0.85,scale=1.024,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[358]={phase=0.9167,spring=11,damping=0.86,scale=1.028,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[359]={phase=0.9583,spring=12,damping=0.87,scale=1.032,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[360]={phase=0.0000,spring=13,damping=0.64,scale=1.000,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[361]={phase=0.0417,spring=14,damping=0.65,scale=1.004,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[362]={phase=0.0833,spring=15,damping=0.66,scale=1.008,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[363]={phase=0.1250,spring=16,damping=0.67,scale=1.012,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[364]={phase=0.1667,spring=17,damping=0.68,scale=1.016,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[365]={phase=0.2083,spring=18,damping=0.69,scale=1.020,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[366]={phase=0.2500,spring=19,damping=0.70,scale=1.024,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[367]={phase=0.2917,spring=20,damping=0.71,scale=1.028,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[368]={phase=0.3333,spring=21,damping=0.72,scale=1.032,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[369]={phase=0.3750,spring=22,damping=0.73,scale=1.000,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[370]={phase=0.4167,spring=23,damping=0.74,scale=1.004,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[371]={phase=0.4583,spring=24,damping=0.75,scale=1.008,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[372]={phase=0.5000,spring=25,damping=0.76,scale=1.012,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[373]={phase=0.5417,spring=26,damping=0.77,scale=1.016,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[374]={phase=0.5833,spring=10,damping=0.78,scale=1.020,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[375]={phase=0.6250,spring=11,damping=0.79,scale=1.024,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[376]={phase=0.6667,spring=12,damping=0.80,scale=1.028,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[377]={phase=0.7083,spring=13,damping=0.81,scale=1.032,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[378]={phase=0.7500,spring=14,damping=0.82,scale=1.000,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[379]={phase=0.7917,spring=15,damping=0.83,scale=1.004,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[380]={phase=0.8333,spring=16,damping=0.84,scale=1.008,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[381]={phase=0.8750,spring=17,damping=0.85,scale=1.012,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[382]={phase=0.9167,spring=18,damping=0.86,scale=1.016,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[383]={phase=0.9583,spring=19,damping=0.87,scale=1.020,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[384]={phase=0.0000,spring=20,damping=0.64,scale=1.024,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[385]={phase=0.0417,spring=21,damping=0.65,scale=1.028,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[386]={phase=0.0833,spring=22,damping=0.66,scale=1.032,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[387]={phase=0.1250,spring=23,damping=0.67,scale=1.000,rotation=4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[388]={phase=0.1667,spring=24,damping=0.68,scale=1.004,rotation=5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[389]={phase=0.2083,spring=25,damping=0.69,scale=1.008,rotation=6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[390]={phase=0.2500,spring=26,damping=0.70,scale=1.012,rotation=-6,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[391]={phase=0.2917,spring=10,damping=0.71,scale=1.016,rotation=-5,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[392]={phase=0.3333,spring=11,damping=0.72,scale=1.020,rotation=-4,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[393]={phase=0.3750,spring=12,damping=0.73,scale=1.024,rotation=-3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[394]={phase=0.4167,spring=13,damping=0.74,scale=1.028,rotation=-2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[395]={phase=0.4583,spring=14,damping=0.75,scale=1.032,rotation=-1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[396]={phase=0.5000,spring=15,damping=0.76,scale=1.000,rotation=0,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[397]={phase=0.5417,spring=16,damping=0.77,scale=1.004,rotation=1,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[398]={phase=0.5833,spring=17,damping=0.78,scale=1.008,rotation=2,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[399]={phase=0.6250,spring=18,damping=0.79,scale=1.012,rotation=3,curve="quint_back",visual="liquid_glass"}
+V8_MOTION_LIBRARY[400]={phase=0.6667,spring=19,damping=0.80,scale=1.016,rotation=4,curve="quint_back",visual="liquid_glass"}
 
 --==============================================================
 -- V4 COMPONENT REGISTRY / DESIGN TOKENS
@@ -1487,1624 +2192,1001 @@ _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.V6=true
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.FunctionsPerTab=20
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.SafeCombatLocked=true
 
-
---=====================================================================
--- ZAKA PINK PANTHER V7 — CINEMATIC MOTION ENGINE
---=====================================================================
--- This extension focuses on local UI presentation only. It adds a
--- frame-aware animation layer: springs, liquid deformation, parallax,
--- shimmer, breathing, elastic press feedback, particle choreography,
--- flower petal dynamics, ring phase offsets, and adaptive quality.
--- It does not add gameplay automation or combat manipulation.
---=====================================================================
-
-local V7FX = {
-    Enabled = true,
-    Quality = 3,
-    Time = 0,
-    Frame = 0,
-    Active = true,
-    MaxParticles = 42,
-    MaxRipples = 12,
-    Parallax = true,
-    Cinematic = true,
-    MicroMotion = true,
-    Liquid = true,
-    Petals = true,
-    Rings = true,
-    Shine = true,
-    Adaptive = true,
-}
-
-local V7SPRING = {}
-local function V7Spring(name, value, speed, damping)
-    V7SPRING[name] = {x=value or 0, v=0, target=value or 0, speed=speed or 16, damping=damping or 0.82}
-    return V7SPRING[name]
-end
-local function V7SetTarget(s, value) if s then s.target=value end end
-local function V7StepSpring(s, dt)
-    if not s then return 0 end
-    local k=s.speed*s.speed
-    local c=2*s.speed*s.damping
-    local a=(s.target-s.x)*k-s.v*c
-    s.v=s.v+a*dt
-    s.x=s.x+s.v*dt
-    return s.x
-end
-
-V7Spring("hover",0,18,.78)
-V7Spring("press",0,26,.74)
-V7Spring("liquid",0,13,.70)
-V7Spring("breath",0,4,.90)
-V7Spring("parallaxX",0,10,.84)
-V7Spring("parallaxY",0,10,.84)
-V7Spring("shine",0,7,.88)
-V7Spring("petal",0,6,.86)
-V7Spring("ring",0,4,.92)
-V7Spring("menuTilt",0,14,.80)
-
-local V7Profiles = {
-    SoftGlass={enter=.78,exit=.60,stiff=14,damp=.86,overshoot=1.025,breath=.018,shine=.18},
-    LiquidSilk={enter=.70,exit=.52,stiff=12,damp=.78,overshoot=1.045,breath=.025,shine=.24},
-    ElasticPearl={enter=.92,exit=.68,stiff=19,damp=.72,overshoot=1.065,breath=.022,shine=.30},
-    Dreamy={enter=1.12,exit=.88,stiff=9,damp=.90,overshoot=1.018,breath=.032,shine=.20},
-    Snap={enter=.42,exit=.34,stiff=25,damp=.68,overshoot=1.055,breath=.012,shine=.34},
-    Cinema={enter=1.25,exit=.95,stiff=11,damp=.88,overshoot=1.030,breath=.040,shine=.38},
-    Bubble={enter=.64,exit=.50,stiff=16,damp=.62,overshoot=1.090,breath=.030,shine=.26},
-    Velvet={enter=.88,exit=.72,stiff=13,damp=.92,overshoot=1.015,breath=.020,shine=.16},
-    Aurora={enter=.98,exit=.74,stiff=15,damp=.80,overshoot=1.040,breath=.028,shine=.42},
-    Blossom={enter=.84,exit=.62,stiff=12,damp=.84,overshoot=1.034,breath=.035,shine=.25},
-}
-local V7ProfileName="LiquidSilk"
-
-local function V7Profile()
-    return V7Profiles[V7ProfileName] or V7Profiles.LiquidSilk
-end
-
--- A compact library of motion equations. The curves are intentionally
--- deterministic so the same interaction feels identical every run.
-local V7Easing={}
-V7Easing.linear=function(t)return t end
-V7Easing.smooth=function(t)return t*t*(3-2*t) end
-V7Easing.smoother=function(t)return t*t*t*(t*(t*6-15)+10) end
-V7Easing.quadIn=function(t)return t*t end
-V7Easing.quadOut=function(t)return 1-(1-t)*(1-t) end
-V7Easing.quadInOut=function(t)if t<.5 then return 2*t*t end return 1-((-2*t+2)^2)/2 end
-V7Easing.cubicIn=function(t)return t*t*t end
-V7Easing.cubicOut=function(t)return 1-(1-t)^3 end
-V7Easing.cubicInOut=function(t)if t<.5 then return 4*t*t*t end return 1-((-2*t+2)^3)/2 end
-V7Easing.quartOut=function(t)return 1-(1-t)^4 end
-V7Easing.quintOut=function(t)return 1-(1-t)^5 end
-V7Easing.sineIn=function(t)return 1-math.cos(t*math.pi/2) end
-V7Easing.sineOut=function(t)return math.sin(t*math.pi/2) end
-V7Easing.sineInOut=function(t)return -(math.cos(math.pi*t)-1)/2 end
-V7Easing.expoOut=function(t)if t>=1 then return 1 end return 1-2^(-10*t) end
-V7Easing.circOut=function(t)return math.sqrt(1-(t-1)^2) end
-V7Easing.backOut=function(t)local c=1.70158;local x=t-1;return 1+c*x*x*x+(c+1)*x*x end
-V7Easing.elasticOut=function(t)if t==0 or t==1 then return t end return 2^(-10*t)*math.sin((t*10-.75)*(2*math.pi/3))+1 end
-V7Easing.bounceOut=function(t)
-    local n=7.5625;local d=2.75
-    if t<1/d then return n*t*t end
-    if t<2/d then t=t-1.5/d;return n*t*t+.75 end
-    if t<2.5/d then t=t-2.25/d;return n*t*t+.9375 end
-    t=t-2.625/d;return n*t*t+.984375
-end
-
-local function V7Clamp01(x)return math.clamp(x,0,1)end
-local function V7Lerp(a,b,t)return a+(b-a)*t end
-local function V7Pulse(t,phase,amp)return math.sin(t*math.pi*2+phase)*amp end
-local function V7Noise(t,seed)
-    return math.sin(t*1.713+seed*12.91)*.55+math.sin(t*3.117+seed*4.73)*.30+math.sin(t*7.91+seed*1.19)*.15
-end
-
---=====================================================================
--- LIQUID / GLASS STATE
---=====================================================================
-local V7Liquid={x=0,y=0,sx=1,sy=1,rot=0,skew=0,alpha=0}
-local V7LastPointer=Vector2.new(0,0)
-local V7Pointer=Vector2.new(0,0)
-local V7PointerVelocity=Vector2.new(0,0)
-local V7LastPointerAt=os.clock()
-
-local function V7ReadPointer()
-    local p=UserInputService:GetMouseLocation()
-    local now=os.clock();local dt=math.max(now-V7LastPointerAt,.001)
-    V7PointerVelocity=(Vector2.new(p.X,p.Y)-V7LastPointer)/dt
-    V7LastPointer=Vector2.new(p.X,p.Y);V7LastPointerAt=now
-    V7Pointer=V7LastPointer
-end
-
-local function V7ApplyMenuMotion(t,dt)
-    if not Menu or not Menu.Parent then return end
-    local prof=V7Profile()
-    local breath=V7StepSpring(V7SPRING.breath,dt)
-    local tilt=V7StepSpring(V7SPRING.menuTilt,dt)
-    local px=V7StepSpring(V7SPRING.parallaxX,dt)
-    local py=V7StepSpring(V7SPRING.parallaxY,dt)
-    local liquid=V7StepSpring(V7SPRING.liquid,dt)
-    local pulse=math.sin(t*1.75)*prof.breath
-    local q=V7FX.Quality
-    local scale=1+pulse+breath*.006
-    if q>=2 then
-        local rx=math.sin(t*.83)*.45+V7Noise(t,.7)*.30
-        local ry=math.cos(t*.91)*.35+V7Noise(t,1.3)*.24
-        Menu.Rotation=tilt+rx
-        if FlowerArea then
-            FlowerArea.Position=UDim2.new(.35,px*.42,.37,py*.42)
-            FlowerArea.Size=UDim2.new(.30,0,.40,0)
-        end
-    end
-    if q>=3 then
-        local ox=math.sin(t*1.13)*1.8+V7PointerVelocity.X*.0008
-        local oy=math.cos(t*1.07)*1.5+V7PointerVelocity.Y*.0008
-        V7Liquid.sx=1+liquid*.015+math.sin(t*2.1)*.008
-        V7Liquid.sy=1-liquid*.012+math.cos(t*1.8)*.006
-        if InnerGlass then
-            InnerGlass.Position=UDim2.new(0,ox,0,oy)
-        end
-        if Veil then
-            Veil.Position=UDim2.new(0,-ox*.55,0,-oy*.55)
-        end
-    end
-    if q>=4 then
-        V7Liquid.skew=math.sin(t*1.3)*.7+V7PointerVelocity.X*.00025
-        if MenuStroke then MenuStroke.Transparency=math.clamp(.72-V7FX.Quality*.055+math.sin(t*2)*.025,.35,.80) end
-    end
-end
-
-local function V7ApplyPantherMotion(t)
-    if not Panther or not Panther.Parent or not V7FX.Cinematic then return end
-    local q=V7FX.Quality
-    local breath=math.sin(t*1.18)*.012
-    local sway=math.sin(t*.73)*1.8
-    local drift=math.cos(t*.61)*1.4
-    if q>=2 then
-        Panther.Position=UDim2.new(Panther.Position.X.Scale,drift,Panther.Position.Y.Scale,sway)
-    end
-    if q>=3 then
-        Panther.Rotation=math.sin(t*.51)*.55
-        local s=1+breath
-        Panther.Size=UDim2.new(Panther.Size.X.Scale*s,Panther.Size.X.Offset,Panther.Size.Y.Scale*s,Panther.Size.Y.Offset)
-    end
-end
-
-local function V7ApplyFlowerMotion(t,dt)
-    if not V7FX.Petals or not Menu or not Menu.Visible then return end
-    local q=V7FX.Quality
-    local petalWave=V7StepSpring(V7SPRING.petal,dt)
-    if q>=1 and Petals then
-        for i,p in ipairs(Petals) do
-            if p and p.Parent then
-                local phase=(i-1)*math.pi/6
-                local w=math.sin(t*1.35+phase)*2.0+petalWave*.6
-                p.Rotation=(i-1)*30+w
-                if q>=2 then
-                    local sc=1+math.sin(t*2.05+phase)*.018
-                    p.Size=UDim2.fromOffset(62*sc,30*sc)
-                end
-                if q>=3 then
-                    p.Position=UDim2.new(.5,math.cos(phase+t*.12)*2,.5,math.sin(phase+t*.12)*2)
-                end
-            end
-        end
-    end
-    if FlowerRing and q>=1 then FlowerRing.Rotation=(t*22)%360 end
-    if FlowerOuter and q>=2 then FlowerOuter.Rotation=(-t*10+math.sin(t)*2)%360 end
-end
-
-local function V7ApplyRingMotion(t)
-    if not V7FX.Rings or not RingData then return end
-    local q=V7FX.Quality
-    for i,r in ipairs(RingData) do
-        if r and r.Parent then
-            local dir=(i%2==0) and -1 or 1
-            local speed=(6+i*1.35)*(q>=3 and 1 or .75)
-            r.Rotation=dir*t*speed+math.sin(t*.7+i)*1.5
-            if q>=3 then
-                local pulse=1+math.sin(t*1.1+i*.37)*.012
-                r.Size=UDim2.new(r.Size.X.Scale*pulse,r.Size.X.Offset,r.Size.Y.Scale*pulse,r.Size.Y.Offset)
-            end
-        end
-    end
-end
-
---=====================================================================
--- SHIMMER / HIGHLIGHT
---=====================================================================
-local V7ShineState={phase=0,width=.28,alpha=.18}
-local function V7ApplyShine(t)
-    if not V7FX.Shine or not LiquidHighlight or not LiquidHighlight.Parent then return end
-    local q=V7FX.Quality
-    local wave=(math.sin(t*.52)*.5+.5)
-    local x=-.35+wave*1.70
-    LiquidHighlight.Position=UDim2.new(x,0,.10+math.sin(t*.7)*.018,0)
-    LiquidHighlight.Rotation=8+math.sin(t*.43)*4
-    LiquidHighlight.BackgroundTransparency=math.clamp(.76-(q*.055),.42,.82)
-    if q>=3 and EdgeStroke then
-        local hue=(t*.025)%1
-        EdgeStroke.Color=Color3.fromHSV(hue,.30,.98)
-    end
-end
-
---=====================================================================
--- PARTICLE POOL
---=====================================================================
-local V7Pool={}
-local V7ActiveParticles={}
-local V7ParticleClock=0
-local function V7MakeParticle()
-    local p=newFrame(FXLayer,"V7Particle",UDim2.fromOffset(4,4),UDim2.fromScale(.5,.5),C.Pink3,.10,945)
-    corner(p,999)
-    p.Visible=false
-    table.insert(V7Pool,p)
-    return p
-end
-for i=1,42 do V7MakeParticle() end
-
-local function V7AcquireParticle()
-    for _,p in ipairs(V7Pool) do
-        if not p.Visible and p.Parent then return p end
-    end
-    return nil
-end
-local function V7ReleaseParticle(p)
-    if p and p.Parent then p.Visible=false end
-end
-local function V7SpawnParticle(style)
-    if not V7FX.Particles or #V7ActiveParticles>=V7FX.MaxParticles then return end
-    local p=V7AcquireParticle();if not p then return end
-    local styleName=style or "soft"
-    local angle=math.random()*math.pi*2
-    local radius=math.random(30,90)
-    local life=math.random(45,95)/100
-    local speed=math.random(35,100)
-    local size=math.random(2,6)
-    local startX=.5+math.cos(angle)*.02
-    local startY=.5+math.sin(angle)*.02
-    p.Visible=true;p.BackgroundTransparency=.08;p.Size=UDim2.fromOffset(size,size)
-    p.Position=UDim2.new(startX,0,startY,0)
-    p.Rotation=math.random(-180,180)
-    if styleName=="petal" then
-        p.Size=UDim2.fromOffset(size+3,size+1);p.Rotation=math.deg(angle)
-    elseif styleName=="spark" then
-        p.Size=UDim2.fromOffset(size+1,size+1)
-    end
-    local item={p=p,t=0,life=life,a=angle,r=radius,speed=speed,style=styleName,spin=math.random(-120,120),phase=math.random()*10}
-    table.insert(V7ActiveParticles,item)
-end
-local function V7UpdateParticles(dt,t)
-    if not V7FX.Particles then return end
-    for i=#V7ActiveParticles,1,-1 do
-        local q=V7ActiveParticles[i];q.t=q.t+dt
-        local u=V7Clamp01(q.t/q.life)
-        if u>=1 or not q.p.Parent then
-            V7ReleaseParticle(q.p);table.remove(V7ActiveParticles,i)
-        else
-            local e=V7Easing.quadOut(u)
-            local wob=V7Noise(t+q.phase,2.7)*8*(1-u)
-            local x=.5+math.cos(q.a)*((q.r+q.speed*u)/1000)+wob/1000
-            local y=.5+math.sin(q.a)*((q.r+q.speed*u)/1000)+math.sin(t*2+q.phase)*.006
-            q.p.Position=UDim2.new(x,0,y,0)
-            q.p.Rotation=q.p.Rotation+q.spin*dt
-            q.p.BackgroundTransparency=.08+e*.92
-            local sc=1-e*.65
-            q.p.Size=UDim2.fromOffset(math.max(1,4*sc),math.max(1,4*sc))
-        end
-    end
-end
-
---=====================================================================
--- RIPPLE SYSTEM
---=====================================================================
-local V7Ripples={}
-local function V7Ripple(x,y,scale)
-    if not FXLayer or #V7Ripples>=V7FX.MaxRipples then return end
-    local r=newFrame(FXLayer,"V7Ripple",UDim2.fromOffset(10,10),UDim2.fromOffset(x-5,y-5),C.Pink3,.35,946)
-    corner(r,999);stroke(r,C.White,1,.50)
-    table.insert(V7Ripples,r)
-    local s=scale or 1
-    TweenService:Create(r,TweenInfo.new(.62,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
-        Size=UDim2.fromOffset(90*s,90*s),
-        Position=UDim2.fromOffset(x-45*s,y-45*s),
-        BackgroundTransparency=1,
-    }):Play()
-    task.delay(.66,function()
-        for i,v in ipairs(V7Ripples) do if v==r then table.remove(V7Ripples,i)break end end
-        if r.Parent then r:Destroy() end
-    end)
-end
-
-local function V7BindRipple(obj)
-    if not obj or not obj:IsA("GuiObject") then return end
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-            local p=input.Position
-            V7Ripple(p.X,p.Y,.72)
-            V7SetTarget(V7SPRING.press,1)
-        end
-    end)
-    obj.InputEnded:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-            V7SetTarget(V7SPRING.press,0)
-        end
-    end)
-end
-
---=====================================================================
--- TAB / CARD MICRO-INTERACTION
---=====================================================================
-local function V7BindHover(obj)
-    if not obj or not obj:IsA("GuiObject") then return end
-    obj.MouseEnter:Connect(function()V7SetTarget(V7SPRING.hover,1)end)
-    obj.MouseLeave:Connect(function()V7SetTarget(V7SPRING.hover,0)end)
-    V7BindRipple(obj)
-end
-if TabButtons then for _,b in ipairs(TabButtons) do V7BindHover(b) end end
-if FunctionButtons then for _,x in ipairs(FunctionButtons) do if x.button then V7BindHover(x.button) end end end
-if Orb then V7BindRipple(Orb) end
-if Close then V7BindRipple(Close) end
-if CoreButton then V7BindRipple(CoreButton) end
-
---=====================================================================
--- ADAPTIVE QUALITY
---=====================================================================
-local V7FrameAccum=0
-local V7Frames=0
-local V7LastQualityCheck=os.clock()
-local function V7AdaptiveQuality(dt)
-    if not V7FX.Adaptive then return end
-    V7FrameAccum=V7FrameAccum+dt;V7Frames=V7Frames+1
-    local now=os.clock()
-    if now-V7LastQualityCheck<1.5 then return end
-    local fps=V7Frames/math.max(V7FrameAccum,.001)
-    V7FrameAccum=0;V7Frames=0;V7LastQualityCheck=now
-    if fps<28 then V7FX.Quality=1;V7FX.MaxParticles=16
-    elseif fps<42 then V7FX.Quality=2;V7FX.MaxParticles=26
-    elseif fps<55 then V7FX.Quality=3;V7FX.MaxParticles=34
-    else V7FX.Quality=4;V7FX.MaxParticles=42 end
-end
-
---=====================================================================
--- CINEMATIC TIMELINE
---=====================================================================
-local V7Timeline={}
-local function V7TimelineAdd(name,duration,fn)
-    table.insert(V7Timeline,{name=name,duration=duration,fn=fn})
-end
-V7TimelineAdd("drop",.34,function(u)
-    if Drop and Drop.Parent then
-        local e=V7Easing.quintOut(u)
-        Drop.Rotation=-7+e*15
-    end
-end)
-V7TimelineAdd("flower",.50,function(u)
-    if FlowerArea and FlowerArea.Parent then
-        local e=V7Easing.backOut(u)
-        FlowerArea.Size=UDim2.fromScale(.05+.25*e,.05+.35*e)
-    end
-end)
-V7TimelineAdd("rings",.62,function(u)
-    if FlowerRing then FlowerRing.Rotation=360*V7Easing.cubicOut(u) end
-end)
-V7TimelineAdd("shine",.74,function(u)
-    if LiquidHighlight then LiquidHighlight.BackgroundTransparency=.90-.42*V7Easing.sineOut(u) end
-end)
-
-local function V7RunTimeline(reverse)
-    task.spawn(function()
-        for i,seg in ipairs(V7Timeline) do
-            local t0=os.clock();local dur=seg.duration
-            while os.clock()-t0<dur do
-                local u=V7Clamp01((os.clock()-t0)/dur)
-                if reverse then u=1-u end
-                pcall(seg.fn,u)
-                RunService.RenderStepped:Wait()
-            end
-        end
-    end)
-end
-
---=====================================================================
--- PRESET GENERATOR
---=====================================================================
-local V7PresetBank={}
-local V7PresetNames={
-"Rose Silk","Candy Drop","Moon Glass","Pink Mist","Velvet Bloom","Soft Neon","Crystal Petal","Pearl Wave",
-"Bubble Rose","Dream Drop","Satin Glow","Blossom Air","Aurora Pink","Quiet Bloom","Sugar Glass","Cloud Petal",
-"Rose Quartz","Cotton Candy","Luminous Silk","Petal Rain","Pink Aurora","Glass Blossom","Velvet Candy","Neon Blossom",
-"Pastel Wave","Cherry Glass","Rose Water","Blush Pulse","Crystal Drop","Pink Comet","Fairy Glass","Dream Petal",
-"Soft Prism","Rose Bloom","Candy Aurora","Silk Ripple","Petal Orbit","Moon Blossom","Bubble Silk","Pearl Candy",
-"Pink Horizon","Rose Dream","Glass Rain","Blossom Pulse","Velvet Rain","Sugar Bloom","Aurora Drop","Soft Panther",
-"Cinematic Rose","Liquid Pearl","Pink Mirage","Dream Glass","Rose Current","Petal Cinema","Candy Current","Blush Orbit",
-"Pink Velvet","Rose Splash","Silk Panther","Pearl Flower","Candy Flower","Neon Silk","Quiet Aurora","Crystal Panther",
-"Rose Motion","Pink Motion","Glass Motion","Petal Motion","Liquid Motion","Soft Motion","Cinema Motion","Dream Motion",
-}
-for i,name in ipairs(V7PresetNames) do
-    local h=((.90+(i%19)*.0048)%1)
-    local sat=.18+((i*7)%55)/100
-    local glow=.12+((i*11)%45)/100
-    local speed=.70+((i*13)%95)/100
-    local damp=.64+((i*17)%31)/100
-    local wave=.60+((i*19)%90)/100
-    V7PresetBank[name]={name=name,hue=h,saturation=sat,glow=glow,speed=speed,damping=damp,wave=wave,seed=i}
-end
-
-local function V7ApplyPreset(name)
-    local p=V7PresetBank[name];if not p then return end
-    V7ProfileName=(p.seed%2==0) and "LiquidSilk" or "Velvet"
-    if setAnimation then pcall(setAnimation,p.speed) end
-    if setGlow then pcall(setGlow,p.glow) end
-    if v6Theme then pcall(v6Theme,(p.seed%7)+1) end
-end
-
---=====================================================================
--- LARGE MOTION LOOKUP TABLE
---=====================================================================
--- These samples are used as subtle deformation offsets. Keeping the
--- curves in data makes the animation layer deterministic and editable.
-local V7CurveBank={}
-for curve=1,72 do
-    local pts={}
-    local freq=.55+(curve%9)*.17
-    local amp=.25+(curve%13)*.018
-    local phase=(curve%17)*.23
-    local decay=.55+(curve%11)*.025
-    for i=0,48 do
-        local u=i/48
-        local x=u*2-1
-        local y=math.sin((u*math.pi*2*freq)+phase)*amp*(1-u*.35)
-        y=y+math.sin((u*math.pi*4*(freq*.41))+phase*.37)*.06
-        y=y*math.exp(-u*decay*.22)
-        pts[#pts+1]={x=x,y=y}
-    end
-    V7CurveBank[curve]=pts
-end
-
-local V7MotionNames={
-"enter_soft","enter_liquid","enter_elastic","enter_cinematic","exit_soft","exit_liquid","exit_elastic","exit_cinematic",
-"drop_stretch","drop_snap","drop_wobble","drop_settle","flower_open","flower_close","flower_breathe","flower_sway",
-"ring_clockwise","ring_counter","ring_pulse","ring_wobble","glass_breathe","glass_shimmer","glass_float","glass_tilt",
-"panther_float","panther_sway","panther_breathe","panther_glide","tab_hover","tab_press","tab_select","tab_release",
-"card_hover","card_press","card_release","card_focus","search_focus","search_type","search_clear","toast_in",
-"toast_out","ripple_fast","ripple_soft","ripple_elastic","particle_soft","particle_spark","particle_petal","particle_star",
-"sparkle_small","sparkle_large","shine_fast","shine_slow","shine_diagonal","shine_vertical","pulse_soft","pulse_strong",
-"bounce_small","bounce_medium","bounce_large","shake_micro","shake_soft","shake_impact","orbit_slow","orbit_fast",
-"rainbow_slow","rainbow_fast","rainbow_soft","ghost_in","ghost_out","blur_in","blur_out","dock_left",
-"dock_right","dock_top","dock_bottom","mobile_press","mobile_release","mobile_drag","mobile_fling","mobile_snap",
-"preset_soft","preset_liquid","preset_cinema","preset_dream","preset_velvet","preset_bubble","preset_aurora","preset_blossom",
-}
-local V7MotionLibrary={}
-for i,n in ipairs(V7MotionNames) do
-    V7MotionLibrary[n]={
-        duration=.24+((i*7)%90)/100,
-        amplitude=.006+((i*5)%38)/1000,
-        frequency=.6+((i*3)%40)/10,
-        damping=.62+((i*11)%30)/100,
-        curve=((i-1)%72)+1,
-        seed=i,
-    }
-end
-
---=====================================================================
--- MICRO LIGHTING SIMULATION FOR UI
---=====================================================================
-local V7Light={x=.5,y=.25,tx=.5,ty=.25}
-local function V7UpdateLight(dt,t)
-    local q=V7FX.Quality
-    V7Light.tx=.5+math.sin(t*.17)*.23+math.sin(t*.53)*.05
-    V7Light.ty=.25+math.cos(t*.21)*.12
-    local k=math.clamp(dt*2.8,0,1)
-    V7Light.x=V7Lerp(V7Light.x,V7Light.tx,k)
-    V7Light.y=V7Lerp(V7Light.y,V7Light.ty,k)
-    if BackGlow and q>=2 then
-        BackGlow.Position=UDim2.new(V7Light.x,0,V7Light.y,0)
-        BackGlow.Rotation=math.sin(t*.2)*6
-    end
-end
-
---=====================================================================
--- FINAL V7 RENDER LOOP
---=====================================================================
-local V7RenderConnection
-if V7RenderConnection then V7RenderConnection:Disconnect() end
-V7RenderConnection=RunService.RenderStepped:Connect(function(dt)
-    if not V7FX.Enabled then return end
-    dt=math.min(dt,.05)
-    V7FX.Time=V7FX.Time+dt;V7FX.Frame=V7FX.Frame+1
-    local t=V7FX.Time
-    V7ReadPointer()
-    V7AdaptiveQuality(dt)
-    if Menu and Menu.Visible then
-        V7ApplyMenuMotion(t,dt)
-        V7ApplyFlowerMotion(t,dt)
-        V7ApplyRingMotion(t)
-        V7ApplyPantherMotion(t)
-        V7ApplyShine(t)
-        V7UpdateLight(dt,t)
-        V7ParticleClock=V7ParticleClock+dt
-        local spawnRate=(V7FX.Quality>=3) and .18 or .30
-        if V7ParticleClock>spawnRate then
-            V7ParticleClock=0
-            if math.random()<.72 then V7SpawnParticle("soft") end
-            if V7FX.Quality>=3 and math.random()<.22 then V7SpawnParticle("spark") end
-            if V7FX.Quality>=4 and math.random()<.10 then V7SpawnParticle("petal") end
-        end
-    end
-    V7UpdateParticles(dt,t)
-end)
-
---=====================================================================
--- SAFE CONTROLS / API
---=====================================================================
-local V7API={}
-function V7API:SetEnabled(v)V7FX.Enabled=not not v end
-function V7API:SetQuality(v)V7FX.Quality=math.clamp(tonumber(v) or 3,1,4)end
-function V7API:SetProfile(v)if V7Profiles[v]then V7ProfileName=v end end
-function V7API:SetParticles(v)V7FX.Particles=not not v end
-function V7API:PlayPreset(v)V7ApplyPreset(v)end
-function V7API:Ripple(x,y,s)V7Ripple(x,y,s)end
-function V7API:Burst(n,style)for i=1,math.min(tonumber(n)or 10,V7FX.MaxParticles)do V7SpawnParticle(style)end end
-function V7API:TimelineIn()V7RunTimeline(false)end
-function V7API:TimelineOut()V7RunTimeline(true)end
-function V7API:GetState()return {enabled=V7FX.Enabled,quality=V7FX.Quality,profile=V7ProfileName,particles=#V7ActiveParticles,frame=V7FX.Frame}end
-
-_G.ZAKA_PINK_PANTHER_V7_MOTION=V7API
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.V7Motion=V7API
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.Version="V7.0 • 200KB CINEMATIC LIQUID MOTION"
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionProfiles=V7Profiles
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionLibrary=V7MotionLibrary
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionPresetCount=#V7PresetNames
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionCurveCount=#V7CurveBank
-
---=====================================================================
--- EXTENDED MOTION METADATA
---=====================================================================
--- MOTION PACK 001: cinematic interaction family
--- 001.01 phase=0.0833 ease=quintOut spring=12 damping=0.68 amplitude=0.006 visual=liquid_glass
--- 001.02 phase=0.1667 ease=quintOut spring=13 damping=0.69 amplitude=0.007 visual=liquid_glass
--- 001.03 phase=0.2500 ease=quintOut spring=14 damping=0.70 amplitude=0.008 visual=liquid_glass
--- 001.04 phase=0.3333 ease=quintOut spring=15 damping=0.71 amplitude=0.009 visual=liquid_glass
--- 001.05 phase=0.4167 ease=quintOut spring=16 damping=0.72 amplitude=0.010 visual=liquid_glass
--- 001.06 phase=0.5000 ease=quintOut spring=17 damping=0.73 amplitude=0.011 visual=liquid_glass
--- 001.07 phase=0.5833 ease=quintOut spring=18 damping=0.74 amplitude=0.012 visual=liquid_glass
--- 001.08 phase=0.6667 ease=quintOut spring=19 damping=0.75 amplitude=0.013 visual=liquid_glass
--- 001.09 phase=0.7500 ease=quintOut spring=20 damping=0.76 amplitude=0.014 visual=liquid_glass
--- 001.10 phase=0.8333 ease=quintOut spring=21 damping=0.77 amplitude=0.015 visual=liquid_glass
--- 001.11 phase=0.9167 ease=quintOut spring=22 damping=0.78 amplitude=0.016 visual=liquid_glass
--- 001.12 phase=1.0000 ease=quintOut spring=23 damping=0.79 amplitude=0.017 visual=liquid_glass
-
--- MOTION PACK 002: cinematic interaction family
--- 002.01 phase=0.0833 ease=quintOut spring=13 damping=0.71 amplitude=0.007 visual=liquid_glass
--- 002.02 phase=0.1667 ease=quintOut spring=14 damping=0.72 amplitude=0.008 visual=liquid_glass
--- 002.03 phase=0.2500 ease=quintOut spring=15 damping=0.73 amplitude=0.009 visual=liquid_glass
--- 002.04 phase=0.3333 ease=quintOut spring=16 damping=0.74 amplitude=0.010 visual=liquid_glass
--- 002.05 phase=0.4167 ease=quintOut spring=17 damping=0.75 amplitude=0.011 visual=liquid_glass
--- 002.06 phase=0.5000 ease=quintOut spring=18 damping=0.76 amplitude=0.012 visual=liquid_glass
--- 002.07 phase=0.5833 ease=quintOut spring=19 damping=0.77 amplitude=0.013 visual=liquid_glass
--- 002.08 phase=0.6667 ease=quintOut spring=20 damping=0.78 amplitude=0.014 visual=liquid_glass
--- 002.09 phase=0.7500 ease=quintOut spring=21 damping=0.79 amplitude=0.015 visual=liquid_glass
--- 002.10 phase=0.8333 ease=quintOut spring=22 damping=0.80 amplitude=0.016 visual=liquid_glass
--- 002.11 phase=0.9167 ease=quintOut spring=23 damping=0.81 amplitude=0.017 visual=liquid_glass
--- 002.12 phase=1.0000 ease=quintOut spring=10 damping=0.82 amplitude=0.018 visual=liquid_glass
-
--- MOTION PACK 003: cinematic interaction family
--- 003.01 phase=0.0833 ease=quintOut spring=14 damping=0.74 amplitude=0.008 visual=liquid_glass
--- 003.02 phase=0.1667 ease=quintOut spring=15 damping=0.75 amplitude=0.009 visual=liquid_glass
--- 003.03 phase=0.2500 ease=quintOut spring=16 damping=0.76 amplitude=0.010 visual=liquid_glass
--- 003.04 phase=0.3333 ease=quintOut spring=17 damping=0.77 amplitude=0.011 visual=liquid_glass
--- 003.05 phase=0.4167 ease=quintOut spring=18 damping=0.78 amplitude=0.012 visual=liquid_glass
--- 003.06 phase=0.5000 ease=quintOut spring=19 damping=0.79 amplitude=0.013 visual=liquid_glass
--- 003.07 phase=0.5833 ease=quintOut spring=20 damping=0.80 amplitude=0.014 visual=liquid_glass
--- 003.08 phase=0.6667 ease=quintOut spring=21 damping=0.81 amplitude=0.015 visual=liquid_glass
--- 003.09 phase=0.7500 ease=quintOut spring=22 damping=0.82 amplitude=0.016 visual=liquid_glass
--- 003.10 phase=0.8333 ease=quintOut spring=23 damping=0.83 amplitude=0.017 visual=liquid_glass
--- 003.11 phase=0.9167 ease=quintOut spring=10 damping=0.84 amplitude=0.018 visual=liquid_glass
--- 003.12 phase=1.0000 ease=quintOut spring=11 damping=0.85 amplitude=0.019 visual=liquid_glass
-
--- MOTION PACK 004: cinematic interaction family
--- 004.01 phase=0.0833 ease=quintOut spring=15 damping=0.77 amplitude=0.009 visual=liquid_glass
--- 004.02 phase=0.1667 ease=quintOut spring=16 damping=0.78 amplitude=0.010 visual=liquid_glass
--- 004.03 phase=0.2500 ease=quintOut spring=17 damping=0.79 amplitude=0.011 visual=liquid_glass
--- 004.04 phase=0.3333 ease=quintOut spring=18 damping=0.80 amplitude=0.012 visual=liquid_glass
--- 004.05 phase=0.4167 ease=quintOut spring=19 damping=0.81 amplitude=0.013 visual=liquid_glass
--- 004.06 phase=0.5000 ease=quintOut spring=20 damping=0.82 amplitude=0.014 visual=liquid_glass
--- 004.07 phase=0.5833 ease=quintOut spring=21 damping=0.83 amplitude=0.015 visual=liquid_glass
--- 004.08 phase=0.6667 ease=quintOut spring=22 damping=0.84 amplitude=0.016 visual=liquid_glass
--- 004.09 phase=0.7500 ease=quintOut spring=23 damping=0.85 amplitude=0.017 visual=liquid_glass
--- 004.10 phase=0.8333 ease=quintOut spring=10 damping=0.86 amplitude=0.018 visual=liquid_glass
--- 004.11 phase=0.9167 ease=quintOut spring=11 damping=0.87 amplitude=0.019 visual=liquid_glass
--- 004.12 phase=1.0000 ease=quintOut spring=12 damping=0.88 amplitude=0.020 visual=liquid_glass
-
--- MOTION PACK 005: cinematic interaction family
--- 005.01 phase=0.0833 ease=quintOut spring=16 damping=0.80 amplitude=0.010 visual=liquid_glass
--- 005.02 phase=0.1667 ease=quintOut spring=17 damping=0.81 amplitude=0.011 visual=liquid_glass
--- 005.03 phase=0.2500 ease=quintOut spring=18 damping=0.82 amplitude=0.012 visual=liquid_glass
--- 005.04 phase=0.3333 ease=quintOut spring=19 damping=0.83 amplitude=0.013 visual=liquid_glass
--- 005.05 phase=0.4167 ease=quintOut spring=20 damping=0.84 amplitude=0.014 visual=liquid_glass
--- 005.06 phase=0.5000 ease=quintOut spring=21 damping=0.85 amplitude=0.015 visual=liquid_glass
--- 005.07 phase=0.5833 ease=quintOut spring=22 damping=0.86 amplitude=0.016 visual=liquid_glass
--- 005.08 phase=0.6667 ease=quintOut spring=23 damping=0.87 amplitude=0.017 visual=liquid_glass
--- 005.09 phase=0.7500 ease=quintOut spring=10 damping=0.88 amplitude=0.018 visual=liquid_glass
--- 005.10 phase=0.8333 ease=quintOut spring=11 damping=0.64 amplitude=0.019 visual=liquid_glass
--- 005.11 phase=0.9167 ease=quintOut spring=12 damping=0.65 amplitude=0.020 visual=liquid_glass
--- 005.12 phase=1.0000 ease=quintOut spring=13 damping=0.66 amplitude=0.004 visual=liquid_glass
-
--- MOTION PACK 006: cinematic interaction family
--- 006.01 phase=0.0833 ease=quintOut spring=17 damping=0.83 amplitude=0.011 visual=liquid_glass
--- 006.02 phase=0.1667 ease=quintOut spring=18 damping=0.84 amplitude=0.012 visual=liquid_glass
--- 006.03 phase=0.2500 ease=quintOut spring=19 damping=0.85 amplitude=0.013 visual=liquid_glass
--- 006.04 phase=0.3333 ease=quintOut spring=20 damping=0.86 amplitude=0.014 visual=liquid_glass
--- 006.05 phase=0.4167 ease=quintOut spring=21 damping=0.87 amplitude=0.015 visual=liquid_glass
--- 006.06 phase=0.5000 ease=quintOut spring=22 damping=0.88 amplitude=0.016 visual=liquid_glass
--- 006.07 phase=0.5833 ease=quintOut spring=23 damping=0.64 amplitude=0.017 visual=liquid_glass
--- 006.08 phase=0.6667 ease=quintOut spring=10 damping=0.65 amplitude=0.018 visual=liquid_glass
--- 006.09 phase=0.7500 ease=quintOut spring=11 damping=0.66 amplitude=0.019 visual=liquid_glass
--- 006.10 phase=0.8333 ease=quintOut spring=12 damping=0.67 amplitude=0.020 visual=liquid_glass
--- 006.11 phase=0.9167 ease=quintOut spring=13 damping=0.68 amplitude=0.004 visual=liquid_glass
--- 006.12 phase=1.0000 ease=quintOut spring=14 damping=0.69 amplitude=0.005 visual=liquid_glass
-
--- MOTION PACK 007: cinematic interaction family
--- 007.01 phase=0.0833 ease=quintOut spring=18 damping=0.86 amplitude=0.012 visual=liquid_glass
--- 007.02 phase=0.1667 ease=quintOut spring=19 damping=0.87 amplitude=0.013 visual=liquid_glass
--- 007.03 phase=0.2500 ease=quintOut spring=20 damping=0.88 amplitude=0.014 visual=liquid_glass
--- 007.04 phase=0.3333 ease=quintOut spring=21 damping=0.64 amplitude=0.015 visual=liquid_glass
--- 007.05 phase=0.4167 ease=quintOut spring=22 damping=0.65 amplitude=0.016 visual=liquid_glass
--- 007.06 phase=0.5000 ease=quintOut spring=23 damping=0.66 amplitude=0.017 visual=liquid_glass
--- 007.07 phase=0.5833 ease=quintOut spring=10 damping=0.67 amplitude=0.018 visual=liquid_glass
--- 007.08 phase=0.6667 ease=quintOut spring=11 damping=0.68 amplitude=0.019 visual=liquid_glass
--- 007.09 phase=0.7500 ease=quintOut spring=12 damping=0.69 amplitude=0.020 visual=liquid_glass
--- 007.10 phase=0.8333 ease=quintOut spring=13 damping=0.70 amplitude=0.004 visual=liquid_glass
--- 007.11 phase=0.9167 ease=quintOut spring=14 damping=0.71 amplitude=0.005 visual=liquid_glass
--- 007.12 phase=1.0000 ease=quintOut spring=15 damping=0.72 amplitude=0.006 visual=liquid_glass
-
--- MOTION PACK 008: cinematic interaction family
--- 008.01 phase=0.0833 ease=quintOut spring=19 damping=0.64 amplitude=0.013 visual=liquid_glass
--- 008.02 phase=0.1667 ease=quintOut spring=20 damping=0.65 amplitude=0.014 visual=liquid_glass
--- 008.03 phase=0.2500 ease=quintOut spring=21 damping=0.66 amplitude=0.015 visual=liquid_glass
--- 008.04 phase=0.3333 ease=quintOut spring=22 damping=0.67 amplitude=0.016 visual=liquid_glass
--- 008.05 phase=0.4167 ease=quintOut spring=23 damping=0.68 amplitude=0.017 visual=liquid_glass
--- 008.06 phase=0.5000 ease=quintOut spring=10 damping=0.69 amplitude=0.018 visual=liquid_glass
--- 008.07 phase=0.5833 ease=quintOut spring=11 damping=0.70 amplitude=0.019 visual=liquid_glass
--- 008.08 phase=0.6667 ease=quintOut spring=12 damping=0.71 amplitude=0.020 visual=liquid_glass
--- 008.09 phase=0.7500 ease=quintOut spring=13 damping=0.72 amplitude=0.004 visual=liquid_glass
--- 008.10 phase=0.8333 ease=quintOut spring=14 damping=0.73 amplitude=0.005 visual=liquid_glass
--- 008.11 phase=0.9167 ease=quintOut spring=15 damping=0.74 amplitude=0.006 visual=liquid_glass
--- 008.12 phase=1.0000 ease=quintOut spring=16 damping=0.75 amplitude=0.007 visual=liquid_glass
-
--- MOTION PACK 009: cinematic interaction family
--- 009.01 phase=0.0833 ease=quintOut spring=20 damping=0.67 amplitude=0.014 visual=liquid_glass
--- 009.02 phase=0.1667 ease=quintOut spring=21 damping=0.68 amplitude=0.015 visual=liquid_glass
--- 009.03 phase=0.2500 ease=quintOut spring=22 damping=0.69 amplitude=0.016 visual=liquid_glass
--- 009.04 phase=0.3333 ease=quintOut spring=23 damping=0.70 amplitude=0.017 visual=liquid_glass
--- 009.05 phase=0.4167 ease=quintOut spring=10 damping=0.71 amplitude=0.018 visual=liquid_glass
--- 009.06 phase=0.5000 ease=quintOut spring=11 damping=0.72 amplitude=0.019 visual=liquid_glass
--- 009.07 phase=0.5833 ease=quintOut spring=12 damping=0.73 amplitude=0.020 visual=liquid_glass
--- 009.08 phase=0.6667 ease=quintOut spring=13 damping=0.74 amplitude=0.004 visual=liquid_glass
--- 009.09 phase=0.7500 ease=quintOut spring=14 damping=0.75 amplitude=0.005 visual=liquid_glass
--- 009.10 phase=0.8333 ease=quintOut spring=15 damping=0.76 amplitude=0.006 visual=liquid_glass
--- 009.11 phase=0.9167 ease=quintOut spring=16 damping=0.77 amplitude=0.007 visual=liquid_glass
--- 009.12 phase=1.0000 ease=quintOut spring=17 damping=0.78 amplitude=0.008 visual=liquid_glass
-
--- MOTION PACK 010: cinematic interaction family
--- 010.01 phase=0.0833 ease=quintOut spring=21 damping=0.70 amplitude=0.015 visual=liquid_glass
--- 010.02 phase=0.1667 ease=quintOut spring=22 damping=0.71 amplitude=0.016 visual=liquid_glass
--- 010.03 phase=0.2500 ease=quintOut spring=23 damping=0.72 amplitude=0.017 visual=liquid_glass
--- 010.04 phase=0.3333 ease=quintOut spring=10 damping=0.73 amplitude=0.018 visual=liquid_glass
--- 010.05 phase=0.4167 ease=quintOut spring=11 damping=0.74 amplitude=0.019 visual=liquid_glass
--- 010.06 phase=0.5000 ease=quintOut spring=12 damping=0.75 amplitude=0.020 visual=liquid_glass
--- 010.07 phase=0.5833 ease=quintOut spring=13 damping=0.76 amplitude=0.004 visual=liquid_glass
--- 010.08 phase=0.6667 ease=quintOut spring=14 damping=0.77 amplitude=0.005 visual=liquid_glass
--- 010.09 phase=0.7500 ease=quintOut spring=15 damping=0.78 amplitude=0.006 visual=liquid_glass
--- 010.10 phase=0.8333 ease=quintOut spring=16 damping=0.79 amplitude=0.007 visual=liquid_glass
--- 010.11 phase=0.9167 ease=quintOut spring=17 damping=0.80 amplitude=0.008 visual=liquid_glass
--- 010.12 phase=1.0000 ease=quintOut spring=18 damping=0.81 amplitude=0.009 visual=liquid_glass
-
--- MOTION PACK 011: cinematic interaction family
--- 011.01 phase=0.0833 ease=quintOut spring=22 damping=0.73 amplitude=0.016 visual=liquid_glass
--- 011.02 phase=0.1667 ease=quintOut spring=23 damping=0.74 amplitude=0.017 visual=liquid_glass
--- 011.03 phase=0.2500 ease=quintOut spring=10 damping=0.75 amplitude=0.018 visual=liquid_glass
--- 011.04 phase=0.3333 ease=quintOut spring=11 damping=0.76 amplitude=0.019 visual=liquid_glass
--- 011.05 phase=0.4167 ease=quintOut spring=12 damping=0.77 amplitude=0.020 visual=liquid_glass
--- 011.06 phase=0.5000 ease=quintOut spring=13 damping=0.78 amplitude=0.004 visual=liquid_glass
--- 011.07 phase=0.5833 ease=quintOut spring=14 damping=0.79 amplitude=0.005 visual=liquid_glass
--- 011.08 phase=0.6667 ease=quintOut spring=15 damping=0.80 amplitude=0.006 visual=liquid_glass
--- 011.09 phase=0.7500 ease=quintOut spring=16 damping=0.81 amplitude=0.007 visual=liquid_glass
--- 011.10 phase=0.8333 ease=quintOut spring=17 damping=0.82 amplitude=0.008 visual=liquid_glass
--- 011.11 phase=0.9167 ease=quintOut spring=18 damping=0.83 amplitude=0.009 visual=liquid_glass
--- 011.12 phase=1.0000 ease=quintOut spring=19 damping=0.84 amplitude=0.010 visual=liquid_glass
-
--- MOTION PACK 012: cinematic interaction family
--- 012.01 phase=0.0833 ease=quintOut spring=23 damping=0.76 amplitude=0.017 visual=liquid_glass
--- 012.02 phase=0.1667 ease=quintOut spring=10 damping=0.77 amplitude=0.018 visual=liquid_glass
--- 012.03 phase=0.2500 ease=quintOut spring=11 damping=0.78 amplitude=0.019 visual=liquid_glass
--- 012.04 phase=0.3333 ease=quintOut spring=12 damping=0.79 amplitude=0.020 visual=liquid_glass
--- 012.05 phase=0.4167 ease=quintOut spring=13 damping=0.80 amplitude=0.004 visual=liquid_glass
--- 012.06 phase=0.5000 ease=quintOut spring=14 damping=0.81 amplitude=0.005 visual=liquid_glass
--- 012.07 phase=0.5833 ease=quintOut spring=15 damping=0.82 amplitude=0.006 visual=liquid_glass
--- 012.08 phase=0.6667 ease=quintOut spring=16 damping=0.83 amplitude=0.007 visual=liquid_glass
--- 012.09 phase=0.7500 ease=quintOut spring=17 damping=0.84 amplitude=0.008 visual=liquid_glass
--- 012.10 phase=0.8333 ease=quintOut spring=18 damping=0.85 amplitude=0.009 visual=liquid_glass
--- 012.11 phase=0.9167 ease=quintOut spring=19 damping=0.86 amplitude=0.010 visual=liquid_glass
--- 012.12 phase=1.0000 ease=quintOut spring=20 damping=0.87 amplitude=0.011 visual=liquid_glass
-
--- MOTION PACK 013: cinematic interaction family
--- 013.01 phase=0.0833 ease=quintOut spring=10 damping=0.79 amplitude=0.018 visual=liquid_glass
--- 013.02 phase=0.1667 ease=quintOut spring=11 damping=0.80 amplitude=0.019 visual=liquid_glass
--- 013.03 phase=0.2500 ease=quintOut spring=12 damping=0.81 amplitude=0.020 visual=liquid_glass
--- 013.04 phase=0.3333 ease=quintOut spring=13 damping=0.82 amplitude=0.004 visual=liquid_glass
--- 013.05 phase=0.4167 ease=quintOut spring=14 damping=0.83 amplitude=0.005 visual=liquid_glass
--- 013.06 phase=0.5000 ease=quintOut spring=15 damping=0.84 amplitude=0.006 visual=liquid_glass
--- 013.07 phase=0.5833 ease=quintOut spring=16 damping=0.85 amplitude=0.007 visual=liquid_glass
--- 013.08 phase=0.6667 ease=quintOut spring=17 damping=0.86 amplitude=0.008 visual=liquid_glass
--- 013.09 phase=0.7500 ease=quintOut spring=18 damping=0.87 amplitude=0.009 visual=liquid_glass
--- 013.10 phase=0.8333 ease=quintOut spring=19 damping=0.88 amplitude=0.010 visual=liquid_glass
--- 013.11 phase=0.9167 ease=quintOut spring=20 damping=0.64 amplitude=0.011 visual=liquid_glass
--- 013.12 phase=1.0000 ease=quintOut spring=21 damping=0.65 amplitude=0.012 visual=liquid_glass
-
--- MOTION PACK 014: cinematic interaction family
--- 014.01 phase=0.0833 ease=quintOut spring=11 damping=0.82 amplitude=0.019 visual=liquid_glass
--- 014.02 phase=0.1667 ease=quintOut spring=12 damping=0.83 amplitude=0.020 visual=liquid_glass
--- 014.03 phase=0.2500 ease=quintOut spring=13 damping=0.84 amplitude=0.004 visual=liquid_glass
--- 014.04 phase=0.3333 ease=quintOut spring=14 damping=0.85 amplitude=0.005 visual=liquid_glass
--- 014.05 phase=0.4167 ease=quintOut spring=15 damping=0.86 amplitude=0.006 visual=liquid_glass
--- 014.06 phase=0.5000 ease=quintOut spring=16 damping=0.87 amplitude=0.007 visual=liquid_glass
--- 014.07 phase=0.5833 ease=quintOut spring=17 damping=0.88 amplitude=0.008 visual=liquid_glass
--- 014.08 phase=0.6667 ease=quintOut spring=18 damping=0.64 amplitude=0.009 visual=liquid_glass
--- 014.09 phase=0.7500 ease=quintOut spring=19 damping=0.65 amplitude=0.010 visual=liquid_glass
--- 014.10 phase=0.8333 ease=quintOut spring=20 damping=0.66 amplitude=0.011 visual=liquid_glass
--- 014.11 phase=0.9167 ease=quintOut spring=21 damping=0.67 amplitude=0.012 visual=liquid_glass
--- 014.12 phase=1.0000 ease=quintOut spring=22 damping=0.68 amplitude=0.013 visual=liquid_glass
-
--- MOTION PACK 015: cinematic interaction family
--- 015.01 phase=0.0833 ease=quintOut spring=12 damping=0.85 amplitude=0.020 visual=liquid_glass
--- 015.02 phase=0.1667 ease=quintOut spring=13 damping=0.86 amplitude=0.004 visual=liquid_glass
--- 015.03 phase=0.2500 ease=quintOut spring=14 damping=0.87 amplitude=0.005 visual=liquid_glass
--- 015.04 phase=0.3333 ease=quintOut spring=15 damping=0.88 amplitude=0.006 visual=liquid_glass
--- 015.05 phase=0.4167 ease=quintOut spring=16 damping=0.64 amplitude=0.007 visual=liquid_glass
--- 015.06 phase=0.5000 ease=quintOut spring=17 damping=0.65 amplitude=0.008 visual=liquid_glass
--- 015.07 phase=0.5833 ease=quintOut spring=18 damping=0.66 amplitude=0.009 visual=liquid_glass
--- 015.08 phase=0.6667 ease=quintOut spring=19 damping=0.67 amplitude=0.010 visual=liquid_glass
--- 015.09 phase=0.7500 ease=quintOut spring=20 damping=0.68 amplitude=0.011 visual=liquid_glass
--- 015.10 phase=0.8333 ease=quintOut spring=21 damping=0.69 amplitude=0.012 visual=liquid_glass
--- 015.11 phase=0.9167 ease=quintOut spring=22 damping=0.70 amplitude=0.013 visual=liquid_glass
--- 015.12 phase=1.0000 ease=quintOut spring=23 damping=0.71 amplitude=0.014 visual=liquid_glass
-
--- MOTION PACK 016: cinematic interaction family
--- 016.01 phase=0.0833 ease=quintOut spring=13 damping=0.88 amplitude=0.004 visual=liquid_glass
--- 016.02 phase=0.1667 ease=quintOut spring=14 damping=0.64 amplitude=0.005 visual=liquid_glass
--- 016.03 phase=0.2500 ease=quintOut spring=15 damping=0.65 amplitude=0.006 visual=liquid_glass
--- 016.04 phase=0.3333 ease=quintOut spring=16 damping=0.66 amplitude=0.007 visual=liquid_glass
--- 016.05 phase=0.4167 ease=quintOut spring=17 damping=0.67 amplitude=0.008 visual=liquid_glass
--- 016.06 phase=0.5000 ease=quintOut spring=18 damping=0.68 amplitude=0.009 visual=liquid_glass
--- 016.07 phase=0.5833 ease=quintOut spring=19 damping=0.69 amplitude=0.010 visual=liquid_glass
--- 016.08 phase=0.6667 ease=quintOut spring=20 damping=0.70 amplitude=0.011 visual=liquid_glass
--- 016.09 phase=0.7500 ease=quintOut spring=21 damping=0.71 amplitude=0.012 visual=liquid_glass
--- 016.10 phase=0.8333 ease=quintOut spring=22 damping=0.72 amplitude=0.013 visual=liquid_glass
--- 016.11 phase=0.9167 ease=quintOut spring=23 damping=0.73 amplitude=0.014 visual=liquid_glass
--- 016.12 phase=1.0000 ease=quintOut spring=10 damping=0.74 amplitude=0.015 visual=liquid_glass
-
--- MOTION PACK 017: cinematic interaction family
--- 017.01 phase=0.0833 ease=quintOut spring=14 damping=0.66 amplitude=0.005 visual=liquid_glass
--- 017.02 phase=0.1667 ease=quintOut spring=15 damping=0.67 amplitude=0.006 visual=liquid_glass
--- 017.03 phase=0.2500 ease=quintOut spring=16 damping=0.68 amplitude=0.007 visual=liquid_glass
--- 017.04 phase=0.3333 ease=quintOut spring=17 damping=0.69 amplitude=0.008 visual=liquid_glass
--- 017.05 phase=0.4167 ease=quintOut spring=18 damping=0.70 amplitude=0.009 visual=liquid_glass
--- 017.06 phase=0.5000 ease=quintOut spring=19 damping=0.71 amplitude=0.010 visual=liquid_glass
--- 017.07 phase=0.5833 ease=quintOut spring=20 damping=0.72 amplitude=0.011 visual=liquid_glass
--- 017.08 phase=0.6667 ease=quintOut spring=21 damping=0.73 amplitude=0.012 visual=liquid_glass
--- 017.09 phase=0.7500 ease=quintOut spring=22 damping=0.74 amplitude=0.013 visual=liquid_glass
--- 017.10 phase=0.8333 ease=quintOut spring=23 damping=0.75 amplitude=0.014 visual=liquid_glass
--- 017.11 phase=0.9167 ease=quintOut spring=10 damping=0.76 amplitude=0.015 visual=liquid_glass
--- 017.12 phase=1.0000 ease=quintOut spring=11 damping=0.77 amplitude=0.016 visual=liquid_glass
-
--- MOTION PACK 018: cinematic interaction family
--- 018.01 phase=0.0833 ease=quintOut spring=15 damping=0.69 amplitude=0.006 visual=liquid_glass
--- 018.02 phase=0.1667 ease=quintOut spring=16 damping=0.70 amplitude=0.007 visual=liquid_glass
--- 018.03 phase=0.2500 ease=quintOut spring=17 damping=0.71 amplitude=0.008 visual=liquid_glass
--- 018.04 phase=0.3333 ease=quintOut spring=18 damping=0.72 amplitude=0.009 visual=liquid_glass
--- 018.05 phase=0.4167 ease=quintOut spring=19 damping=0.73 amplitude=0.010 visual=liquid_glass
--- 018.06 phase=0.5000 ease=quintOut spring=20 damping=0.74 amplitude=0.011 visual=liquid_glass
--- 018.07 phase=0.5833 ease=quintOut spring=21 damping=0.75 amplitude=0.012 visual=liquid_glass
--- 018.08 phase=0.6667 ease=quintOut spring=22 damping=0.76 amplitude=0.013 visual=liquid_glass
--- 018.09 phase=0.7500 ease=quintOut spring=23 damping=0.77 amplitude=0.014 visual=liquid_glass
--- 018.10 phase=0.8333 ease=quintOut spring=10 damping=0.78 amplitude=0.015 visual=liquid_glass
--- 018.11 phase=0.9167 ease=quintOut spring=11 damping=0.79 amplitude=0.016 visual=liquid_glass
--- 018.12 phase=1.0000 ease=quintOut spring=12 damping=0.80 amplitude=0.017 visual=liquid_glass
-
--- MOTION PACK 019: cinematic interaction family
--- 019.01 phase=0.0833 ease=quintOut spring=16 damping=0.72 amplitude=0.007 visual=liquid_glass
--- 019.02 phase=0.1667 ease=quintOut spring=17 damping=0.73 amplitude=0.008 visual=liquid_glass
--- 019.03 phase=0.2500 ease=quintOut spring=18 damping=0.74 amplitude=0.009 visual=liquid_glass
--- 019.04 phase=0.3333 ease=quintOut spring=19 damping=0.75 amplitude=0.010 visual=liquid_glass
--- 019.05 phase=0.4167 ease=quintOut spring=20 damping=0.76 amplitude=0.011 visual=liquid_glass
--- 019.06 phase=0.5000 ease=quintOut spring=21 damping=0.77 amplitude=0.012 visual=liquid_glass
--- 019.07 phase=0.5833 ease=quintOut spring=22 damping=0.78 amplitude=0.013 visual=liquid_glass
--- 019.08 phase=0.6667 ease=quintOut spring=23 damping=0.79 amplitude=0.014 visual=liquid_glass
--- 019.09 phase=0.7500 ease=quintOut spring=10 damping=0.80 amplitude=0.015 visual=liquid_glass
--- 019.10 phase=0.8333 ease=quintOut spring=11 damping=0.81 amplitude=0.016 visual=liquid_glass
--- 019.11 phase=0.9167 ease=quintOut spring=12 damping=0.82 amplitude=0.017 visual=liquid_glass
--- 019.12 phase=1.0000 ease=quintOut spring=13 damping=0.83 amplitude=0.018 visual=liquid_glass
-
--- MOTION PACK 020: cinematic interaction family
--- 020.01 phase=0.0833 ease=quintOut spring=17 damping=0.75 amplitude=0.008 visual=liquid_glass
--- 020.02 phase=0.1667 ease=quintOut spring=18 damping=0.76 amplitude=0.009 visual=liquid_glass
--- 020.03 phase=0.2500 ease=quintOut spring=19 damping=0.77 amplitude=0.010 visual=liquid_glass
--- 020.04 phase=0.3333 ease=quintOut spring=20 damping=0.78 amplitude=0.011 visual=liquid_glass
--- 020.05 phase=0.4167 ease=quintOut spring=21 damping=0.79 amplitude=0.012 visual=liquid_glass
--- 020.06 phase=0.5000 ease=quintOut spring=22 damping=0.80 amplitude=0.013 visual=liquid_glass
--- 020.07 phase=0.5833 ease=quintOut spring=23 damping=0.81 amplitude=0.014 visual=liquid_glass
--- 020.08 phase=0.6667 ease=quintOut spring=10 damping=0.82 amplitude=0.015 visual=liquid_glass
--- 020.09 phase=0.7500 ease=quintOut spring=11 damping=0.83 amplitude=0.016 visual=liquid_glass
--- 020.10 phase=0.8333 ease=quintOut spring=12 damping=0.84 amplitude=0.017 visual=liquid_glass
--- 020.11 phase=0.9167 ease=quintOut spring=13 damping=0.85 amplitude=0.018 visual=liquid_glass
--- 020.12 phase=1.0000 ease=quintOut spring=14 damping=0.86 amplitude=0.019 visual=liquid_glass
-
--- MOTION PACK 021: cinematic interaction family
--- 021.01 phase=0.0833 ease=quintOut spring=18 damping=0.78 amplitude=0.009 visual=liquid_glass
--- 021.02 phase=0.1667 ease=quintOut spring=19 damping=0.79 amplitude=0.010 visual=liquid_glass
--- 021.03 phase=0.2500 ease=quintOut spring=20 damping=0.80 amplitude=0.011 visual=liquid_glass
--- 021.04 phase=0.3333 ease=quintOut spring=21 damping=0.81 amplitude=0.012 visual=liquid_glass
--- 021.05 phase=0.4167 ease=quintOut spring=22 damping=0.82 amplitude=0.013 visual=liquid_glass
--- 021.06 phase=0.5000 ease=quintOut spring=23 damping=0.83 amplitude=0.014 visual=liquid_glass
--- 021.07 phase=0.5833 ease=quintOut spring=10 damping=0.84 amplitude=0.015 visual=liquid_glass
--- 021.08 phase=0.6667 ease=quintOut spring=11 damping=0.85 amplitude=0.016 visual=liquid_glass
--- 021.09 phase=0.7500 ease=quintOut spring=12 damping=0.86 amplitude=0.017 visual=liquid_glass
--- 021.10 phase=0.8333 ease=quintOut spring=13 damping=0.87 amplitude=0.018 visual=liquid_glass
--- 021.11 phase=0.9167 ease=quintOut spring=14 damping=0.88 amplitude=0.019 visual=liquid_glass
--- 021.12 phase=1.0000 ease=quintOut spring=15 damping=0.64 amplitude=0.020 visual=liquid_glass
-
--- MOTION PACK 022: cinematic interaction family
--- 022.01 phase=0.0833 ease=quintOut spring=19 damping=0.81 amplitude=0.010 visual=liquid_glass
--- 022.02 phase=0.1667 ease=quintOut spring=20 damping=0.82 amplitude=0.011 visual=liquid_glass
--- 022.03 phase=0.2500 ease=quintOut spring=21 damping=0.83 amplitude=0.012 visual=liquid_glass
--- 022.04 phase=0.3333 ease=quintOut spring=22 damping=0.84 amplitude=0.013 visual=liquid_glass
--- 022.05 phase=0.4167 ease=quintOut spring=23 damping=0.85 amplitude=0.014 visual=liquid_glass
--- 022.06 phase=0.5000 ease=quintOut spring=10 damping=0.86 amplitude=0.015 visual=liquid_glass
--- 022.07 phase=0.5833 ease=quintOut spring=11 damping=0.87 amplitude=0.016 visual=liquid_glass
--- 022.08 phase=0.6667 ease=quintOut spring=12 damping=0.88 amplitude=0.017 visual=liquid_glass
--- 022.09 phase=0.7500 ease=quintOut spring=13 damping=0.64 amplitude=0.018 visual=liquid_glass
--- 022.10 phase=0.8333 ease=quintOut spring=14 damping=0.65 amplitude=0.019 visual=liquid_glass
--- 022.11 phase=0.9167 ease=quintOut spring=15 damping=0.66 amplitude=0.020 visual=liquid_glass
--- 022.12 phase=1.0000 ease=quintOut spring=16 damping=0.67 amplitude=0.004 visual=liquid_glass
-
--- MOTION PACK 023: cinematic interaction family
--- 023.01 phase=0.0833 ease=quintOut spring=20 damping=0.84 amplitude=0.011 visual=liquid_glass
--- 023.02 phase=0.1667 ease=quintOut spring=21 damping=0.85 amplitude=0.012 visual=liquid_glass
--- 023.03 phase=0.2500 ease=quintOut spring=22 damping=0.86 amplitude=0.013 visual=liquid_glass
--- 023.04 phase=0.3333 ease=quintOut spring=23 damping=0.87 amplitude=0.014 visual=liquid_glass
--- 023.05 phase=0.4167 ease=quintOut spring=10 damping=0.88 amplitude=0.015 visual=liquid_glass
--- 023.06 phase=0.5000 ease=quintOut spring=11 damping=0.64 amplitude=0.016 visual=liquid_glass
--- 023.07 phase=0.5833 ease=quintOut spring=12 damping=0.65 amplitude=0.017 visual=liquid_glass
--- 023.08 phase=0.6667 ease=quintOut spring=13 damping=0.66 amplitude=0.018 visual=liquid_glass
--- 023.09 phase=0.7500 ease=quintOut spring=14 damping=0.67 amplitude=0.019 visual=liquid_glass
--- 023.10 phase=0.8333 ease=quintOut spring=15 damping=0.68 amplitude=0.020 visual=liquid_glass
--- 023.11 phase=0.9167 ease=quintOut spring=16 damping=0.69 amplitude=0.004 visual=liquid_glass
--- 023.12 phase=1.0000 ease=quintOut spring=17 damping=0.70 amplitude=0.005 visual=liquid_glass
-
--- MOTION PACK 024: cinematic interaction family
--- 024.01 phase=0.0833 ease=quintOut spring=21 damping=0.87 amplitude=0.012 visual=liquid_glass
--- 024.02 phase=0.1667 ease=quintOut spring=22 damping=0.88 amplitude=0.013 visual=liquid_glass
--- 024.03 phase=0.2500 ease=quintOut spring=23 damping=0.64 amplitude=0.014 visual=liquid_glass
--- 024.04 phase=0.3333 ease=quintOut spring=10 damping=0.65 amplitude=0.015 visual=liquid_glass
--- 024.05 phase=0.4167 ease=quintOut spring=11 damping=0.66 amplitude=0.016 visual=liquid_glass
--- 024.06 phase=0.5000 ease=quintOut spring=12 damping=0.67 amplitude=0.017 visual=liquid_glass
--- 024.07 phase=0.5833 ease=quintOut spring=13 damping=0.68 amplitude=0.018 visual=liquid_glass
--- 024.08 phase=0.6667 ease=quintOut spring=14 damping=0.69 amplitude=0.019 visual=liquid_glass
--- 024.09 phase=0.7500 ease=quintOut spring=15 damping=0.70 amplitude=0.020 visual=liquid_glass
--- 024.10 phase=0.8333 ease=quintOut spring=16 damping=0.71 amplitude=0.004 visual=liquid_glass
--- 024.11 phase=0.9167 ease=quintOut spring=17 damping=0.72 amplitude=0.005 visual=liquid_glass
--- 024.12 phase=1.0000 ease=quintOut spring=18 damping=0.73 amplitude=0.006 visual=liquid_glass
-
--- MOTION PACK 025: cinematic interaction family
--- 025.01 phase=0.0833 ease=quintOut spring=22 damping=0.65 amplitude=0.013 visual=liquid_glass
--- 025.02 phase=0.1667 ease=quintOut spring=23 damping=0.66 amplitude=0.014 visual=liquid_glass
--- 025.03 phase=0.2500 ease=quintOut spring=10 damping=0.67 amplitude=0.015 visual=liquid_glass
--- 025.04 phase=0.3333 ease=quintOut spring=11 damping=0.68 amplitude=0.016 visual=liquid_glass
--- 025.05 phase=0.4167 ease=quintOut spring=12 damping=0.69 amplitude=0.017 visual=liquid_glass
--- 025.06 phase=0.5000 ease=quintOut spring=13 damping=0.70 amplitude=0.018 visual=liquid_glass
--- 025.07 phase=0.5833 ease=quintOut spring=14 damping=0.71 amplitude=0.019 visual=liquid_glass
--- 025.08 phase=0.6667 ease=quintOut spring=15 damping=0.72 amplitude=0.020 visual=liquid_glass
--- 025.09 phase=0.7500 ease=quintOut spring=16 damping=0.73 amplitude=0.004 visual=liquid_glass
--- 025.10 phase=0.8333 ease=quintOut spring=17 damping=0.74 amplitude=0.005 visual=liquid_glass
--- 025.11 phase=0.9167 ease=quintOut spring=18 damping=0.75 amplitude=0.006 visual=liquid_glass
--- 025.12 phase=1.0000 ease=quintOut spring=19 damping=0.76 amplitude=0.007 visual=liquid_glass
-
--- MOTION PACK 026: cinematic interaction family
--- 026.01 phase=0.0833 ease=quintOut spring=23 damping=0.68 amplitude=0.014 visual=liquid_glass
--- 026.02 phase=0.1667 ease=quintOut spring=10 damping=0.69 amplitude=0.015 visual=liquid_glass
--- 026.03 phase=0.2500 ease=quintOut spring=11 damping=0.70 amplitude=0.016 visual=liquid_glass
--- 026.04 phase=0.3333 ease=quintOut spring=12 damping=0.71 amplitude=0.017 visual=liquid_glass
--- 026.05 phase=0.4167 ease=quintOut spring=13 damping=0.72 amplitude=0.018 visual=liquid_glass
--- 026.06 phase=0.5000 ease=quintOut spring=14 damping=0.73 amplitude=0.019 visual=liquid_glass
--- 026.07 phase=0.5833 ease=quintOut spring=15 damping=0.74 amplitude=0.020 visual=liquid_glass
--- 026.08 phase=0.6667 ease=quintOut spring=16 damping=0.75 amplitude=0.004 visual=liquid_glass
--- 026.09 phase=0.7500 ease=quintOut spring=17 damping=0.76 amplitude=0.005 visual=liquid_glass
--- 026.10 phase=0.8333 ease=quintOut spring=18 damping=0.77 amplitude=0.006 visual=liquid_glass
--- 026.11 phase=0.9167 ease=quintOut spring=19 damping=0.78 amplitude=0.007 visual=liquid_glass
--- 026.12 phase=1.0000 ease=quintOut spring=20 damping=0.79 amplitude=0.008 visual=liquid_glass
-
--- MOTION PACK 027: cinematic interaction family
--- 027.01 phase=0.0833 ease=quintOut spring=10 damping=0.71 amplitude=0.015 visual=liquid_glass
--- 027.02 phase=0.1667 ease=quintOut spring=11 damping=0.72 amplitude=0.016 visual=liquid_glass
--- 027.03 phase=0.2500 ease=quintOut spring=12 damping=0.73 amplitude=0.017 visual=liquid_glass
--- 027.04 phase=0.3333 ease=quintOut spring=13 damping=0.74 amplitude=0.018 visual=liquid_glass
--- 027.05 phase=0.4167 ease=quintOut spring=14 damping=0.75 amplitude=0.019 visual=liquid_glass
--- 027.06 phase=0.5000 ease=quintOut spring=15 damping=0.76 amplitude=0.020 visual=liquid_glass
--- 027.07 phase=0.5833 ease=quintOut spring=16 damping=0.77 amplitude=0.004 visual=liquid_glass
--- 027.08 phase=0.6667 ease=quintOut spring=17 damping=0.78 amplitude=0.005 visual=liquid_glass
--- 027.09 phase=0.7500 ease=quintOut spring=18 damping=0.79 amplitude=0.006 visual=liquid_glass
--- 027.10 phase=0.8333 ease=quintOut spring=19 damping=0.80 amplitude=0.007 visual=liquid_glass
--- 027.11 phase=0.9167 ease=quintOut spring=20 damping=0.81 amplitude=0.008 visual=liquid_glass
--- 027.12 phase=1.0000 ease=quintOut spring=21 damping=0.82 amplitude=0.009 visual=liquid_glass
-
--- MOTION PACK 028: cinematic interaction family
--- 028.01 phase=0.0833 ease=quintOut spring=11 damping=0.74 amplitude=0.016 visual=liquid_glass
--- 028.02 phase=0.1667 ease=quintOut spring=12 damping=0.75 amplitude=0.017 visual=liquid_glass
--- 028.03 phase=0.2500 ease=quintOut spring=13 damping=0.76 amplitude=0.018 visual=liquid_glass
--- 028.04 phase=0.3333 ease=quintOut spring=14 damping=0.77 amplitude=0.019 visual=liquid_glass
--- 028.05 phase=0.4167 ease=quintOut spring=15 damping=0.78 amplitude=0.020 visual=liquid_glass
--- 028.06 phase=0.5000 ease=quintOut spring=16 damping=0.79 amplitude=0.004 visual=liquid_glass
--- 028.07 phase=0.5833 ease=quintOut spring=17 damping=0.80 amplitude=0.005 visual=liquid_glass
--- 028.08 phase=0.6667 ease=quintOut spring=18 damping=0.81 amplitude=0.006 visual=liquid_glass
--- 028.09 phase=0.7500 ease=quintOut spring=19 damping=0.82 amplitude=0.007 visual=liquid_glass
--- 028.10 phase=0.8333 ease=quintOut spring=20 damping=0.83 amplitude=0.008 visual=liquid_glass
--- 028.11 phase=0.9167 ease=quintOut spring=21 damping=0.84 amplitude=0.009 visual=liquid_glass
--- 028.12 phase=1.0000 ease=quintOut spring=22 damping=0.85 amplitude=0.010 visual=liquid_glass
-
--- MOTION PACK 029: cinematic interaction family
--- 029.01 phase=0.0833 ease=quintOut spring=12 damping=0.77 amplitude=0.017 visual=liquid_glass
--- 029.02 phase=0.1667 ease=quintOut spring=13 damping=0.78 amplitude=0.018 visual=liquid_glass
--- 029.03 phase=0.2500 ease=quintOut spring=14 damping=0.79 amplitude=0.019 visual=liquid_glass
--- 029.04 phase=0.3333 ease=quintOut spring=15 damping=0.80 amplitude=0.020 visual=liquid_glass
--- 029.05 phase=0.4167 ease=quintOut spring=16 damping=0.81 amplitude=0.004 visual=liquid_glass
--- 029.06 phase=0.5000 ease=quintOut spring=17 damping=0.82 amplitude=0.005 visual=liquid_glass
--- 029.07 phase=0.5833 ease=quintOut spring=18 damping=0.83 amplitude=0.006 visual=liquid_glass
--- 029.08 phase=0.6667 ease=quintOut spring=19 damping=0.84 amplitude=0.007 visual=liquid_glass
--- 029.09 phase=0.7500 ease=quintOut spring=20 damping=0.85 amplitude=0.008 visual=liquid_glass
--- 029.10 phase=0.8333 ease=quintOut spring=21 damping=0.86 amplitude=0.009 visual=liquid_glass
--- 029.11 phase=0.9167 ease=quintOut spring=22 damping=0.87 amplitude=0.010 visual=liquid_glass
--- 029.12 phase=1.0000 ease=quintOut spring=23 damping=0.88 amplitude=0.011 visual=liquid_glass
-
--- MOTION PACK 030: cinematic interaction family
--- 030.01 phase=0.0833 ease=quintOut spring=13 damping=0.80 amplitude=0.018 visual=liquid_glass
--- 030.02 phase=0.1667 ease=quintOut spring=14 damping=0.81 amplitude=0.019 visual=liquid_glass
--- 030.03 phase=0.2500 ease=quintOut spring=15 damping=0.82 amplitude=0.020 visual=liquid_glass
--- 030.04 phase=0.3333 ease=quintOut spring=16 damping=0.83 amplitude=0.004 visual=liquid_glass
--- 030.05 phase=0.4167 ease=quintOut spring=17 damping=0.84 amplitude=0.005 visual=liquid_glass
--- 030.06 phase=0.5000 ease=quintOut spring=18 damping=0.85 amplitude=0.006 visual=liquid_glass
--- 030.07 phase=0.5833 ease=quintOut spring=19 damping=0.86 amplitude=0.007 visual=liquid_glass
--- 030.08 phase=0.6667 ease=quintOut spring=20 damping=0.87 amplitude=0.008 visual=liquid_glass
--- 030.09 phase=0.7500 ease=quintOut spring=21 damping=0.88 amplitude=0.009 visual=liquid_glass
--- 030.10 phase=0.8333 ease=quintOut spring=22 damping=0.64 amplitude=0.010 visual=liquid_glass
--- 030.11 phase=0.9167 ease=quintOut spring=23 damping=0.65 amplitude=0.011 visual=liquid_glass
--- 030.12 phase=1.0000 ease=quintOut spring=10 damping=0.66 amplitude=0.012 visual=liquid_glass
-
--- MOTION PACK 031: cinematic interaction family
--- 031.01 phase=0.0833 ease=quintOut spring=14 damping=0.83 amplitude=0.019 visual=liquid_glass
--- 031.02 phase=0.1667 ease=quintOut spring=15 damping=0.84 amplitude=0.020 visual=liquid_glass
--- 031.03 phase=0.2500 ease=quintOut spring=16 damping=0.85 amplitude=0.004 visual=liquid_glass
--- 031.04 phase=0.3333 ease=quintOut spring=17 damping=0.86 amplitude=0.005 visual=liquid_glass
--- 031.05 phase=0.4167 ease=quintOut spring=18 damping=0.87 amplitude=0.006 visual=liquid_glass
--- 031.06 phase=0.5000 ease=quintOut spring=19 damping=0.88 amplitude=0.007 visual=liquid_glass
--- 031.07 phase=0.5833 ease=quintOut spring=20 damping=0.64 amplitude=0.008 visual=liquid_glass
--- 031.08 phase=0.6667 ease=quintOut spring=21 damping=0.65 amplitude=0.009 visual=liquid_glass
--- 031.09 phase=0.7500 ease=quintOut spring=22 damping=0.66 amplitude=0.010 visual=liquid_glass
--- 031.10 phase=0.8333 ease=quintOut spring=23 damping=0.67 amplitude=0.011 visual=liquid_glass
--- 031.11 phase=0.9167 ease=quintOut spring=10 damping=0.68 amplitude=0.012 visual=liquid_glass
--- 031.12 phase=1.0000 ease=quintOut spring=11 damping=0.69 amplitude=0.013 visual=liquid_glass
-
--- MOTION PACK 032: cinematic interaction family
--- 032.01 phase=0.0833 ease=quintOut spring=15 damping=0.86 amplitude=0.020 visual=liquid_glass
--- 032.02 phase=0.1667 ease=quintOut spring=16 damping=0.87 amplitude=0.004 visual=liquid_glass
--- 032.03 phase=0.2500 ease=quintOut spring=17 damping=0.88 amplitude=0.005 visual=liquid_glass
--- 032.04 phase=0.3333 ease=quintOut spring=18 damping=0.64 amplitude=0.006 visual=liquid_glass
--- 032.05 phase=0.4167 ease=quintOut spring=19 damping=0.65 amplitude=0.007 visual=liquid_glass
--- 032.06 phase=0.5000 ease=quintOut spring=20 damping=0.66 amplitude=0.008 visual=liquid_glass
--- 032.07 phase=0.5833 ease=quintOut spring=21 damping=0.67 amplitude=0.009 visual=liquid_glass
--- 032.08 phase=0.6667 ease=quintOut spring=22 damping=0.68 amplitude=0.010 visual=liquid_glass
--- 032.09 phase=0.7500 ease=quintOut spring=23 damping=0.69 amplitude=0.011 visual=liquid_glass
--- 032.10 phase=0.8333 ease=quintOut spring=10 damping=0.70 amplitude=0.012 visual=liquid_glass
--- 032.11 phase=0.9167 ease=quintOut spring=11 damping=0.71 amplitude=0.013 visual=liquid_glass
--- 032.12 phase=1.0000 ease=quintOut spring=12 damping=0.72 amplitude=0.014 visual=liquid_glass
-
--- MOTION PACK 033: cinematic interaction family
--- 033.01 phase=0.0833 ease=quintOut spring=16 damping=0.64 amplitude=0.004 visual=liquid_glass
--- 033.02 phase=0.1667 ease=quintOut spring=17 damping=0.65 amplitude=0.005 visual=liquid_glass
--- 033.03 phase=0.2500 ease=quintOut spring=18 damping=0.66 amplitude=0.006 visual=liquid_glass
--- 033.04 phase=0.3333 ease=quintOut spring=19 damping=0.67 amplitude=0.007 visual=liquid_glass
--- 033.05 phase=0.4167 ease=quintOut spring=20 damping=0.68 amplitude=0.008 visual=liquid_glass
--- 033.06 phase=0.5000 ease=quintOut spring=21 damping=0.69 amplitude=0.009 visual=liquid_glass
--- 033.07 phase=0.5833 ease=quintOut spring=22 damping=0.70 amplitude=0.010 visual=liquid_glass
--- 033.08 phase=0.6667 ease=quintOut spring=23 damping=0.71 amplitude=0.011 visual=liquid_glass
--- 033.09 phase=0.7500 ease=quintOut spring=10 damping=0.72 amplitude=0.012 visual=liquid_glass
--- 033.10 phase=0.8333 ease=quintOut spring=11 damping=0.73 amplitude=0.013 visual=liquid_glass
--- 033.11 phase=0.9167 ease=quintOut spring=12 damping=0.74 amplitude=0.014 visual=liquid_glass
--- 033.12 phase=1.0000 ease=quintOut spring=13 damping=0.75 amplitude=0.015 visual=liquid_glass
-
--- MOTION PACK 034: cinematic interaction family
--- 034.01 phase=0.0833 ease=quintOut spring=17 damping=0.67 amplitude=0.005 visual=liquid_glass
--- 034.02 phase=0.1667 ease=quintOut spring=18 damping=0.68 amplitude=0.006 visual=liquid_glass
--- 034.03 phase=0.2500 ease=quintOut spring=19 damping=0.69 amplitude=0.007 visual=liquid_glass
--- 034.04 phase=0.3333 ease=quintOut spring=20 damping=0.70 amplitude=0.008 visual=liquid_glass
--- 034.05 phase=0.4167 ease=quintOut spring=21 damping=0.71 amplitude=0.009 visual=liquid_glass
--- 034.06 phase=0.5000 ease=quintOut spring=22 damping=0.72 amplitude=0.010 visual=liquid_glass
--- 034.07 phase=0.5833 ease=quintOut spring=23 damping=0.73 amplitude=0.011 visual=liquid_glass
--- 034.08 phase=0.6667 ease=quintOut spring=10 damping=0.74 amplitude=0.012 visual=liquid_glass
--- 034.09 phase=0.7500 ease=quintOut spring=11 damping=0.75 amplitude=0.013 visual=liquid_glass
--- 034.10 phase=0.8333 ease=quintOut spring=12 damping=0.76 amplitude=0.014 visual=liquid_glass
--- 034.11 phase=0.9167 ease=quintOut spring=13 damping=0.77 amplitude=0.015 visual=liquid_glass
--- 034.12 phase=1.0000 ease=quintOut spring=14 damping=0.78 amplitude=0.016 visual=liquid_glass
-
--- MOTION PACK 035: cinematic interaction family
--- 035.01 phase=0.0833 ease=quintOut spring=18 damping=0.70 amplitude=0.006 visual=liquid_glass
--- 035.02 phase=0.1667 ease=quintOut spring=19 damping=0.71 amplitude=0.007 visual=liquid_glass
--- 035.03 phase=0.2500 ease=quintOut spring=20 damping=0.72 amplitude=0.008 visual=liquid_glass
--- 035.04 phase=0.3333 ease=quintOut spring=21 damping=0.73 amplitude=0.009 visual=liquid_glass
--- 035.05 phase=0.4167 ease=quintOut spring=22 damping=0.74 amplitude=0.010 visual=liquid_glass
--- 035.06 phase=0.5000 ease=quintOut spring=23 damping=0.75 amplitude=0.011 visual=liquid_glass
--- 035.07 phase=0.5833 ease=quintOut spring=10 damping=0.76 amplitude=0.012 visual=liquid_glass
--- 035.08 phase=0.6667 ease=quintOut spring=11 damping=0.77 amplitude=0.013 visual=liquid_glass
--- 035.09 phase=0.7500 ease=quintOut spring=12 damping=0.78 amplitude=0.014 visual=liquid_glass
--- 035.10 phase=0.8333 ease=quintOut spring=13 damping=0.79 amplitude=0.015 visual=liquid_glass
--- 035.11 phase=0.9167 ease=quintOut spring=14 damping=0.80 amplitude=0.016 visual=liquid_glass
--- 035.12 phase=1.0000 ease=quintOut spring=15 damping=0.81 amplitude=0.017 visual=liquid_glass
-
--- MOTION PACK 036: cinematic interaction family
--- 036.01 phase=0.0833 ease=quintOut spring=19 damping=0.73 amplitude=0.007 visual=liquid_glass
--- 036.02 phase=0.1667 ease=quintOut spring=20 damping=0.74 amplitude=0.008 visual=liquid_glass
--- 036.03 phase=0.2500 ease=quintOut spring=21 damping=0.75 amplitude=0.009 visual=liquid_glass
--- 036.04 phase=0.3333 ease=quintOut spring=22 damping=0.76 amplitude=0.010 visual=liquid_glass
--- 036.05 phase=0.4167 ease=quintOut spring=23 damping=0.77 amplitude=0.011 visual=liquid_glass
--- 036.06 phase=0.5000 ease=quintOut spring=10 damping=0.78 amplitude=0.012 visual=liquid_glass
--- 036.07 phase=0.5833 ease=quintOut spring=11 damping=0.79 amplitude=0.013 visual=liquid_glass
--- 036.08 phase=0.6667 ease=quintOut spring=12 damping=0.80 amplitude=0.014 visual=liquid_glass
--- 036.09 phase=0.7500 ease=quintOut spring=13 damping=0.81 amplitude=0.015 visual=liquid_glass
--- 036.10 phase=0.8333 ease=quintOut spring=14 damping=0.82 amplitude=0.016 visual=liquid_glass
--- 036.11 phase=0.9167 ease=quintOut spring=15 damping=0.83 amplitude=0.017 visual=liquid_glass
--- 036.12 phase=1.0000 ease=quintOut spring=16 damping=0.84 amplitude=0.018 visual=liquid_glass
-
--- MOTION PACK 037: cinematic interaction family
--- 037.01 phase=0.0833 ease=quintOut spring=20 damping=0.76 amplitude=0.008 visual=liquid_glass
--- 037.02 phase=0.1667 ease=quintOut spring=21 damping=0.77 amplitude=0.009 visual=liquid_glass
--- 037.03 phase=0.2500 ease=quintOut spring=22 damping=0.78 amplitude=0.010 visual=liquid_glass
--- 037.04 phase=0.3333 ease=quintOut spring=23 damping=0.79 amplitude=0.011 visual=liquid_glass
--- 037.05 phase=0.4167 ease=quintOut spring=10 damping=0.80 amplitude=0.012 visual=liquid_glass
--- 037.06 phase=0.5000 ease=quintOut spring=11 damping=0.81 amplitude=0.013 visual=liquid_glass
--- 037.07 phase=0.5833 ease=quintOut spring=12 damping=0.82 amplitude=0.014 visual=liquid_glass
--- 037.08 phase=0.6667 ease=quintOut spring=13 damping=0.83 amplitude=0.015 visual=liquid_glass
--- 037.09 phase=0.7500 ease=quintOut spring=14 damping=0.84 amplitude=0.016 visual=liquid_glass
--- 037.10 phase=0.8333 ease=quintOut spring=15 damping=0.85 amplitude=0.017 visual=liquid_glass
--- 037.11 phase=0.9167 ease=quintOut spring=16 damping=0.86 amplitude=0.018 visual=liquid_glass
--- 037.12 phase=1.0000 ease=quintOut spring=17 damping=0.87 amplitude=0.019 visual=liquid_glass
-
--- MOTION PACK 038: cinematic interaction family
--- 038.01 phase=0.0833 ease=quintOut spring=21 damping=0.79 amplitude=0.009 visual=liquid_glass
--- 038.02 phase=0.1667 ease=quintOut spring=22 damping=0.80 amplitude=0.010 visual=liquid_glass
--- 038.03 phase=0.2500 ease=quintOut spring=23 damping=0.81 amplitude=0.011 visual=liquid_glass
--- 038.04 phase=0.3333 ease=quintOut spring=10 damping=0.82 amplitude=0.012 visual=liquid_glass
--- 038.05 phase=0.4167 ease=quintOut spring=11 damping=0.83 amplitude=0.013 visual=liquid_glass
--- 038.06 phase=0.5000 ease=quintOut spring=12 damping=0.84 amplitude=0.014 visual=liquid_glass
--- 038.07 phase=0.5833 ease=quintOut spring=13 damping=0.85 amplitude=0.015 visual=liquid_glass
--- 038.08 phase=0.6667 ease=quintOut spring=14 damping=0.86 amplitude=0.016 visual=liquid_glass
--- 038.09 phase=0.7500 ease=quintOut spring=15 damping=0.87 amplitude=0.017 visual=liquid_glass
--- 038.10 phase=0.8333 ease=quintOut spring=16 damping=0.88 amplitude=0.018 visual=liquid_glass
--- 038.11 phase=0.9167 ease=quintOut spring=17 damping=0.64 amplitude=0.019 visual=liquid_glass
--- 038.12 phase=1.0000 ease=quintOut spring=18 damping=0.65 amplitude=0.020 visual=liquid_glass
-
--- MOTION PACK 039: cinematic interaction family
--- 039.01 phase=0.0833 ease=quintOut spring=22 damping=0.82 amplitude=0.010 visual=liquid_glass
--- 039.02 phase=0.1667 ease=quintOut spring=23 damping=0.83 amplitude=0.011 visual=liquid_glass
--- 039.03 phase=0.2500 ease=quintOut spring=10 damping=0.84 amplitude=0.012 visual=liquid_glass
--- 039.04 phase=0.3333 ease=quintOut spring=11 damping=0.85 amplitude=0.013 visual=liquid_glass
--- 039.05 phase=0.4167 ease=quintOut spring=12 damping=0.86 amplitude=0.014 visual=liquid_glass
--- 039.06 phase=0.5000 ease=quintOut spring=13 damping=0.87 amplitude=0.015 visual=liquid_glass
--- 039.07 phase=0.5833 ease=quintOut spring=14 damping=0.88 amplitude=0.016 visual=liquid_glass
--- 039.08 phase=0.6667 ease=quintOut spring=15 damping=0.64 amplitude=0.017 visual=liquid_glass
--- 039.09 phase=0.7500 ease=quintOut spring=16 damping=0.65 amplitude=0.018 visual=liquid_glass
--- 039.10 phase=0.8333 ease=quintOut spring=17 damping=0.66 amplitude=0.019 visual=liquid_glass
--- 039.11 phase=0.9167 ease=quintOut spring=18 damping=0.67 amplitude=0.020 visual=liquid_glass
--- 039.12 phase=1.0000 ease=quintOut spring=19 damping=0.68 amplitude=0.004 visual=liquid_glass
-
--- MOTION PACK 040: cinematic interaction family
--- 040.01 phase=0.0833 ease=quintOut spring=23 damping=0.85 amplitude=0.011 visual=liquid_glass
--- 040.02 phase=0.1667 ease=quintOut spring=10 damping=0.86 amplitude=0.012 visual=liquid_glass
--- 040.03 phase=0.2500 ease=quintOut spring=11 damping=0.87 amplitude=0.013 visual=liquid_glass
--- 040.04 phase=0.3333 ease=quintOut spring=12 damping=0.88 amplitude=0.014 visual=liquid_glass
--- 040.05 phase=0.4167 ease=quintOut spring=13 damping=0.64 amplitude=0.015 visual=liquid_glass
--- 040.06 phase=0.5000 ease=quintOut spring=14 damping=0.65 amplitude=0.016 visual=liquid_glass
--- 040.07 phase=0.5833 ease=quintOut spring=15 damping=0.66 amplitude=0.017 visual=liquid_glass
--- 040.08 phase=0.6667 ease=quintOut spring=16 damping=0.67 amplitude=0.018 visual=liquid_glass
--- 040.09 phase=0.7500 ease=quintOut spring=17 damping=0.68 amplitude=0.019 visual=liquid_glass
--- 040.10 phase=0.8333 ease=quintOut spring=18 damping=0.69 amplitude=0.020 visual=liquid_glass
--- 040.11 phase=0.9167 ease=quintOut spring=19 damping=0.70 amplitude=0.004 visual=liquid_glass
--- 040.12 phase=1.0000 ease=quintOut spring=20 damping=0.71 amplitude=0.005 visual=liquid_glass
-
--- MOTION PACK 041: cinematic interaction family
--- 041.01 phase=0.0833 ease=quintOut spring=10 damping=0.88 amplitude=0.012 visual=liquid_glass
--- 041.02 phase=0.1667 ease=quintOut spring=11 damping=0.64 amplitude=0.013 visual=liquid_glass
--- 041.03 phase=0.2500 ease=quintOut spring=12 damping=0.65 amplitude=0.014 visual=liquid_glass
--- 041.04 phase=0.3333 ease=quintOut spring=13 damping=0.66 amplitude=0.015 visual=liquid_glass
--- 041.05 phase=0.4167 ease=quintOut spring=14 damping=0.67 amplitude=0.016 visual=liquid_glass
--- 041.06 phase=0.5000 ease=quintOut spring=15 damping=0.68 amplitude=0.017 visual=liquid_glass
--- 041.07 phase=0.5833 ease=quintOut spring=16 damping=0.69 amplitude=0.018 visual=liquid_glass
--- 041.08 phase=0.6667 ease=quintOut spring=17 damping=0.70 amplitude=0.019 visual=liquid_glass
--- 041.09 phase=0.7500 ease=quintOut spring=18 damping=0.71 amplitude=0.020 visual=liquid_glass
--- 041.10 phase=0.8333 ease=quintOut spring=19 damping=0.72 amplitude=0.004 visual=liquid_glass
--- 041.11 phase=0.9167 ease=quintOut spring=20 damping=0.73 amplitude=0.005 visual=liquid_glass
--- 041.12 phase=1.0000 ease=quintOut spring=21 damping=0.74 amplitude=0.006 visual=liquid_glass
-
--- MOTION PACK 042: cinematic interaction family
--- 042.01 phase=0.0833 ease=quintOut spring=11 damping=0.66 amplitude=0.013 visual=liquid_glass
--- 042.02 phase=0.1667 ease=quintOut spring=12 damping=0.67 amplitude=0.014 visual=liquid_glass
--- 042.03 phase=0.2500 ease=quintOut spring=13 damping=0.68 amplitude=0.015 visual=liquid_glass
--- 042.04 phase=0.3333 ease=quintOut spring=14 damping=0.69 amplitude=0.016 visual=liquid_glass
--- 042.05 phase=0.4167 ease=quintOut spring=15 damping=0.70 amplitude=0.017 visual=liquid_glass
--- 042.06 phase=0.5000 ease=quintOut spring=16 damping=0.71 amplitude=0.018 visual=liquid_glass
--- 042.07 phase=0.5833 ease=quintOut spring=17 damping=0.72 amplitude=0.019 visual=liquid_glass
--- 042.08 phase=0.6667 ease=quintOut spring=18 damping=0.73 amplitude=0.020 visual=liquid_glass
--- 042.09 phase=0.7500 ease=quintOut spring=19 damping=0.74 amplitude=0.004 visual=liquid_glass
--- 042.10 phase=0.8333 ease=quintOut spring=20 damping=0.75 amplitude=0.005 visual=liquid_glass
--- 042.11 phase=0.9167 ease=quintOut spring=21 damping=0.76 amplitude=0.006 visual=liquid_glass
--- 042.12 phase=1.0000 ease=quintOut spring=22 damping=0.77 amplitude=0.007 visual=liquid_glass
-
--- MOTION PACK 043: cinematic interaction family
--- 043.01 phase=0.0833 ease=quintOut spring=12 damping=0.69 amplitude=0.014 visual=liquid_glass
--- 043.02 phase=0.1667 ease=quintOut spring=13 damping=0.70 amplitude=0.015 visual=liquid_glass
--- 043.03 phase=0.2500 ease=quintOut spring=14 damping=0.71 amplitude=0.016 visual=liquid_glass
--- 043.04 phase=0.3333 ease=quintOut spring=15 damping=0.72 amplitude=0.017 visual=liquid_glass
--- 043.05 phase=0.4167 ease=quintOut spring=16 damping=0.73 amplitude=0.018 visual=liquid_glass
--- 043.06 phase=0.5000 ease=quintOut spring=17 damping=0.74 amplitude=0.019 visual=liquid_glass
--- 043.07 phase=0.5833 ease=quintOut spring=18 damping=0.75 amplitude=0.020 visual=liquid_glass
--- 043.08 phase=0.6667 ease=quintOut spring=19 damping=0.76 amplitude=0.004 visual=liquid_glass
--- 043.09 phase=0.7500 ease=quintOut spring=20 damping=0.77 amplitude=0.005 visual=liquid_glass
--- 043.10 phase=0.8333 ease=quintOut spring=21 damping=0.78 amplitude=0.006 visual=liquid_glass
--- 043.11 phase=0.9167 ease=quintOut spring=22 damping=0.79 amplitude=0.007 visual=liquid_glass
--- 043.12 phase=1.0000 ease=quintOut spring=23 damping=0.80 amplitude=0.008 visual=liquid_glass
-
--- MOTION PACK 044: cinematic interaction family
--- 044.01 phase=0.0833 ease=quintOut spring=13 damping=0.72 amplitude=0.015 visual=liquid_glass
--- 044.02 phase=0.1667 ease=quintOut spring=14 damping=0.73 amplitude=0.016 visual=liquid_glass
--- 044.03 phase=0.2500 ease=quintOut spring=15 damping=0.74 amplitude=0.017 visual=liquid_glass
--- 044.04 phase=0.3333 ease=quintOut spring=16 damping=0.75 amplitude=0.018 visual=liquid_glass
--- 044.05 phase=0.4167 ease=quintOut spring=17 damping=0.76 amplitude=0.019 visual=liquid_glass
--- 044.06 phase=0.5000 ease=quintOut spring=18 damping=0.77 amplitude=0.020 visual=liquid_glass
--- 044.07 phase=0.5833 ease=quintOut spring=19 damping=0.78 amplitude=0.004 visual=liquid_glass
--- 044.08 phase=0.6667 ease=quintOut spring=20 damping=0.79 amplitude=0.005 visual=liquid_glass
--- 044.09 phase=0.7500 ease=quintOut spring=21 damping=0.80 amplitude=0.006 visual=liquid_glass
--- 044.10 phase=0.8333 ease=quintOut spring=22 damping=0.81 amplitude=0.007 visual=liquid_glass
--- 044.11 phase=0.9167 ease=quintOut spring=23 damping=0.82 amplitude=0.008 visual=liquid_glass
--- 044.12 phase=1.0000 ease=quintOut spring=10 damping=0.83 amplitude=0.009 visual=liquid_glass
-
--- MOTION PACK 045: cinematic interaction family
--- 045.01 phase=0.0833 ease=quintOut spring=14 damping=0.75 amplitude=0.016 visual=liquid_glass
--- 045.02 phase=0.1667 ease=quintOut spring=15 damping=0.76 amplitude=0.017 visual=liquid_glass
--- 045.03 phase=0.2500 ease=quintOut spring=16 damping=0.77 amplitude=0.018 visual=liquid_glass
--- 045.04 phase=0.3333 ease=quintOut spring=17 damping=0.78 amplitude=0.019 visual=liquid_glass
--- 045.05 phase=0.4167 ease=quintOut spring=18 damping=0.79 amplitude=0.020 visual=liquid_glass
--- 045.06 phase=0.5000 ease=quintOut spring=19 damping=0.80 amplitude=0.004 visual=liquid_glass
--- 045.07 phase=0.5833 ease=quintOut spring=20 damping=0.81 amplitude=0.005 visual=liquid_glass
--- 045.08 phase=0.6667 ease=quintOut spring=21 damping=0.82 amplitude=0.006 visual=liquid_glass
--- 045.09 phase=0.7500 ease=quintOut spring=22 damping=0.83 amplitude=0.007 visual=liquid_glass
--- 045.10 phase=0.8333 ease=quintOut spring=23 damping=0.84 amplitude=0.008 visual=liquid_glass
--- 045.11 phase=0.9167 ease=quintOut spring=10 damping=0.85 amplitude=0.009 visual=liquid_glass
--- 045.12 phase=1.0000 ease=quintOut spring=11 damping=0.86 amplitude=0.010 visual=liquid_glass
-
--- MOTION PACK 046: cinematic interaction family
--- 046.01 phase=0.0833 ease=quintOut spring=15 damping=0.78 amplitude=0.017 visual=liquid_glass
--- 046.02 phase=0.1667 ease=quintOut spring=16 damping=0.79 amplitude=0.018 visual=liquid_glass
--- 046.03 phase=0.2500 ease=quintOut spring=17 damping=0.80 amplitude=0.019 visual=liquid_glass
--- 046.04 phase=0.3333 ease=quintOut spring=18 damping=0.81 amplitude=0.020 visual=liquid_glass
--- 046.05 phase=0.4167 ease=quintOut spring=19 damping=0.82 amplitude=0.004 visual=liquid_glass
--- 046.06 phase=0.5000 ease=quintOut spring=20 damping=0.83 amplitude=0.005 visual=liquid_glass
--- 046.07 phase=0.5833 ease=quintOut spring=21 damping=0.84 amplitude=0.006 visual=liquid_glass
--- 046.08 phase=0.6667 ease=quintOut spring=22 damping=0.85 amplitude=0.007 visual=liquid_glass
--- 046.09 phase=0.7500 ease=quintOut spring=23 damping=0.86 amplitude=0.008 visual=liquid_glass
--- 046.10 phase=0.8333 ease=quintOut spring=10 damping=0.87 amplitude=0.009 visual=liquid_glass
--- 046.11 phase=0.9167 ease=quintOut spring=11 damping=0.88 amplitude=0.010 visual=liquid_glass
--- 046.12 phase=1.0000 ease=quintOut spring=12 damping=0.64 amplitude=0.011 visual=liquid_glass
-
--- MOTION PACK 047: cinematic interaction family
--- 047.01 phase=0.0833 ease=quintOut spring=16 damping=0.81 amplitude=0.018 visual=liquid_glass
--- 047.02 phase=0.1667 ease=quintOut spring=17 damping=0.82 amplitude=0.019 visual=liquid_glass
--- 047.03 phase=0.2500 ease=quintOut spring=18 damping=0.83 amplitude=0.020 visual=liquid_glass
--- 047.04 phase=0.3333 ease=quintOut spring=19 damping=0.84 amplitude=0.004 visual=liquid_glass
--- 047.05 phase=0.4167 ease=quintOut spring=20 damping=0.85 amplitude=0.005 visual=liquid_glass
--- 047.06 phase=0.5000 ease=quintOut spring=21 damping=0.86 amplitude=0.006 visual=liquid_glass
--- 047.07 phase=0.5833 ease=quintOut spring=22 damping=0.87 amplitude=0.007 visual=liquid_glass
--- 047.08 phase=0.6667 ease=quintOut spring=23 damping=0.88 amplitude=0.008 visual=liquid_glass
--- 047.09 phase=0.7500 ease=quintOut spring=10 damping=0.64 amplitude=0.009 visual=liquid_glass
--- 047.10 phase=0.8333 ease=quintOut spring=11 damping=0.65 amplitude=0.010 visual=liquid_glass
--- 047.11 phase=0.9167 ease=quintOut spring=12 damping=0.66 amplitude=0.011 visual=liquid_glass
--- 047.12 phase=1.0000 ease=quintOut spring=13 damping=0.67 amplitude=0.012 visual=liquid_glass
-
--- MOTION PACK 048: cinematic interaction family
--- 048.01 phase=0.0833 ease=quintOut spring=17 damping=0.84 amplitude=0.019 visual=liquid_glass
--- 048.02 phase=0.1667 ease=quintOut spring=18 damping=0.85 amplitude=0.020 visual=liquid_glass
--- 048.03 phase=0.2500 ease=quintOut spring=19 damping=0.86 amplitude=0.004 visual=liquid_glass
--- 048.04 phase=0.3333 ease=quintOut spring=20 damping=0.87 amplitude=0.005 visual=liquid_glass
--- 048.05 phase=0.4167 ease=quintOut spring=21 damping=0.88 amplitude=0.006 visual=liquid_glass
--- 048.06 phase=0.5000 ease=quintOut spring=22 damping=0.64 amplitude=0.007 visual=liquid_glass
--- 048.07 phase=0.5833 ease=quintOut spring=23 damping=0.65 amplitude=0.008 visual=liquid_glass
--- 048.08 phase=0.6667 ease=quintOut spring=10 damping=0.66 amplitude=0.009 visual=liquid_glass
--- 048.09 phase=0.7500 ease=quintOut spring=11 damping=0.67 amplitude=0.010 visual=liquid_glass
--- 048.10 phase=0.8333 ease=quintOut spring=12 damping=0.68 amplitude=0.011 visual=liquid_glass
--- 048.11 phase=0.9167 ease=quintOut spring=13 damping=0.69 amplitude=0.012 visual=liquid_glass
--- 048.12 phase=1.0000 ease=quintOut spring=14 damping=0.70 amplitude=0.013 visual=liquid_glass
-
--- MOTION PACK 049: cinematic interaction family
--- 049.01 phase=0.0833 ease=quintOut spring=18 damping=0.87 amplitude=0.020 visual=liquid_glass
--- 049.02 phase=0.1667 ease=quintOut spring=19 damping=0.88 amplitude=0.004 visual=liquid_glass
--- 049.03 phase=0.2500 ease=quintOut spring=20 damping=0.64 amplitude=0.005 visual=liquid_glass
--- 049.04 phase=0.3333 ease=quintOut spring=21 damping=0.65 amplitude=0.006 visual=liquid_glass
--- 049.05 phase=0.4167 ease=quintOut spring=22 damping=0.66 amplitude=0.007 visual=liquid_glass
--- 049.06 phase=0.5000 ease=quintOut spring=23 damping=0.67 amplitude=0.008 visual=liquid_glass
--- 049.07 phase=0.5833 ease=quintOut spring=10 damping=0.68 amplitude=0.009 visual=liquid_glass
--- 049.08 phase=0.6667 ease=quintOut spring=11 damping=0.69 amplitude=0.010 visual=liquid_glass
--- 049.09 phase=0.7500 ease=quintOut spring=12 damping=0.70 amplitude=0.011 visual=liquid_glass
--- 049.10 phase=0.8333 ease=quintOut spring=13 damping=0.71 amplitude=0.012 visual=liquid_glass
--- 049.11 phase=0.9167 ease=quintOut spring=14 damping=0.72 amplitude=0.013 visual=liquid_glass
--- 049.12 phase=1.0000 ease=quintOut spring=15 damping=0.73 amplitude=0.014 visual=liquid_glass
-
--- MOTION PACK 050: cinematic interaction family
--- 050.01 phase=0.0833 ease=quintOut spring=19 damping=0.65 amplitude=0.004 visual=liquid_glass
--- 050.02 phase=0.1667 ease=quintOut spring=20 damping=0.66 amplitude=0.005 visual=liquid_glass
--- 050.03 phase=0.2500 ease=quintOut spring=21 damping=0.67 amplitude=0.006 visual=liquid_glass
--- 050.04 phase=0.3333 ease=quintOut spring=22 damping=0.68 amplitude=0.007 visual=liquid_glass
--- 050.05 phase=0.4167 ease=quintOut spring=23 damping=0.69 amplitude=0.008 visual=liquid_glass
--- 050.06 phase=0.5000 ease=quintOut spring=10 damping=0.70 amplitude=0.009 visual=liquid_glass
--- 050.07 phase=0.5833 ease=quintOut spring=11 damping=0.71 amplitude=0.010 visual=liquid_glass
--- 050.08 phase=0.6667 ease=quintOut spring=12 damping=0.72 amplitude=0.011 visual=liquid_glass
--- 050.09 phase=0.7500 ease=quintOut spring=13 damping=0.73 amplitude=0.012 visual=liquid_glass
--- 050.10 phase=0.8333 ease=quintOut spring=14 damping=0.74 amplitude=0.013 visual=liquid_glass
--- 050.11 phase=0.9167 ease=quintOut spring=15 damping=0.75 amplitude=0.014 visual=liquid_glass
--- 050.12 phase=1.0000 ease=quintOut spring=16 damping=0.76 amplitude=0.015 visual=liquid_glass
-
--- MOTION PACK 051: cinematic interaction family
--- 051.01 phase=0.0833 ease=quintOut spring=20 damping=0.68 amplitude=0.005 visual=liquid_glass
--- 051.02 phase=0.1667 ease=quintOut spring=21 damping=0.69 amplitude=0.006 visual=liquid_glass
--- 051.03 phase=0.2500 ease=quintOut spring=22 damping=0.70 amplitude=0.007 visual=liquid_glass
--- 051.04 phase=0.3333 ease=quintOut spring=23 damping=0.71 amplitude=0.008 visual=liquid_glass
--- 051.05 phase=0.4167 ease=quintOut spring=10 damping=0.72 amplitude=0.009 visual=liquid_glass
--- 051.06 phase=0.5000 ease=quintOut spring=11 damping=0.73 amplitude=0.010 visual=liquid_glass
--- 051.07 phase=0.5833 ease=quintOut spring=12 damping=0.74 amplitude=0.011 visual=liquid_glass
--- 051.08 phase=0.6667 ease=quintOut spring=13 damping=0.75 amplitude=0.012 visual=liquid_glass
--- 051.09 phase=0.7500 ease=quintOut spring=14 damping=0.76 amplitude=0.013 visual=liquid_glass
--- 051.10 phase=0.8333 ease=quintOut spring=15 damping=0.77 amplitude=0.014 visual=liquid_glass
--- 051.11 phase=0.9167 ease=quintOut spring=16 damping=0.78 amplitude=0.015 visual=liquid_glass
--- 051.12 phase=1.0000 ease=quintOut spring=17 damping=0.79 amplitude=0.016 visual=liquid_glass
-
--- MOTION PACK 052: cinematic interaction family
--- 052.01 phase=0.0833 ease=quintOut spring=21 damping=0.71 amplitude=0.006 visual=liquid_glass
--- 052.02 phase=0.1667 ease=quintOut spring=22 damping=0.72 amplitude=0.007 visual=liquid_glass
--- 052.03 phase=0.2500 ease=quintOut spring=23 damping=0.73 amplitude=0.008 visual=liquid_glass
--- 052.04 phase=0.3333 ease=quintOut spring=10 damping=0.74 amplitude=0.009 visual=liquid_glass
--- 052.05 phase=0.4167 ease=quintOut spring=11 damping=0.75 amplitude=0.010 visual=liquid_glass
--- 052.06 phase=0.5000 ease=quintOut spring=12 damping=0.76 amplitude=0.011 visual=liquid_glass
--- 052.07 phase=0.5833 ease=quintOut spring=13 damping=0.77 amplitude=0.012 visual=liquid_glass
--- 052.08 phase=0.6667 ease=quintOut spring=14 damping=0.78 amplitude=0.013 visual=liquid_glass
--- 052.09 phase=0.7500 ease=quintOut spring=15 damping=0.79 amplitude=0.014 visual=liquid_glass
--- 052.10 phase=0.8333 ease=quintOut spring=16 damping=0.80 amplitude=0.015 visual=liquid_glass
--- 052.11 phase=0.9167 ease=quintOut spring=17 damping=0.81 amplitude=0.016 visual=liquid_glass
--- 052.12 phase=1.0000 ease=quintOut spring=18 damping=0.82 amplitude=0.017 visual=liquid_glass
-
--- MOTION PACK 053: cinematic interaction family
--- 053.01 phase=0.0833 ease=quintOut spring=22 damping=0.74 amplitude=0.007 visual=liquid_glass
--- 053.02 phase=0.1667 ease=quintOut spring=23 damping=0.75 amplitude=0.008 visual=liquid_glass
--- 053.03 phase=0.2500 ease=quintOut spring=10 damping=0.76 amplitude=0.009 visual=liquid_glass
--- 053.04 phase=0.3333 ease=quintOut spring=11 damping=0.77 amplitude=0.010 visual=liquid_glass
--- 053.05 phase=0.4167 ease=quintOut spring=12 damping=0.78 amplitude=0.011 visual=liquid_glass
--- 053.06 phase=0.5000 ease=quintOut spring=13 damping=0.79 amplitude=0.012 visual=liquid_glass
--- 053.07 phase=0.5833 ease=quintOut spring=14 damping=0.80 amplitude=0.013 visual=liquid_glass
--- 053.08 phase=0.6667 ease=quintOut spring=15 damping=0.81 amplitude=0.014 visual=liquid_glass
--- 053.09 phase=0.7500 ease=quintOut spring=16 damping=0.82 amplitude=0.015 visual=liquid_glass
--- 053.10 phase=0.8333 ease=quintOut spring=17 damping=0.83 amplitude=0.016 visual=liquid_glass
--- 053.11 phase=0.9167 ease=quintOut spring=18 damping=0.84 amplitude=0.017 visual=liquid_glass
--- 053.12 phase=1.0000 ease=quintOut spring=19 damping=0.85 amplitude=0.018 visual=liquid_glass
-
--- MOTION PACK 054: cinematic interaction family
--- 054.01 phase=0.0833 ease=quintOut spring=23 damping=0.77 amplitude=0.008 visual=liquid_glass
--- 054.02 phase=0.1667 ease=quintOut spring=10 damping=0.78 amplitude=0.009 visual=liquid_glass
--- 054.03 phase=0.2500 ease=quintOut spring=11 damping=0.79 amplitude=0.010 visual=liquid_glass
--- 054.04 phase=0.3333 ease=quintOut spring=12 damping=0.80 amplitude=0.011 visual=liquid_glass
--- 054.05 phase=0.4167 ease=quintOut spring=13 damping=0.81 amplitude=0.012 visual=liquid_glass
--- 054.06 phase=0.5000 ease=quintOut spring=14 damping=0.82 amplitude=0.013 visual=liquid_glass
--- 054.07 phase=0.5833 ease=quintOut spring=15 damping=0.83 amplitude=0.014 visual=liquid_glass
--- 054.08 phase=0.6667 ease=quintOut spring=16 damping=0.84 amplitude=0.015 visual=liquid_glass
--- 054.09 phase=0.7500 ease=quintOut spring=17 damping=0.85 amplitude=0.016 visual=liquid_glass
--- 054.10 phase=0.8333 ease=quintOut spring=18 damping=0.86 amplitude=0.017 visual=liquid_glass
--- 054.11 phase=0.9167 ease=quintOut spring=19 damping=0.87 amplitude=0.018 visual=liquid_glass
--- 054.12 phase=1.0000 ease=quintOut spring=20 damping=0.88 amplitude=0.019 visual=liquid_glass
-
--- MOTION PACK 055: cinematic interaction family
--- 055.01 phase=0.0833 ease=quintOut spring=10 damping=0.80 amplitude=0.009 visual=liquid_glass
--- 055.02 phase=0.1667 ease=quintOut spring=11 damping=0.81 amplitude=0.010 visual=liquid_glass
--- 055.03 phase=0.2500 ease=quintOut spring=12 damping=0.82 amplitude=0.011 visual=liquid_glass
--- 055.04 phase=0.3333 ease=quintOut spring=13 damping=0.83 amplitude=0.012 visual=liquid_glass
--- 055.05 phase=0.4167 ease=quintOut spring=14 damping=0.84 amplitude=0.013 visual=liquid_glass
--- 055.06 phase=0.5000 ease=quintOut spring=15 damping=0.85 amplitude=0.014 visual=liquid_glass
--- 055.07 phase=0.5833 ease=quintOut spring=16 damping=0.86 amplitude=0.015 visual=liquid_glass
--- 055.08 phase=0.6667 ease=quintOut spring=17 damping=0.87 amplitude=0.016 visual=liquid_glass
--- 055.09 phase=0.7500 ease=quintOut spring=18 damping=0.88 amplitude=0.017 visual=liquid_glass
--- 055.10 phase=0.8333 ease=quintOut spring=19 damping=0.64 amplitude=0.018 visual=liquid_glass
--- 055.11 phase=0.9167 ease=quintOut spring=20 damping=0.65 amplitude=0.019 visual=liquid_glass
--- 055.12 phase=1.0000 ease=quintOut spring=21 damping=0.66 amplitude=0.020 visual=liquid_glass
-
--- MOTION PACK 056: cinematic interaction family
--- 056.01 phase=0.0833 ease=quintOut spring=11 damping=0.83 amplitude=0.010 visual=liquid_glass
--- 056.02 phase=0.1667 ease=quintOut spring=12 damping=0.84 amplitude=0.011 visual=liquid_glass
--- 056.03 phase=0.2500 ease=quintOut spring=13 damping=0.85 amplitude=0.012 visual=liquid_glass
--- 056.04 phase=0.3333 ease=quintOut spring=14 damping=0.86 amplitude=0.013 visual=liquid_glass
--- 056.05 phase=0.4167 ease=quintOut spring=15 damping=0.87 amplitude=0.014 visual=liquid_glass
--- 056.06 phase=0.5000 ease=quintOut spring=16 damping=0.88 amplitude=0.015 visual=liquid_glass
--- 056.07 phase=0.5833 ease=quintOut spring=17 damping=0.64 amplitude=0.016 visual=liquid_glass
--- 056.08 phase=0.6667 ease=quintOut spring=18 damping=0.65 amplitude=0.017 visual=liquid_glass
--- 056.09 phase=0.7500 ease=quintOut spring=19 damping=0.66 amplitude=0.018 visual=liquid_glass
--- 056.10 phase=0.8333 ease=quintOut spring=20 damping=0.67 amplitude=0.019 visual=liquid_glass
--- 056.11 phase=0.9167 ease=quintOut spring=21 damping=0.68 amplitude=0.020 visual=liquid_glass
--- 056.12 phase=1.0000 ease=quintOut spring=22 damping=0.69 amplitude=0.004 visual=liquid_glass
-
--- MOTION PACK 057: cinematic interaction family
--- 057.01 phase=0.0833 ease=quintOut spring=12 damping=0.86 amplitude=0.011 visual=liquid_glass
--- 057.02 phase=0.1667 ease=quintOut spring=13 damping=0.87 amplitude=0.012 visual=liquid_glass
--- 057.03 phase=0.2500 ease=quintOut spring=14 damping=0.88 amplitude=0.013 visual=liquid_glass
--- 057.04 phase=0.3333 ease=quintOut spring=15 damping=0.64 amplitude=0.014 visual=liquid_glass
--- 057.05 phase=0.4167 ease=quintOut spring=16 damping=0.65 amplitude=0.015 visual=liquid_glass
--- 057.06 phase=0.5000 ease=quintOut spring=17 damping=0.66 amplitude=0.016 visual=liquid_glass
--- 057.07 phase=0.5833 ease=quintOut spring=18 damping=0.67 amplitude=0.017 visual=liquid_glass
--- 057.08 phase=0.6667 ease=quintOut spring=19 damping=0.68 amplitude=0.018 visual=liquid_glass
--- 057.09 phase=0.7500 ease=quintOut spring=20 damping=0.69 amplitude=0.019 visual=liquid_glass
--- 057.10 phase=0.8333 ease=quintOut spring=21 damping=0.70 amplitude=0.020 visual=liquid_glass
--- 057.11 phase=0.9167 ease=quintOut spring=22 damping=0.71 amplitude=0.004 visual=liquid_glass
--- 057.12 phase=1.0000 ease=quintOut spring=23 damping=0.72 amplitude=0.005 visual=liquid_glass
-
--- MOTION PACK 058: cinematic interaction family
--- 058.01 phase=0.0833 ease=quintOut spring=13 damping=0.64 amplitude=0.012 visual=liquid_glass
--- 058.02 phase=0.1667 ease=quintOut spring=14 damping=0.65 amplitude=0.013 visual=liquid_glass
--- 058.03 phase=0.2500 ease=quintOut spring=15 damping=0.66 amplitude=0.014 visual=liquid_glass
--- 058.04 phase=0.3333 ease=quintOut spring=16 damping=0.67 amplitude=0.015 visual=liquid_glass
--- 058.05 phase=0.4167 ease=quintOut spring=17 damping=0.68 amplitude=0.016 visual=liquid_glass
--- 058.06 phase=0.5000 ease=quintOut spring=18 damping=0.69 amplitude=0.017 visual=liquid_glass
--- 058.07 phase=0.5833 ease=quintOut spring=19 damping=0.70 amplitude=0.018 visual=liquid_glass
--- 058.08 phase=0.6667 ease=quintOut spring=20 damping=0.71 amplitude=0.019 visual=liquid_glass
--- 058.09 phase=0.7500 ease=quintOut spring=21 damping=0.72 amplitude=0.020 visual=liquid_glass
--- 058.10 phase=0.8333 ease=quintOut spring=22 damping=0.73 amplitude=0.004 visual=liquid_glass
--- 058.11 phase=0.9167 ease=quintOut spring=23 damping=0.74 amplitude=0.005 visual=liquid_glass
--- 058.12 phase=1.0000 ease=quintOut spring=10 damping=0.75 amplitude=0.006 visual=liquid_glass
-
--- MOTION PACK 059: cinematic interaction family
--- 059.01 phase=0.0833 ease=quintOut spring=14 damping=0.67 amplitude=0.013 visual=liquid_glass
--- 059.02 phase=0.1667 ease=quintOut spring=15 damping=0.68 amplitude=0.014 visual=liquid_glass
--- 059.03 phase=0.2500 ease=quintOut spring=16 damping=0.69 amplitude=0.015 visual=liquid_glass
--- 059.04 phase=0.3333 ease=quintOut spring=17 damping=0.70 amplitude=0.016 visual=liquid_glass
--- 059.05 phase=0.4167 ease=quintOut spring=18 damping=0.71 amplitude=0.017 visual=liquid_glass
--- 059.06 phase=0.5000 ease=quintOut spring=19 damping=0.72 amplitude=0.018 visual=liquid_glass
--- 059.07 phase=0.5833 ease=quintOut spring=20 damping=0.73 amplitude=0.019 visual=liquid_glass
--- 059.08 phase=0.6667 ease=quintOut spring=21 damping=0.74 amplitude=0.020 visual=liquid_glass
--- 059.09 phase=0.7500 ease=quintOut spring=22 damping=0.75 amplitude=0.004 visual=liquid_glass
--- 059.10 phase=0.8333 ease=quintOut spring=23 damping=0.76 amplitude=0.005 visual=liquid_glass
--- 059.11 phase=0.9167 ease=quintOut spring=10 damping=0.77 amplitude=0.006 visual=liquid_glass
--- 059.12 phase=1.0000 ease=quintOut spring=11 damping=0.78 amplitude=0.007 visual=liquid_glass
-
--- MOTION PACK 060: cinematic interaction family
--- 060.01 phase=0.0833 ease=quintOut spring=15 damping=0.70 amplitude=0.014 visual=liquid_glass
--- 060.02 phase=0.1667 ease=quintOut spring=16 damping=0.71 amplitude=0.015 visual=liquid_glass
--- 060.03 phase=0.2500 ease=quintOut spring=17 damping=0.72 amplitude=0.016 visual=liquid_glass
--- 060.04 phase=0.3333 ease=quintOut spring=18 damping=0.73 amplitude=0.017 visual=liquid_glass
--- 060.05 phase=0.4167 ease=quintOut spring=19 damping=0.74 amplitude=0.018 visual=liquid_glass
--- 060.06 phase=0.5000 ease=quintOut spring=20 damping=0.75 amplitude=0.019 visual=liquid_glass
--- 060.07 phase=0.5833 ease=quintOut spring=21 damping=0.76 amplitude=0.020 visual=liquid_glass
--- 060.08 phase=0.6667 ease=quintOut spring=22 damping=0.77 amplitude=0.004 visual=liquid_glass
--- 060.09 phase=0.7500 ease=quintOut spring=23 damping=0.78 amplitude=0.005 visual=liquid_glass
--- 060.10 phase=0.8333 ease=quintOut spring=10 damping=0.79 amplitude=0.006 visual=liquid_glass
--- 060.11 phase=0.9167 ease=quintOut spring=11 damping=0.80 amplitude=0.007 visual=liquid_glass
--- 060.12 phase=1.0000 ease=quintOut spring=12 damping=0.81 amplitude=0.008 visual=liquid_glass
-
--- MOTION PACK 061: cinematic interaction family
--- 061.01 phase=0.0833 ease=quintOut spring=16 damping=0.73 amplitude=0.015 visual=liquid_glass
--- 061.02 phase=0.1667 ease=quintOut spring=17 damping=0.74 amplitude=0.016 visual=liquid_glass
--- 061.03 phase=0.2500 ease=quintOut spring=18 damping=0.75 amplitude=0.017 visual=liquid_glass
--- 061.04 phase=0.3333 ease=quintOut spring=19 damping=0.76 amplitude=0.018 visual=liquid_glass
--- 061.05 phase=0.4167 ease=quintOut spring=20 damping=0.77 amplitude=0.019 visual=liquid_glass
--- 061.06 phase=0.5000 ease=quintOut spring=21 damping=0.78 amplitude=0.020 visual=liquid_glass
--- 061.07 phase=0.5833 ease=quintOut spring=22 damping=0.79 amplitude=0.004 visual=liquid_glass
--- 061.08 phase=0.6667 ease=quintOut spring=23 damping=0.80 amplitude=0.005 visual=liquid_glass
--- 061.09 phase=0.7500 ease=quintOut spring=10 damping=0.81 amplitude=0.006 visual=liquid_glass
--- 061.10 phase=0.8333 ease=quintOut spring=11 damping=0.82 amplitude=0.007 visual=liquid_glass
--- 061.11 phase=0.9167 ease=quintOut spring=12 damping=0.83 amplitude=0.008 visual=liquid_glass
--- 061.12 phase=1.0000 ease=quintOut spring=13 damping=0.84 amplitude=0.009 visual=liquid_glass
-
--- MOTION PACK 062: cinematic interaction family
--- 062.01 phase=0.0833 ease=quintOut spring=17 damping=0.76 amplitude=0.016 visual=liquid_glass
--- 062.02 phase=0.1667 ease=quintOut spring=18 damping=0.77 amplitude=0.017 visual=liquid_glass
--- 062.03 phase=0.2500 ease=quintOut spring=19 damping=0.78 amplitude=0.018 visual=liquid_glass
--- 062.04 phase=0.3333 ease=quintOut spring=20 damping=0.79 amplitude=0.019 visual=liquid_glass
--- 062.05 phase=0.4167 ease=quintOut spring=21 damping=0.80 amplitude=0.020 visual=liquid_glass
--- 062.06 phase=0.5000 ease=quintOut spring=22 damping=0.81 amplitude=0.004 visual=liquid_glass
--- 062.07 phase=0.5833 ease=quintOut spring=23 damping=0.82 amplitude=0.005 visual=liquid_glass
--- 062.08 phase=0.6667 ease=quintOut spring=10 damping=0.83 amplitude=0.006 visual=liquid_glass
--- 062.09 phase=0.7500 ease=quintOut spring=11 damping=0.84 amplitude=0.007 visual=liquid_glass
--- 062.10 phase=0.8333 ease=quintOut spring=12 damping=0.85 amplitude=0.008 visual=liquid_glass
--- 062.11 phase=0.9167 ease=quintOut spring=13 damping=0.86 amplitude=0.009 visual=liquid_glass
--- 062.12 phase=1.0000 ease=quintOut spring=14 damping=0.87 amplitude=0.010 visual=liquid_glass
-
--- MOTION PACK 063: cinematic interaction family
--- 063.01 phase=0.0833 ease=quintOut spring=18 damping=0.79 amplitude=0.017 visual=liquid_glass
--- 063.02 phase=0.1667 ease=quintOut spring=19 damping=0.80 amplitude=0.018 visual=liquid_glass
--- 063.03 phase=0.2500 ease=quintOut spring=20 damping=0.81 amplitude=0.019 visual=liquid_glass
--- 063.04 phase=0.3333 ease=quintOut spring=21 damping=0.82 amplitude=0.020 visual=liquid_glass
--- 063.05 phase=0.4167 ease=quintOut spring=22 damping=0.83 amplitude=0.004 visual=liquid_glass
--- 063.06 phase=0.5000 ease=quintOut spring=23 damping=0.84 amplitude=0.005 visual=liquid_glass
--- 063.07 phase=0.5833 ease=quintOut spring=10 damping=0.85 amplitude=0.006 visual=liquid_glass
--- 063.08 phase=0.6667 ease=quintOut spring=11 damping=0.86 amplitude=0.007 visual=liquid_glass
--- 063.09 phase=0.7500 ease=quintOut spring=12 damping=0.87 amplitude=0.008 visual=liquid_glass
--- 063.10 phase=0.8333 ease=quintOut spring=13 damping=0.88 amplitude=0.009 visual=liquid_glass
--- 063.11 phase=0.9167 ease=quintOut spring=14 damping=0.64 amplitude=0.010 visual=liquid_glass
--- 063.12 phase=1.0000 ease=quintOut spring=15 damping=0.65 amplitude=0.011 visual=liquid_glass
-
--- MOTION PACK 064: cinematic interaction family
--- 064.01 phase=0.0833 ease=quintOut spring=19 damping=0.82 amplitude=0.018 visual=liquid_glass
--- 064.02 phase=0.1667 ease=quintOut spring=20 damping=0.83 amplitude=0.019 visual=liquid_glass
--- 064.03 phase=0.2500 ease=quintOut spring=21 damping=0.84 amplitude=0.020 visual=liquid_glass
--- 064.04 phase=0.3333 ease=quintOut spring=22 damping=0.85 amplitude=0.004 visual=liquid_glass
--- 064.05 phase=0.4167 ease=quintOut spring=23 damping=0.86 amplitude=0.005 visual=liquid_glass
--- 064.06 phase=0.5000 ease=quintOut spring=10 damping=0.87 amplitude=0.006 visual=liquid_glass
--- 064.07 phase=0.5833 ease=quintOut spring=11 damping=0.88 amplitude=0.007 visual=liquid_glass
--- 064.08 phase=0.6667 ease=quintOut spring=12 damping=0.64 amplitude=0.008 visual=liquid_glass
--- 064.09 phase=0.7500 ease=quintOut spring=13 damping=0.65 amplitude=0.009 visual=liquid_glass
--- 064.10 phase=0.8333 ease=quintOut spring=14 damping=0.66 amplitude=0.010 visual=liquid_glass
--- 064.11 phase=0.9167 ease=quintOut spring=15 damping=0.67 amplitude=0.011 visual=liquid_glass
--- 064.12 phase=1.0000 ease=quintOut spring=16 damping=0.68 amplitude=0.012 visual=liquid_glass
-
--- MOTION PACK 065: cinematic interaction family
--- 065.01 phase=0.0833 ease=quintOut spring=20 damping=0.85 amplitude=0.019 visual=liquid_glass
--- 065.02 phase=0.1667 ease=quintOut spring=21 damping=0.86 amplitude=0.020 visual=liquid_glass
--- 065.03 phase=0.2500 ease=quintOut spring=22 damping=0.87 amplitude=0.004 visual=liquid_glass
--- 065.04 phase=0.3333 ease=quintOut spring=23 damping=0.88 amplitude=0.005 visual=liquid_glass
--- 065.05 phase=0.4167 ease=quintOut spring=10 damping=0.64 amplitude=0.006 visual=liquid_glass
--- 065.06 phase=0.5000 ease=quintOut spring=11 damping=0.65 amplitude=0.007 visual=liquid_glass
--- 065.07 phase=0.5833 ease=quintOut spring=12 damping=0.66 amplitude=0.008 visual=liquid_glass
--- 065.08 phase=0.6667 ease=quintOut spring=13 damping=0.67 amplitude=0.009 visual=liquid_glass
--- 065.09 phase=0.7500 ease=quintOut spring=14 damping=0.68 amplitude=0.010 visual=liquid_glass
--- 065.10 phase=0.8333 ease=quintOut spring=15 damping=0.69 amplitude=0.011 visual=liquid_glass
--- 065.11 phase=0.9167 ease=quintOut spring=16 damping=0.70 amplitude=0.012 visual=liquid_glass
--- 065.12 phase=1.0000 ease=quintOut spring=17 damping=0.71 amplitude=0.013 visual=liquid_glass
-
--- MOTION PACK 066: cinematic interaction family
--- 066.01 phase=0.0833 ease=quintOut spring=21 damping=0.88 amplitude=0.020 visual=liquid_glass
--- 066.02 phase=0.1667 ease=quintOut spring=22 damping=0.64 amplitude=0.004 visual=liquid_glass
--- 066.03 phase=0.2500 ease=quintOut spring=23 damping=0.65 amplitude=0.005 visual=liquid_glass
--- 066.04 phase=0.3333 ease=quintOut spring=10 damping=0.66 amplitude=0.006 visual=liquid_glass
--- 066.05 phase=0.4167 ease=quintOut spring=11 damping=0.67 amplitude=0.007 visual=liquid_glass
--- 066.06 phase=0.5000 ease=quintOut spring=12 damping=0.68 amplitude=0.008 visual=liquid_glass
--- 066.07 phase=0.5833 ease=quintOut spring=13 damping=0.69 amplitude=0.009 visual=liquid_glass
--- 066.08 phase=0.6667 ease=quintOut spring=14 damping=0.70 amplitude=0.010 visual=liquid_glass
--- 066.09 phase=0.7500 ease=quintOut spring=15 damping=0.71 amplitude=0.011 visual=liquid_glass
--- 066.10 phase=0.8333 ease=quintOut spring=16 damping=0.72 amplitude=0.012 visual=liquid_glass
--- 066.11 phase=0.9167 ease=quintOut spring=17 damping=0.73 amplitude=0.013 visual=liquid_glass
--- 066.12 phase=1.0000 ease=quintOut spring=18 damping=0.74 amplitude=0.014 visual=liquid_glass
-
--- MOTION PACK 067: cinematic interaction family
--- 067.01 phase=0.0833 ease=quintOut spring=22 damping=0.66 amplitude=0.004 visual=liquid_glass
--- 067.02 phase=0.1667 ease=quintOut spring=23 damping=0.67 amplitude=0.005 visual=liquid_glass
--- 067.03 phase=0.2500 ease=quintOut spring=10 damping=0.68 amplitude=0.006 visual=liquid_glass
--- 067.04 phase=0.3333 ease=quintOut spring=11 damping=0.69 amplitude=0.007 visual=liquid_glass
--- 067.05 phase=0.4167 ease=quintOut spring=12 damping=0.70 amplitude=0.008 visual=liquid_glass
--- 067.06 phase=0.5000 ease=quintOut spring=13 damping=0.71 amplitude=0.009 visual=liquid_glass
--- 067.07 phase=0.5833 ease=quintOut spring=14 damping=0.72 amplitude=0.010 visual=liquid_glass
--- 067.08 phase=0.6667 ease=quintOut spring=15 damping=0.73 amplitude=0.011 visual=liquid_glass
--- 067.09 phase=0.7500 ease=quintOut spring=16 damping=0.74 amplitude=0.012 visual=liquid_glass
--- 067.10 phase=0.8333 ease=quintOut spring=17 damping=0.75 amplitude=0.013 visual=liquid_glass
--- 067.11 phase=0.9167 ease=quintOut spring=18 damping=0.76 amplitude=0.014 visual=liquid_glass
--- 067.12 phase=1.0000 ease=quintOut spring=19 damping=0.77 amplitude=0.015 visual=liquid_glass
-
--- MOTION PACK 068: cinematic interaction family
--- 068.01 phase=0.0833 ease=quintOut spring=23 damping=0.69 amplitude=0.005 visual=liquid_glass
--- 068.02 phase=0.1667 ease=quintOut spring=10 damping=0.70 amplitude=0.006 visual=liquid_glass
--- 068.03 phase=0.2500 ease=quintOut spring=11 damping=0.71 amplitude=0.007 visual=liquid_glass
--- 068.04 phase=0.3333 ease=quintOut spring=12 damping=0.72 amplitude=0.008 visual=liquid_glass
--- 068.05 phase=0.4167 ease=quintOut spring=13 damping=0.73 amplitude=0.009 visual=liquid_glass
--- 068.06 phase=0.5000 ease=quintOut spring=14 damping=0.74 amplitude=0.010 visual=liquid_glass
--- 068.07 phase=0.5833 ease=quintOut spring=15 damping=0.75 amplitude=0.011 visual=liquid_glass
--- 068.08 phase=0.6667 ease=quintOut spring=16 damping=0.76 amplitude=0.012 visual=liquid_glass
--- 068.09 phase=0.7500 ease=quintOut spring=17 damping=0.77 amplitude=0.013 visual=liquid_glass
--- 068.10 phase=0.8333 ease=quintOut spring=18 damping=0.78 amplitude=0.014 visual=liquid_glass
--- 068.11 phase=0.9167 ease=quintOut spring=19 damping=0.79 amplitude=0.015 visual=liquid_glass
--- 068.12 phase=1.0000 ease=quintOut spring=20 damping=0.80 amplitude=0.016 visual=liquid_glass
-
--- MOTION PACK 069: cinematic interaction family
--- 069.01 phase=0.0833 ease=quintOut spring=10 damping=0.72 amplitude=0.006 visual=liquid_glass
--- 069.02 phase=0.1667 ease=quintOut spring=11 damping=0.73 amplitude=0.007 visual=liquid_glass
--- 069.03 phase=0.2500 ease=quintOut spring=12 damping=0.74 amplitude=0.008 visual=liquid_glass
--- 069.04 phase=0.3333 ease=quintOut spring=13 damping=0.75 amplitude=0.009 visual=liquid_glass
--- 069.05 phase=0.4167 ease=quintOut spring=14 damping=0.76 amplitude=0.010 visual=liquid_glass
--- 069.06 phase=0.5000 ease=quintOut spring=15 damping=0.77 amplitude=0.011 visual=liquid_glass
--- 069.07 phase=0.5833 ease=quintOut spring=16 damping=0.78 amplitude=0.012 visual=liquid_glass
--- 069.08 phase=0.6667 ease=quintOut spring=17 damping=0.79 amplitude=0.013 visual=liquid_glass
--- 069.09 phase=0.7500 ease=quintOut spring=18 damping=0.80 amplitude=0.014 visual=liquid_glass
--- 069.10 phase=0.8333 ease=quintOut spring=19 damping=0.81 amplitude=0.015 visual=liquid_glass
--- 069.11 phase=0.9167 ease=quintOut spring=20 damping=0.82 amplitude=0.016 visual=liquid_glass
--- 069.12 phase=1.0000 ease=quintOut spring=21 damping=0.83 amplitude=0.017 visual=liquid_glass
-
--- MOTION PACK 070: cinematic interaction family
--- 070.01 phase=0.0833 ease=quintOut spring=11 damping=0.75 amplitude=0.007 visual=liquid_glass
--- 070.02 phase=0.1667 ease=quintOut spring=12 damping=0.76 amplitude=0.008 visual=liquid_glass
--- 070.03 phase=0.2500 ease=quintOut spring=13 damping=0.77 amplitude=0.009 visual=liquid_glass
--- 070.04 phase=0.3333 ease=quintOut spring=14 damping=0.78 amplitude=0.010 visual=liquid_glass
--- 070.05 phase=0.4167 ease=quintOut spring=15 damping=0.79 amplitude=0.011 visual=liquid_glass
--- 070.06 phase=0.5000 ease=quintOut spring=16 damping=0.80 amplitude=0.012 visual=liquid_glass
--- 070.07 phase=0.5833 ease=quintOut spring=17 damping=0.81 amplitude=0.013 visual=liquid_glass
--- 070.08 phase=0.6667 ease=quintOut spring=18 damping=0.82 amplitude=0.014 visual=liquid_glass
--- 070.09 phase=0.7500 ease=quintOut spring=19 damping=0.83 amplitude=0.015 visual=liquid_glass
--- 070.10 phase=0.8333 ease=quintOut spring=20 damping=0.84 amplitude=0.016 visual=liquid_glass
--- 070.11 phase=0.9167 ease=quintOut spring=21 damping=0.85 amplitude=0.017 visual=liquid_glass
--- 070.12 phase=1.0000 ease=quintOut spring=22 damping=0.86 amplitude=0.018 visual=liquid_glass
-
--- MOTION PACK 071: cinematic interaction family
--- 071.01 phase=0.0833 ease=quintOut spring=12 damping=0.78 amplitude=0.008 visual=liquid_glass
--- 071.02 phase=0.1667 ease=quintOut spring=13 damping=0.79 amplitude=0.009 visual=liquid_glass
--- 071.03 phase=0.2500 ease=quintOut spring=14 damping=0.80 amplitude=0.010 visual=liquid_glass
--- 071.04 phase=0.3333 ease=quintOut spring=15 damping=0.81 amplitude=0.011 visual=liquid_glass
--- 071.05 phase=0.4167 ease=quintOut spring=16 damping=0.82 amplitude=0.012 visual=liquid_glass
--- 071.06 phase=0.5000 ease=quintOut spring=17 damping=0.83 amplitude=0.013 visual=liquid_glass
--- 071.07 phase=0.5833 ease=quintOut spring=18 damping=0.84 amplitude=0.014 visual=liquid_glass
--- 071.08 phase=0.6667 ease=quintOut spring=19 damping=0.85 amplitude=0.015 visual=liquid_glass
--- 071.09 phase=0.7500 ease=quintOut spring=20 damping=0.86 amplitude=0.016 visual=liquid_glass
--- 071.10 phase=0.8333 ease=quintOut spring=21 damping=0.87 amplitude=0.017 visual=liquid_glass
--- 071.11 phase=0.9167 ease=quintOut spring=22 damping=0.88 amplitude=0.018 visual=liquid_glass
--- 071.12 phase=1.0000 ease=quintOut spring=23 damping=0.64 amplitude=0.019 visual=liquid_glass
-
--- MOTION PACK 072: cinematic interaction family
--- 072.01 phase=0.0833 ease=quintOut spring=13 damping=0.81 amplitude=0.009 visual=liquid_glass
--- 072.02 phase=0.1667 ease=quintOut spring=14 damping=0.82 amplitude=0.010 visual=liquid_glass
--- 072.03 phase=0.2500 ease=quintOut spring=15 damping=0.83 amplitude=0.011 visual=liquid_glass
--- 072.04 phase=0.3333 ease=quintOut spring=16 damping=0.84 amplitude=0.012 visual=liquid_glass
--- 072.05 phase=0.4167 ease=quintOut spring=17 damping=0.85 amplitude=0.013 visual=liquid_glass
--- 072.06 phase=0.5000 ease=quintOut spring=18 damping=0.86 amplitude=0.014 visual=liquid_glass
--- 072.07 phase=0.5833 ease=quintOut spring=19 damping=0.87 amplitude=0.015 visual=liquid_glass
--- 072.08 phase=0.6667 ease=quintOut spring=20 damping=0.88 amplitude=0.016 visual=liquid_glass
--- 072.09 phase=0.7500 ease=quintOut spring=21 damping=0.64 amplitude=0.017 visual=liquid_glass
--- 072.10 phase=0.8333 ease=quintOut spring=22 damping=0.65 amplitude=0.018 visual=liquid_glass
--- 072.11 phase=0.9167 ease=quintOut spring=23 damping=0.66 amplitude=0.019 visual=liquid_glass
--- 072.12 phase=1.0000 ease=quintOut spring=10 damping=0.67 amplitude=0.020 visual=liquid_glass
-
--- MOTION PACK 073: cinematic interaction family
--- 073.01 phase=0.0833 ease=quintOut spring=14 damping=0.84 amplitude=0.010 visual=liquid_glass
--- 073.02 phase=0.1667 ease=quintOut spring=15 damping=0.85 amplitude=0.011 visual=liquid_glass
--- 073.03 phase=0.2500 ease=quintOut spring=16 damping=0.86 amplitude=0.012 visual=liquid_glass
--- 073.04 phase=0.3333 ease=quintOut spring=17 damping=0.87 amplitude=0.013 visual=liquid_glass
--- 073.05 phase=0.4167 ease=quintOut spring=18 damping=0.88 amplitude=0.014 visual=liquid_glass
--- 073.06 phase=0.5000 ease=quintOut spring=19 damping=0.64 amplitude=0.015 visual=liquid_glass
--- 073.07 phase=0.5833 ease=quintOut spring=20 damping=0.65 amplitude=0.016 visual=liquid_glass
--- 073.08 phase=0.6667 ease=quintOut spring=21 damping=0.66 amplitude=0.017 visual=liquid_glass
--- 073.09 phase=0.7500 ease=quintOut spring=22 damping=0.67 amplitude=0.018 visual=liquid_glass
--- 073.10 phase=0.8333 ease=quintOut spring=23 damping=0.68 amplitude=0.019 visual=liquid_glass
--- 073.11 phase=0.9167 ease=quintOut spring=10 damping=0.69 amplitude=0.020 visual=liquid_glass
--- 073.12 phase=1.0000 ease=quintOut spring=11 damping=0.70 amplitude=0.004 visual=liquid_glass
-
--- MOTION PACK 074: cinematic interaction family
--- 074.01 phase=0.0833 ease=quintOut spring=15 damping=0.87 amplitude=0.011 visual=liquid_glass
--- 074.02 phase=0.1667 ease=quintOut spring=16 damping=0.88 amplitude=0.012 visual=liquid_glass
--- 074.03 phase=0.2500 ease=quintOut spring=17 damping=0.64 amplitude=0.013 visual=liquid_glass
--- 074.04 phase=0.3333 ease=quintOut spring=18 damping=0.65 amplitude=0.014 visual=liquid_glass
--- 074.05 phase=0.4167 ease=quintOut spring=19 damping=0.66 amplitude=0.015 visual=liquid_glass
--- 074.06 phase=0.5000 ease=quintOut spring=20 damping=0.67 amplitude=0.016 visual=liquid_glass
--- 074.07 phase=0.5833 ease=quintOut spring=21 damping=0.68 amplitude=0.017 visual=liquid_glass
--- 074.08 phase=0.6667 ease=quintOut spring=22 damping=0.69 amplitude=0.018 visual=liquid_glass
--- 074.09 phase=0.7500 ease=quintOut spring=23 damping=0.70 amplitude=0.019 visual=liquid_glass
--- 074.10 phase=0.8333 ease=quintOut spring=10 damping=0.71 amplitude=0.020 visual=liquid_glass
--- 074.11 phase=0.9167 ease=quintOut spring=11 damping=0.72 amplitude=0.004 visual=liquid_glass
--- 074.12 phase=1.0000 ease=quintOut spring=12 damping=0.73 amplitude=0.005 visual=liquid_glass
-
--- MOTION PACK 075: cinematic interaction family
--- 075.01 phase=0.0833 ease=quintOut spring=16 damping=0.65 amplitude=0.012 visual=liquid_glass
--- 075.02 phase=0.1667 ease=quintOut spring=17 damping=0.66 amplitude=0.013 visual=liquid_glass
--- 075.03 phase=0.2500 ease=quintOut spring=18 damping=0.67 amplitude=0.014 visual=liquid_glass
--- 075.04 phase=0.3333 ease=quintOut spring=19 damping=0.68 amplitude=0.015 visual=liquid_glass
--- 075.05 phase=0.4167 ease=quintOut spring=20 damping=0.69 amplitude=0.016 visual=liquid_glass
--- 075.06 phase=0.5000 ease=quintOut spring=21 damping=0.70 amplitude=0.017 visual=liquid_glass
--- 075.07 phase=0.5833 ease=quintOut spring=22 damping=0.71 amplitude=0.018 visual=liquid_glass
--- 075.08 phase=0.6667 ease=quintOut spring=23 damping=0.72 amplitude=0.019 visual=liquid_glass
--- 075.09 phase=0.7500 ease=quintOut spring=10 damping=0.73 amplitude=0.020 visual=liquid_glass
--- 075.10 phase=0.8333 ease=quintOut spring=11 damping=0.74 amplitude=0.004 visual=liquid_glass
--- 075.11 phase=0.9167 ease=quintOut spring=12 damping=0.75 amplitude=0.005 visual=liquid_glass
--- 075.12 phase=1.0000 ease=quintOut spring=13 damping=0.76 amplitude=0.006 visual=liquid_glass
+-- V8 CINEMATIC FRAME NOTES
+-- frame 00001: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00002: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00003: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00004: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00005: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00006: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00007: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00008: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00009: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00010: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00011: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00012: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00013: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00014: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00015: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00016: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00017: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00018: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00019: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00020: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00021: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00022: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00023: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00024: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00025: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00026: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00027: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00028: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00029: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00030: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00031: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00032: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00033: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00034: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00035: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00036: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00037: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00038: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00039: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00040: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00041: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00042: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00043: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00044: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00045: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00046: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00047: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00048: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00049: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00050: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00051: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00052: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00053: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00054: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00055: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00056: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00057: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00058: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00059: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00060: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00061: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00062: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00063: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00064: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00065: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00066: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00067: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00068: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00069: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00070: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00071: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00072: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00073: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00074: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00075: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00076: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00077: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00078: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00079: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00080: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00081: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00082: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00083: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00084: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00085: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00086: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00087: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00088: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00089: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00090: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00091: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00092: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00093: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00094: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00095: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00096: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00097: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00098: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00099: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00100: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00101: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00102: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00103: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00104: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00105: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00106: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00107: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00108: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00109: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00110: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00111: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00112: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00113: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00114: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00115: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00116: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00117: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00118: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00119: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00120: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00121: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00122: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00123: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00124: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00125: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00126: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00127: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00128: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00129: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00130: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00131: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00132: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00133: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00134: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00135: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00136: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00137: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00138: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00139: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00140: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00141: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00142: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00143: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00144: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00145: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00146: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00147: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00148: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00149: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00150: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00151: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00152: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00153: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00154: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00155: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00156: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00157: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00158: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00159: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00160: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00161: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00162: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00163: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00164: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00165: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00166: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00167: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00168: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00169: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00170: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00171: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00172: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00173: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00174: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00175: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00176: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00177: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00178: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00179: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00180: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00181: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00182: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00183: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00184: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00185: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00186: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00187: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00188: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00189: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00190: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00191: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00192: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00193: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00194: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00195: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00196: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00197: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00198: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00199: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00200: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00201: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00202: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00203: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00204: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00205: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00206: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00207: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00208: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00209: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00210: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00211: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00212: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00213: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00214: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00215: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00216: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00217: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00218: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00219: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00220: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00221: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00222: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00223: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00224: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00225: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00226: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00227: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00228: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00229: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00230: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00231: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00232: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00233: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00234: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00235: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00236: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00237: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00238: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00239: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00240: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00241: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00242: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00243: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00244: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00245: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00246: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00247: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00248: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00249: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00250: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00251: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00252: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00253: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00254: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00255: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00256: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00257: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00258: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00259: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00260: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00261: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00262: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00263: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00264: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00265: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00266: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00267: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00268: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00269: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00270: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00271: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00272: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00273: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00274: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00275: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00276: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00277: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00278: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00279: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00280: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00281: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00282: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00283: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00284: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00285: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00286: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00287: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00288: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00289: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00290: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00291: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00292: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00293: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00294: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00295: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00296: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00297: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00298: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00299: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00300: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00301: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00302: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00303: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00304: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00305: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00306: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00307: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00308: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00309: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00310: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00311: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00312: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00313: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00314: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00315: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00316: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00317: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00318: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00319: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00320: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00321: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00322: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00323: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00324: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00325: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00326: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00327: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00328: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00329: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00330: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00331: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00332: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00333: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00334: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00335: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00336: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00337: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00338: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00339: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00340: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00341: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00342: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00343: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00344: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00345: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00346: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00347: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00348: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00349: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00350: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00351: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00352: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00353: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00354: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00355: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00356: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00357: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00358: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00359: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00360: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00361: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00362: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00363: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00364: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00365: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00366: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00367: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00368: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00369: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00370: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00371: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00372: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00373: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00374: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00375: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00376: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00377: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00378: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00379: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00380: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00381: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00382: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00383: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00384: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00385: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00386: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00387: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00388: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00389: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00390: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00391: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00392: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00393: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00394: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00395: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00396: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00397: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00398: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00399: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00400: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00401: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00402: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00403: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00404: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00405: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00406: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00407: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00408: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00409: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00410: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00411: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00412: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00413: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00414: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00415: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00416: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00417: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00418: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00419: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00420: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00421: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00422: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00423: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00424: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00425: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00426: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00427: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00428: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00429: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00430: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00431: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00432: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00433: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00434: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00435: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00436: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00437: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00438: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00439: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00440: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00441: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00442: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00443: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00444: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00445: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00446: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00447: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00448: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00449: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00450: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00451: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00452: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00453: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00454: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00455: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00456: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00457: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00458: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00459: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00460: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00461: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00462: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00463: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00464: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00465: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00466: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00467: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00468: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00469: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00470: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00471: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00472: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00473: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00474: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00475: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00476: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00477: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00478: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00479: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00480: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00481: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00482: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00483: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00484: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00485: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00486: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00487: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00488: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00489: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00490: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00491: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00492: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00493: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00494: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00495: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00496: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00497: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00498: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00499: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00500: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00501: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00502: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00503: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00504: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00505: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00506: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00507: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00508: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00509: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00510: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00511: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00512: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00513: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00514: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00515: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00516: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00517: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00518: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00519: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00520: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00521: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00522: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00523: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00524: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00525: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00526: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00527: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00528: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00529: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00530: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00531: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00532: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00533: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00534: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00535: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00536: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00537: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00538: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00539: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00540: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00541: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00542: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00543: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00544: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00545: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00546: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00547: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00548: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00549: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00550: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00551: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00552: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00553: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00554: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00555: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00556: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00557: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00558: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00559: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00560: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00561: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00562: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00563: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00564: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00565: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00566: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00567: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00568: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00569: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00570: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00571: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00572: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00573: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00574: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00575: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00576: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00577: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00578: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00579: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00580: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00581: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00582: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00583: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00584: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00585: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00586: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00587: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00588: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00589: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00590: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00591: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00592: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00593: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00594: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00595: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00596: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00597: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00598: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00599: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00600: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00601: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00602: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00603: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00604: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00605: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00606: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00607: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00608: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00609: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00610: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00611: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00612: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00613: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00614: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00615: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00616: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00617: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00618: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00619: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00620: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00621: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00622: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00623: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00624: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00625: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00626: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00627: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00628: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00629: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00630: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00631: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00632: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00633: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00634: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00635: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00636: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00637: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00638: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00639: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00640: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00641: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00642: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00643: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00644: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00645: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00646: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00647: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00648: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00649: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00650: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00651: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00652: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00653: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00654: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00655: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00656: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00657: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00658: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00659: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00660: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00661: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00662: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00663: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00664: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00665: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00666: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00667: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00668: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00669: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00670: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00671: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00672: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00673: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00674: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00675: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00676: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00677: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00678: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00679: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00680: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00681: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00682: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00683: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00684: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00685: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00686: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00687: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00688: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00689: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00690: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00691: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00692: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00693: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00694: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00695: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00696: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00697: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00698: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00699: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00700: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00701: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00702: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00703: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00704: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00705: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00706: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00707: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00708: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00709: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00710: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00711: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00712: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00713: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00714: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00715: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00716: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00717: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00718: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00719: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00720: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00721: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00722: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00723: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00724: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00725: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00726: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00727: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00728: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00729: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00730: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00731: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00732: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00733: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00734: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00735: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00736: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00737: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00738: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00739: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00740: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00741: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00742: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00743: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00744: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00745: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00746: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00747: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00748: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00749: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00750: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00751: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00752: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00753: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00754: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00755: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00756: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00757: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00758: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00759: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00760: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00761: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00762: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00763: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00764: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00765: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00766: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00767: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00768: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00769: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00770: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00771: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00772: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00773: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00774: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00775: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00776: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00777: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00778: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00779: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00780: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00781: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00782: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00783: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00784: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00785: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00786: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00787: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00788: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00789: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00790: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00791: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00792: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00793: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00794: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00795: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00796: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00797: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00798: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00799: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00800: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00801: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00802: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00803: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00804: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00805: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00806: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00807: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00808: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00809: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00810: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00811: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00812: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00813: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00814: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00815: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00816: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00817: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00818: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00819: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00820: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00821: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00822: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00823: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00824: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00825: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00826: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00827: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00828: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00829: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00830: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00831: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00832: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00833: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00834: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00835: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00836: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00837: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00838: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00839: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00840: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00841: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00842: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00843: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00844: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00845: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00846: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00847: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00848: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00849: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00850: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00851: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00852: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00853: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00854: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00855: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00856: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00857: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00858: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00859: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00860: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00861: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00862: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00863: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00864: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00865: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00866: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00867: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00868: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00869: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00870: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00871: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00872: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00873: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00874: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00875: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00876: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00877: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00878: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00879: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00880: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00881: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00882: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00883: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00884: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00885: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00886: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00887: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00888: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00889: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00890: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00891: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00892: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00893: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00894: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00895: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00896: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00897: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00898: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00899: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00900: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00901: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00902: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00903: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00904: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00905: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00906: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00907: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00908: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00909: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00910: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00911: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00912: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00913: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00914: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00915: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00916: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00917: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00918: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00919: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00920: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00921: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00922: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00923: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00924: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00925: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00926: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00927: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00928: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00929: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00930: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00931: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00932: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00933: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00934: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00935: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00936: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00937: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00938: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00939: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00940: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00941: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00942: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00943: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00944: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00945: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00946: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00947: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00948: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00949: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00950: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00951: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00952: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00953: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00954: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00955: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00956: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00957: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00958: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00959: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00960: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00961: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00962: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00963: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00964: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00965: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00966: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00967: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00968: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00969: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00970: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00971: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00972: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00973: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00974: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00975: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00976: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00977: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00978: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00979: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00980: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00981: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00982: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00983: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00984: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00985: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00986: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00987: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00988: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00989: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00990: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00991: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00992: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00993: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00994: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00995: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00996: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
+-- frame 00997: spring interpolation, liquid squash, glass shimmer, petal sway, ring orbit, touch ripple, mobile-safe composition
