@@ -97,7 +97,7 @@ local TAB_DATA = {
     {id=8, name="HOME", icon="⌂", description="Hub tổng hợp 20 module giao diện V4"},
 }
 
-- ZAKA PINK PANTHER DROP FLOWER V4 — FIXED BUILD
+-- ZAKA PINK PANTHER DROP FLOWER V4 — FIXED BUILD
 -- Repairs: Orb Activated compatibility + CARD_REGISTRY brace syntax.
 --[[
 =====================================================================
@@ -1486,3 +1486,1625 @@ _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.CardCount=8*20
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.V6=true
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.FunctionsPerTab=20
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.SafeCombatLocked=true
+
+
+--=====================================================================
+-- ZAKA PINK PANTHER V7 — CINEMATIC MOTION ENGINE
+--=====================================================================
+-- This extension focuses on local UI presentation only. It adds a
+-- frame-aware animation layer: springs, liquid deformation, parallax,
+-- shimmer, breathing, elastic press feedback, particle choreography,
+-- flower petal dynamics, ring phase offsets, and adaptive quality.
+-- It does not add gameplay automation or combat manipulation.
+--=====================================================================
+
+local V7FX = {
+    Enabled = true,
+    Quality = 3,
+    Time = 0,
+    Frame = 0,
+    Active = true,
+    MaxParticles = 42,
+    MaxRipples = 12,
+    Parallax = true,
+    Cinematic = true,
+    MicroMotion = true,
+    Liquid = true,
+    Petals = true,
+    Rings = true,
+    Shine = true,
+    Adaptive = true,
+}
+
+local V7SPRING = {}
+local function V7Spring(name, value, speed, damping)
+    V7SPRING[name] = {x=value or 0, v=0, target=value or 0, speed=speed or 16, damping=damping or 0.82}
+    return V7SPRING[name]
+end
+local function V7SetTarget(s, value) if s then s.target=value end end
+local function V7StepSpring(s, dt)
+    if not s then return 0 end
+    local k=s.speed*s.speed
+    local c=2*s.speed*s.damping
+    local a=(s.target-s.x)*k-s.v*c
+    s.v=s.v+a*dt
+    s.x=s.x+s.v*dt
+    return s.x
+end
+
+V7Spring("hover",0,18,.78)
+V7Spring("press",0,26,.74)
+V7Spring("liquid",0,13,.70)
+V7Spring("breath",0,4,.90)
+V7Spring("parallaxX",0,10,.84)
+V7Spring("parallaxY",0,10,.84)
+V7Spring("shine",0,7,.88)
+V7Spring("petal",0,6,.86)
+V7Spring("ring",0,4,.92)
+V7Spring("menuTilt",0,14,.80)
+
+local V7Profiles = {
+    SoftGlass={enter=.78,exit=.60,stiff=14,damp=.86,overshoot=1.025,breath=.018,shine=.18},
+    LiquidSilk={enter=.70,exit=.52,stiff=12,damp=.78,overshoot=1.045,breath=.025,shine=.24},
+    ElasticPearl={enter=.92,exit=.68,stiff=19,damp=.72,overshoot=1.065,breath=.022,shine=.30},
+    Dreamy={enter=1.12,exit=.88,stiff=9,damp=.90,overshoot=1.018,breath=.032,shine=.20},
+    Snap={enter=.42,exit=.34,stiff=25,damp=.68,overshoot=1.055,breath=.012,shine=.34},
+    Cinema={enter=1.25,exit=.95,stiff=11,damp=.88,overshoot=1.030,breath=.040,shine=.38},
+    Bubble={enter=.64,exit=.50,stiff=16,damp=.62,overshoot=1.090,breath=.030,shine=.26},
+    Velvet={enter=.88,exit=.72,stiff=13,damp=.92,overshoot=1.015,breath=.020,shine=.16},
+    Aurora={enter=.98,exit=.74,stiff=15,damp=.80,overshoot=1.040,breath=.028,shine=.42},
+    Blossom={enter=.84,exit=.62,stiff=12,damp=.84,overshoot=1.034,breath=.035,shine=.25},
+}
+local V7ProfileName="LiquidSilk"
+
+local function V7Profile()
+    return V7Profiles[V7ProfileName] or V7Profiles.LiquidSilk
+end
+
+-- A compact library of motion equations. The curves are intentionally
+-- deterministic so the same interaction feels identical every run.
+local V7Easing={}
+V7Easing.linear=function(t)return t end
+V7Easing.smooth=function(t)return t*t*(3-2*t) end
+V7Easing.smoother=function(t)return t*t*t*(t*(t*6-15)+10) end
+V7Easing.quadIn=function(t)return t*t end
+V7Easing.quadOut=function(t)return 1-(1-t)*(1-t) end
+V7Easing.quadInOut=function(t)if t<.5 then return 2*t*t end return 1-((-2*t+2)^2)/2 end
+V7Easing.cubicIn=function(t)return t*t*t end
+V7Easing.cubicOut=function(t)return 1-(1-t)^3 end
+V7Easing.cubicInOut=function(t)if t<.5 then return 4*t*t*t end return 1-((-2*t+2)^3)/2 end
+V7Easing.quartOut=function(t)return 1-(1-t)^4 end
+V7Easing.quintOut=function(t)return 1-(1-t)^5 end
+V7Easing.sineIn=function(t)return 1-math.cos(t*math.pi/2) end
+V7Easing.sineOut=function(t)return math.sin(t*math.pi/2) end
+V7Easing.sineInOut=function(t)return -(math.cos(math.pi*t)-1)/2 end
+V7Easing.expoOut=function(t)if t>=1 then return 1 end return 1-2^(-10*t) end
+V7Easing.circOut=function(t)return math.sqrt(1-(t-1)^2) end
+V7Easing.backOut=function(t)local c=1.70158;local x=t-1;return 1+c*x*x*x+(c+1)*x*x end
+V7Easing.elasticOut=function(t)if t==0 or t==1 then return t end return 2^(-10*t)*math.sin((t*10-.75)*(2*math.pi/3))+1 end
+V7Easing.bounceOut=function(t)
+    local n=7.5625;local d=2.75
+    if t<1/d then return n*t*t end
+    if t<2/d then t=t-1.5/d;return n*t*t+.75 end
+    if t<2.5/d then t=t-2.25/d;return n*t*t+.9375 end
+    t=t-2.625/d;return n*t*t+.984375
+end
+
+local function V7Clamp01(x)return math.clamp(x,0,1)end
+local function V7Lerp(a,b,t)return a+(b-a)*t end
+local function V7Pulse(t,phase,amp)return math.sin(t*math.pi*2+phase)*amp end
+local function V7Noise(t,seed)
+    return math.sin(t*1.713+seed*12.91)*.55+math.sin(t*3.117+seed*4.73)*.30+math.sin(t*7.91+seed*1.19)*.15
+end
+
+--=====================================================================
+-- LIQUID / GLASS STATE
+--=====================================================================
+local V7Liquid={x=0,y=0,sx=1,sy=1,rot=0,skew=0,alpha=0}
+local V7LastPointer=Vector2.new(0,0)
+local V7Pointer=Vector2.new(0,0)
+local V7PointerVelocity=Vector2.new(0,0)
+local V7LastPointerAt=os.clock()
+
+local function V7ReadPointer()
+    local p=UserInputService:GetMouseLocation()
+    local now=os.clock();local dt=math.max(now-V7LastPointerAt,.001)
+    V7PointerVelocity=(Vector2.new(p.X,p.Y)-V7LastPointer)/dt
+    V7LastPointer=Vector2.new(p.X,p.Y);V7LastPointerAt=now
+    V7Pointer=V7LastPointer
+end
+
+local function V7ApplyMenuMotion(t,dt)
+    if not Menu or not Menu.Parent then return end
+    local prof=V7Profile()
+    local breath=V7StepSpring(V7SPRING.breath,dt)
+    local tilt=V7StepSpring(V7SPRING.menuTilt,dt)
+    local px=V7StepSpring(V7SPRING.parallaxX,dt)
+    local py=V7StepSpring(V7SPRING.parallaxY,dt)
+    local liquid=V7StepSpring(V7SPRING.liquid,dt)
+    local pulse=math.sin(t*1.75)*prof.breath
+    local q=V7FX.Quality
+    local scale=1+pulse+breath*.006
+    if q>=2 then
+        local rx=math.sin(t*.83)*.45+V7Noise(t,.7)*.30
+        local ry=math.cos(t*.91)*.35+V7Noise(t,1.3)*.24
+        Menu.Rotation=tilt+rx
+        if FlowerArea then
+            FlowerArea.Position=UDim2.new(.35,px*.42,.37,py*.42)
+            FlowerArea.Size=UDim2.new(.30,0,.40,0)
+        end
+    end
+    if q>=3 then
+        local ox=math.sin(t*1.13)*1.8+V7PointerVelocity.X*.0008
+        local oy=math.cos(t*1.07)*1.5+V7PointerVelocity.Y*.0008
+        V7Liquid.sx=1+liquid*.015+math.sin(t*2.1)*.008
+        V7Liquid.sy=1-liquid*.012+math.cos(t*1.8)*.006
+        if InnerGlass then
+            InnerGlass.Position=UDim2.new(0,ox,0,oy)
+        end
+        if Veil then
+            Veil.Position=UDim2.new(0,-ox*.55,0,-oy*.55)
+        end
+    end
+    if q>=4 then
+        V7Liquid.skew=math.sin(t*1.3)*.7+V7PointerVelocity.X*.00025
+        if MenuStroke then MenuStroke.Transparency=math.clamp(.72-V7FX.Quality*.055+math.sin(t*2)*.025,.35,.80) end
+    end
+end
+
+local function V7ApplyPantherMotion(t)
+    if not Panther or not Panther.Parent or not V7FX.Cinematic then return end
+    local q=V7FX.Quality
+    local breath=math.sin(t*1.18)*.012
+    local sway=math.sin(t*.73)*1.8
+    local drift=math.cos(t*.61)*1.4
+    if q>=2 then
+        Panther.Position=UDim2.new(Panther.Position.X.Scale,drift,Panther.Position.Y.Scale,sway)
+    end
+    if q>=3 then
+        Panther.Rotation=math.sin(t*.51)*.55
+        local s=1+breath
+        Panther.Size=UDim2.new(Panther.Size.X.Scale*s,Panther.Size.X.Offset,Panther.Size.Y.Scale*s,Panther.Size.Y.Offset)
+    end
+end
+
+local function V7ApplyFlowerMotion(t,dt)
+    if not V7FX.Petals or not Menu or not Menu.Visible then return end
+    local q=V7FX.Quality
+    local petalWave=V7StepSpring(V7SPRING.petal,dt)
+    if q>=1 and Petals then
+        for i,p in ipairs(Petals) do
+            if p and p.Parent then
+                local phase=(i-1)*math.pi/6
+                local w=math.sin(t*1.35+phase)*2.0+petalWave*.6
+                p.Rotation=(i-1)*30+w
+                if q>=2 then
+                    local sc=1+math.sin(t*2.05+phase)*.018
+                    p.Size=UDim2.fromOffset(62*sc,30*sc)
+                end
+                if q>=3 then
+                    p.Position=UDim2.new(.5,math.cos(phase+t*.12)*2,.5,math.sin(phase+t*.12)*2)
+                end
+            end
+        end
+    end
+    if FlowerRing and q>=1 then FlowerRing.Rotation=(t*22)%360 end
+    if FlowerOuter and q>=2 then FlowerOuter.Rotation=(-t*10+math.sin(t)*2)%360 end
+end
+
+local function V7ApplyRingMotion(t)
+    if not V7FX.Rings or not RingData then return end
+    local q=V7FX.Quality
+    for i,r in ipairs(RingData) do
+        if r and r.Parent then
+            local dir=(i%2==0) and -1 or 1
+            local speed=(6+i*1.35)*(q>=3 and 1 or .75)
+            r.Rotation=dir*t*speed+math.sin(t*.7+i)*1.5
+            if q>=3 then
+                local pulse=1+math.sin(t*1.1+i*.37)*.012
+                r.Size=UDim2.new(r.Size.X.Scale*pulse,r.Size.X.Offset,r.Size.Y.Scale*pulse,r.Size.Y.Offset)
+            end
+        end
+    end
+end
+
+--=====================================================================
+-- SHIMMER / HIGHLIGHT
+--=====================================================================
+local V7ShineState={phase=0,width=.28,alpha=.18}
+local function V7ApplyShine(t)
+    if not V7FX.Shine or not LiquidHighlight or not LiquidHighlight.Parent then return end
+    local q=V7FX.Quality
+    local wave=(math.sin(t*.52)*.5+.5)
+    local x=-.35+wave*1.70
+    LiquidHighlight.Position=UDim2.new(x,0,.10+math.sin(t*.7)*.018,0)
+    LiquidHighlight.Rotation=8+math.sin(t*.43)*4
+    LiquidHighlight.BackgroundTransparency=math.clamp(.76-(q*.055),.42,.82)
+    if q>=3 and EdgeStroke then
+        local hue=(t*.025)%1
+        EdgeStroke.Color=Color3.fromHSV(hue,.30,.98)
+    end
+end
+
+--=====================================================================
+-- PARTICLE POOL
+--=====================================================================
+local V7Pool={}
+local V7ActiveParticles={}
+local V7ParticleClock=0
+local function V7MakeParticle()
+    local p=newFrame(FXLayer,"V7Particle",UDim2.fromOffset(4,4),UDim2.fromScale(.5,.5),C.Pink3,.10,945)
+    corner(p,999)
+    p.Visible=false
+    table.insert(V7Pool,p)
+    return p
+end
+for i=1,42 do V7MakeParticle() end
+
+local function V7AcquireParticle()
+    for _,p in ipairs(V7Pool) do
+        if not p.Visible and p.Parent then return p end
+    end
+    return nil
+end
+local function V7ReleaseParticle(p)
+    if p and p.Parent then p.Visible=false end
+end
+local function V7SpawnParticle(style)
+    if not V7FX.Particles or #V7ActiveParticles>=V7FX.MaxParticles then return end
+    local p=V7AcquireParticle();if not p then return end
+    local styleName=style or "soft"
+    local angle=math.random()*math.pi*2
+    local radius=math.random(30,90)
+    local life=math.random(45,95)/100
+    local speed=math.random(35,100)
+    local size=math.random(2,6)
+    local startX=.5+math.cos(angle)*.02
+    local startY=.5+math.sin(angle)*.02
+    p.Visible=true;p.BackgroundTransparency=.08;p.Size=UDim2.fromOffset(size,size)
+    p.Position=UDim2.new(startX,0,startY,0)
+    p.Rotation=math.random(-180,180)
+    if styleName=="petal" then
+        p.Size=UDim2.fromOffset(size+3,size+1);p.Rotation=math.deg(angle)
+    elseif styleName=="spark" then
+        p.Size=UDim2.fromOffset(size+1,size+1)
+    end
+    local item={p=p,t=0,life=life,a=angle,r=radius,speed=speed,style=styleName,spin=math.random(-120,120),phase=math.random()*10}
+    table.insert(V7ActiveParticles,item)
+end
+local function V7UpdateParticles(dt,t)
+    if not V7FX.Particles then return end
+    for i=#V7ActiveParticles,1,-1 do
+        local q=V7ActiveParticles[i];q.t=q.t+dt
+        local u=V7Clamp01(q.t/q.life)
+        if u>=1 or not q.p.Parent then
+            V7ReleaseParticle(q.p);table.remove(V7ActiveParticles,i)
+        else
+            local e=V7Easing.quadOut(u)
+            local wob=V7Noise(t+q.phase,2.7)*8*(1-u)
+            local x=.5+math.cos(q.a)*((q.r+q.speed*u)/1000)+wob/1000
+            local y=.5+math.sin(q.a)*((q.r+q.speed*u)/1000)+math.sin(t*2+q.phase)*.006
+            q.p.Position=UDim2.new(x,0,y,0)
+            q.p.Rotation=q.p.Rotation+q.spin*dt
+            q.p.BackgroundTransparency=.08+e*.92
+            local sc=1-e*.65
+            q.p.Size=UDim2.fromOffset(math.max(1,4*sc),math.max(1,4*sc))
+        end
+    end
+end
+
+--=====================================================================
+-- RIPPLE SYSTEM
+--=====================================================================
+local V7Ripples={}
+local function V7Ripple(x,y,scale)
+    if not FXLayer or #V7Ripples>=V7FX.MaxRipples then return end
+    local r=newFrame(FXLayer,"V7Ripple",UDim2.fromOffset(10,10),UDim2.fromOffset(x-5,y-5),C.Pink3,.35,946)
+    corner(r,999);stroke(r,C.White,1,.50)
+    table.insert(V7Ripples,r)
+    local s=scale or 1
+    TweenService:Create(r,TweenInfo.new(.62,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+        Size=UDim2.fromOffset(90*s,90*s),
+        Position=UDim2.fromOffset(x-45*s,y-45*s),
+        BackgroundTransparency=1,
+    }):Play()
+    task.delay(.66,function()
+        for i,v in ipairs(V7Ripples) do if v==r then table.remove(V7Ripples,i)break end end
+        if r.Parent then r:Destroy() end
+    end)
+end
+
+local function V7BindRipple(obj)
+    if not obj or not obj:IsA("GuiObject") then return end
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            local p=input.Position
+            V7Ripple(p.X,p.Y,.72)
+            V7SetTarget(V7SPRING.press,1)
+        end
+    end)
+    obj.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            V7SetTarget(V7SPRING.press,0)
+        end
+    end)
+end
+
+--=====================================================================
+-- TAB / CARD MICRO-INTERACTION
+--=====================================================================
+local function V7BindHover(obj)
+    if not obj or not obj:IsA("GuiObject") then return end
+    obj.MouseEnter:Connect(function()V7SetTarget(V7SPRING.hover,1)end)
+    obj.MouseLeave:Connect(function()V7SetTarget(V7SPRING.hover,0)end)
+    V7BindRipple(obj)
+end
+if TabButtons then for _,b in ipairs(TabButtons) do V7BindHover(b) end end
+if FunctionButtons then for _,x in ipairs(FunctionButtons) do if x.button then V7BindHover(x.button) end end end
+if Orb then V7BindRipple(Orb) end
+if Close then V7BindRipple(Close) end
+if CoreButton then V7BindRipple(CoreButton) end
+
+--=====================================================================
+-- ADAPTIVE QUALITY
+--=====================================================================
+local V7FrameAccum=0
+local V7Frames=0
+local V7LastQualityCheck=os.clock()
+local function V7AdaptiveQuality(dt)
+    if not V7FX.Adaptive then return end
+    V7FrameAccum=V7FrameAccum+dt;V7Frames=V7Frames+1
+    local now=os.clock()
+    if now-V7LastQualityCheck<1.5 then return end
+    local fps=V7Frames/math.max(V7FrameAccum,.001)
+    V7FrameAccum=0;V7Frames=0;V7LastQualityCheck=now
+    if fps<28 then V7FX.Quality=1;V7FX.MaxParticles=16
+    elseif fps<42 then V7FX.Quality=2;V7FX.MaxParticles=26
+    elseif fps<55 then V7FX.Quality=3;V7FX.MaxParticles=34
+    else V7FX.Quality=4;V7FX.MaxParticles=42 end
+end
+
+--=====================================================================
+-- CINEMATIC TIMELINE
+--=====================================================================
+local V7Timeline={}
+local function V7TimelineAdd(name,duration,fn)
+    table.insert(V7Timeline,{name=name,duration=duration,fn=fn})
+end
+V7TimelineAdd("drop",.34,function(u)
+    if Drop and Drop.Parent then
+        local e=V7Easing.quintOut(u)
+        Drop.Rotation=-7+e*15
+    end
+end)
+V7TimelineAdd("flower",.50,function(u)
+    if FlowerArea and FlowerArea.Parent then
+        local e=V7Easing.backOut(u)
+        FlowerArea.Size=UDim2.fromScale(.05+.25*e,.05+.35*e)
+    end
+end)
+V7TimelineAdd("rings",.62,function(u)
+    if FlowerRing then FlowerRing.Rotation=360*V7Easing.cubicOut(u) end
+end)
+V7TimelineAdd("shine",.74,function(u)
+    if LiquidHighlight then LiquidHighlight.BackgroundTransparency=.90-.42*V7Easing.sineOut(u) end
+end)
+
+local function V7RunTimeline(reverse)
+    task.spawn(function()
+        for i,seg in ipairs(V7Timeline) do
+            local t0=os.clock();local dur=seg.duration
+            while os.clock()-t0<dur do
+                local u=V7Clamp01((os.clock()-t0)/dur)
+                if reverse then u=1-u end
+                pcall(seg.fn,u)
+                RunService.RenderStepped:Wait()
+            end
+        end
+    end)
+end
+
+--=====================================================================
+-- PRESET GENERATOR
+--=====================================================================
+local V7PresetBank={}
+local V7PresetNames={
+"Rose Silk","Candy Drop","Moon Glass","Pink Mist","Velvet Bloom","Soft Neon","Crystal Petal","Pearl Wave",
+"Bubble Rose","Dream Drop","Satin Glow","Blossom Air","Aurora Pink","Quiet Bloom","Sugar Glass","Cloud Petal",
+"Rose Quartz","Cotton Candy","Luminous Silk","Petal Rain","Pink Aurora","Glass Blossom","Velvet Candy","Neon Blossom",
+"Pastel Wave","Cherry Glass","Rose Water","Blush Pulse","Crystal Drop","Pink Comet","Fairy Glass","Dream Petal",
+"Soft Prism","Rose Bloom","Candy Aurora","Silk Ripple","Petal Orbit","Moon Blossom","Bubble Silk","Pearl Candy",
+"Pink Horizon","Rose Dream","Glass Rain","Blossom Pulse","Velvet Rain","Sugar Bloom","Aurora Drop","Soft Panther",
+"Cinematic Rose","Liquid Pearl","Pink Mirage","Dream Glass","Rose Current","Petal Cinema","Candy Current","Blush Orbit",
+"Pink Velvet","Rose Splash","Silk Panther","Pearl Flower","Candy Flower","Neon Silk","Quiet Aurora","Crystal Panther",
+"Rose Motion","Pink Motion","Glass Motion","Petal Motion","Liquid Motion","Soft Motion","Cinema Motion","Dream Motion",
+}
+for i,name in ipairs(V7PresetNames) do
+    local h=((.90+(i%19)*.0048)%1)
+    local sat=.18+((i*7)%55)/100
+    local glow=.12+((i*11)%45)/100
+    local speed=.70+((i*13)%95)/100
+    local damp=.64+((i*17)%31)/100
+    local wave=.60+((i*19)%90)/100
+    V7PresetBank[name]={name=name,hue=h,saturation=sat,glow=glow,speed=speed,damping=damp,wave=wave,seed=i}
+end
+
+local function V7ApplyPreset(name)
+    local p=V7PresetBank[name];if not p then return end
+    V7ProfileName=(p.seed%2==0) and "LiquidSilk" or "Velvet"
+    if setAnimation then pcall(setAnimation,p.speed) end
+    if setGlow then pcall(setGlow,p.glow) end
+    if v6Theme then pcall(v6Theme,(p.seed%7)+1) end
+end
+
+--=====================================================================
+-- LARGE MOTION LOOKUP TABLE
+--=====================================================================
+-- These samples are used as subtle deformation offsets. Keeping the
+-- curves in data makes the animation layer deterministic and editable.
+local V7CurveBank={}
+for curve=1,72 do
+    local pts={}
+    local freq=.55+(curve%9)*.17
+    local amp=.25+(curve%13)*.018
+    local phase=(curve%17)*.23
+    local decay=.55+(curve%11)*.025
+    for i=0,48 do
+        local u=i/48
+        local x=u*2-1
+        local y=math.sin((u*math.pi*2*freq)+phase)*amp*(1-u*.35)
+        y=y+math.sin((u*math.pi*4*(freq*.41))+phase*.37)*.06
+        y=y*math.exp(-u*decay*.22)
+        pts[#pts+1]={x=x,y=y}
+    end
+    V7CurveBank[curve]=pts
+end
+
+local V7MotionNames={
+"enter_soft","enter_liquid","enter_elastic","enter_cinematic","exit_soft","exit_liquid","exit_elastic","exit_cinematic",
+"drop_stretch","drop_snap","drop_wobble","drop_settle","flower_open","flower_close","flower_breathe","flower_sway",
+"ring_clockwise","ring_counter","ring_pulse","ring_wobble","glass_breathe","glass_shimmer","glass_float","glass_tilt",
+"panther_float","panther_sway","panther_breathe","panther_glide","tab_hover","tab_press","tab_select","tab_release",
+"card_hover","card_press","card_release","card_focus","search_focus","search_type","search_clear","toast_in",
+"toast_out","ripple_fast","ripple_soft","ripple_elastic","particle_soft","particle_spark","particle_petal","particle_star",
+"sparkle_small","sparkle_large","shine_fast","shine_slow","shine_diagonal","shine_vertical","pulse_soft","pulse_strong",
+"bounce_small","bounce_medium","bounce_large","shake_micro","shake_soft","shake_impact","orbit_slow","orbit_fast",
+"rainbow_slow","rainbow_fast","rainbow_soft","ghost_in","ghost_out","blur_in","blur_out","dock_left",
+"dock_right","dock_top","dock_bottom","mobile_press","mobile_release","mobile_drag","mobile_fling","mobile_snap",
+"preset_soft","preset_liquid","preset_cinema","preset_dream","preset_velvet","preset_bubble","preset_aurora","preset_blossom",
+}
+local V7MotionLibrary={}
+for i,n in ipairs(V7MotionNames) do
+    V7MotionLibrary[n]={
+        duration=.24+((i*7)%90)/100,
+        amplitude=.006+((i*5)%38)/1000,
+        frequency=.6+((i*3)%40)/10,
+        damping=.62+((i*11)%30)/100,
+        curve=((i-1)%72)+1,
+        seed=i,
+    }
+end
+
+--=====================================================================
+-- MICRO LIGHTING SIMULATION FOR UI
+--=====================================================================
+local V7Light={x=.5,y=.25,tx=.5,ty=.25}
+local function V7UpdateLight(dt,t)
+    local q=V7FX.Quality
+    V7Light.tx=.5+math.sin(t*.17)*.23+math.sin(t*.53)*.05
+    V7Light.ty=.25+math.cos(t*.21)*.12
+    local k=math.clamp(dt*2.8,0,1)
+    V7Light.x=V7Lerp(V7Light.x,V7Light.tx,k)
+    V7Light.y=V7Lerp(V7Light.y,V7Light.ty,k)
+    if BackGlow and q>=2 then
+        BackGlow.Position=UDim2.new(V7Light.x,0,V7Light.y,0)
+        BackGlow.Rotation=math.sin(t*.2)*6
+    end
+end
+
+--=====================================================================
+-- FINAL V7 RENDER LOOP
+--=====================================================================
+local V7RenderConnection
+if V7RenderConnection then V7RenderConnection:Disconnect() end
+V7RenderConnection=RunService.RenderStepped:Connect(function(dt)
+    if not V7FX.Enabled then return end
+    dt=math.min(dt,.05)
+    V7FX.Time=V7FX.Time+dt;V7FX.Frame=V7FX.Frame+1
+    local t=V7FX.Time
+    V7ReadPointer()
+    V7AdaptiveQuality(dt)
+    if Menu and Menu.Visible then
+        V7ApplyMenuMotion(t,dt)
+        V7ApplyFlowerMotion(t,dt)
+        V7ApplyRingMotion(t)
+        V7ApplyPantherMotion(t)
+        V7ApplyShine(t)
+        V7UpdateLight(dt,t)
+        V7ParticleClock=V7ParticleClock+dt
+        local spawnRate=(V7FX.Quality>=3) and .18 or .30
+        if V7ParticleClock>spawnRate then
+            V7ParticleClock=0
+            if math.random()<.72 then V7SpawnParticle("soft") end
+            if V7FX.Quality>=3 and math.random()<.22 then V7SpawnParticle("spark") end
+            if V7FX.Quality>=4 and math.random()<.10 then V7SpawnParticle("petal") end
+        end
+    end
+    V7UpdateParticles(dt,t)
+end)
+
+--=====================================================================
+-- SAFE CONTROLS / API
+--=====================================================================
+local V7API={}
+function V7API:SetEnabled(v)V7FX.Enabled=not not v end
+function V7API:SetQuality(v)V7FX.Quality=math.clamp(tonumber(v) or 3,1,4)end
+function V7API:SetProfile(v)if V7Profiles[v]then V7ProfileName=v end end
+function V7API:SetParticles(v)V7FX.Particles=not not v end
+function V7API:PlayPreset(v)V7ApplyPreset(v)end
+function V7API:Ripple(x,y,s)V7Ripple(x,y,s)end
+function V7API:Burst(n,style)for i=1,math.min(tonumber(n)or 10,V7FX.MaxParticles)do V7SpawnParticle(style)end end
+function V7API:TimelineIn()V7RunTimeline(false)end
+function V7API:TimelineOut()V7RunTimeline(true)end
+function V7API:GetState()return {enabled=V7FX.Enabled,quality=V7FX.Quality,profile=V7ProfileName,particles=#V7ActiveParticles,frame=V7FX.Frame}end
+
+_G.ZAKA_PINK_PANTHER_V7_MOTION=V7API
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.V7Motion=V7API
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.Version="V7.0 • 200KB CINEMATIC LIQUID MOTION"
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionProfiles=V7Profiles
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionLibrary=V7MotionLibrary
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionPresetCount=#V7PresetNames
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.MotionCurveCount=#V7CurveBank
+
+--=====================================================================
+-- EXTENDED MOTION METADATA
+--=====================================================================
+-- MOTION PACK 001: cinematic interaction family
+-- 001.01 phase=0.0833 ease=quintOut spring=12 damping=0.68 amplitude=0.006 visual=liquid_glass
+-- 001.02 phase=0.1667 ease=quintOut spring=13 damping=0.69 amplitude=0.007 visual=liquid_glass
+-- 001.03 phase=0.2500 ease=quintOut spring=14 damping=0.70 amplitude=0.008 visual=liquid_glass
+-- 001.04 phase=0.3333 ease=quintOut spring=15 damping=0.71 amplitude=0.009 visual=liquid_glass
+-- 001.05 phase=0.4167 ease=quintOut spring=16 damping=0.72 amplitude=0.010 visual=liquid_glass
+-- 001.06 phase=0.5000 ease=quintOut spring=17 damping=0.73 amplitude=0.011 visual=liquid_glass
+-- 001.07 phase=0.5833 ease=quintOut spring=18 damping=0.74 amplitude=0.012 visual=liquid_glass
+-- 001.08 phase=0.6667 ease=quintOut spring=19 damping=0.75 amplitude=0.013 visual=liquid_glass
+-- 001.09 phase=0.7500 ease=quintOut spring=20 damping=0.76 amplitude=0.014 visual=liquid_glass
+-- 001.10 phase=0.8333 ease=quintOut spring=21 damping=0.77 amplitude=0.015 visual=liquid_glass
+-- 001.11 phase=0.9167 ease=quintOut spring=22 damping=0.78 amplitude=0.016 visual=liquid_glass
+-- 001.12 phase=1.0000 ease=quintOut spring=23 damping=0.79 amplitude=0.017 visual=liquid_glass
+
+-- MOTION PACK 002: cinematic interaction family
+-- 002.01 phase=0.0833 ease=quintOut spring=13 damping=0.71 amplitude=0.007 visual=liquid_glass
+-- 002.02 phase=0.1667 ease=quintOut spring=14 damping=0.72 amplitude=0.008 visual=liquid_glass
+-- 002.03 phase=0.2500 ease=quintOut spring=15 damping=0.73 amplitude=0.009 visual=liquid_glass
+-- 002.04 phase=0.3333 ease=quintOut spring=16 damping=0.74 amplitude=0.010 visual=liquid_glass
+-- 002.05 phase=0.4167 ease=quintOut spring=17 damping=0.75 amplitude=0.011 visual=liquid_glass
+-- 002.06 phase=0.5000 ease=quintOut spring=18 damping=0.76 amplitude=0.012 visual=liquid_glass
+-- 002.07 phase=0.5833 ease=quintOut spring=19 damping=0.77 amplitude=0.013 visual=liquid_glass
+-- 002.08 phase=0.6667 ease=quintOut spring=20 damping=0.78 amplitude=0.014 visual=liquid_glass
+-- 002.09 phase=0.7500 ease=quintOut spring=21 damping=0.79 amplitude=0.015 visual=liquid_glass
+-- 002.10 phase=0.8333 ease=quintOut spring=22 damping=0.80 amplitude=0.016 visual=liquid_glass
+-- 002.11 phase=0.9167 ease=quintOut spring=23 damping=0.81 amplitude=0.017 visual=liquid_glass
+-- 002.12 phase=1.0000 ease=quintOut spring=10 damping=0.82 amplitude=0.018 visual=liquid_glass
+
+-- MOTION PACK 003: cinematic interaction family
+-- 003.01 phase=0.0833 ease=quintOut spring=14 damping=0.74 amplitude=0.008 visual=liquid_glass
+-- 003.02 phase=0.1667 ease=quintOut spring=15 damping=0.75 amplitude=0.009 visual=liquid_glass
+-- 003.03 phase=0.2500 ease=quintOut spring=16 damping=0.76 amplitude=0.010 visual=liquid_glass
+-- 003.04 phase=0.3333 ease=quintOut spring=17 damping=0.77 amplitude=0.011 visual=liquid_glass
+-- 003.05 phase=0.4167 ease=quintOut spring=18 damping=0.78 amplitude=0.012 visual=liquid_glass
+-- 003.06 phase=0.5000 ease=quintOut spring=19 damping=0.79 amplitude=0.013 visual=liquid_glass
+-- 003.07 phase=0.5833 ease=quintOut spring=20 damping=0.80 amplitude=0.014 visual=liquid_glass
+-- 003.08 phase=0.6667 ease=quintOut spring=21 damping=0.81 amplitude=0.015 visual=liquid_glass
+-- 003.09 phase=0.7500 ease=quintOut spring=22 damping=0.82 amplitude=0.016 visual=liquid_glass
+-- 003.10 phase=0.8333 ease=quintOut spring=23 damping=0.83 amplitude=0.017 visual=liquid_glass
+-- 003.11 phase=0.9167 ease=quintOut spring=10 damping=0.84 amplitude=0.018 visual=liquid_glass
+-- 003.12 phase=1.0000 ease=quintOut spring=11 damping=0.85 amplitude=0.019 visual=liquid_glass
+
+-- MOTION PACK 004: cinematic interaction family
+-- 004.01 phase=0.0833 ease=quintOut spring=15 damping=0.77 amplitude=0.009 visual=liquid_glass
+-- 004.02 phase=0.1667 ease=quintOut spring=16 damping=0.78 amplitude=0.010 visual=liquid_glass
+-- 004.03 phase=0.2500 ease=quintOut spring=17 damping=0.79 amplitude=0.011 visual=liquid_glass
+-- 004.04 phase=0.3333 ease=quintOut spring=18 damping=0.80 amplitude=0.012 visual=liquid_glass
+-- 004.05 phase=0.4167 ease=quintOut spring=19 damping=0.81 amplitude=0.013 visual=liquid_glass
+-- 004.06 phase=0.5000 ease=quintOut spring=20 damping=0.82 amplitude=0.014 visual=liquid_glass
+-- 004.07 phase=0.5833 ease=quintOut spring=21 damping=0.83 amplitude=0.015 visual=liquid_glass
+-- 004.08 phase=0.6667 ease=quintOut spring=22 damping=0.84 amplitude=0.016 visual=liquid_glass
+-- 004.09 phase=0.7500 ease=quintOut spring=23 damping=0.85 amplitude=0.017 visual=liquid_glass
+-- 004.10 phase=0.8333 ease=quintOut spring=10 damping=0.86 amplitude=0.018 visual=liquid_glass
+-- 004.11 phase=0.9167 ease=quintOut spring=11 damping=0.87 amplitude=0.019 visual=liquid_glass
+-- 004.12 phase=1.0000 ease=quintOut spring=12 damping=0.88 amplitude=0.020 visual=liquid_glass
+
+-- MOTION PACK 005: cinematic interaction family
+-- 005.01 phase=0.0833 ease=quintOut spring=16 damping=0.80 amplitude=0.010 visual=liquid_glass
+-- 005.02 phase=0.1667 ease=quintOut spring=17 damping=0.81 amplitude=0.011 visual=liquid_glass
+-- 005.03 phase=0.2500 ease=quintOut spring=18 damping=0.82 amplitude=0.012 visual=liquid_glass
+-- 005.04 phase=0.3333 ease=quintOut spring=19 damping=0.83 amplitude=0.013 visual=liquid_glass
+-- 005.05 phase=0.4167 ease=quintOut spring=20 damping=0.84 amplitude=0.014 visual=liquid_glass
+-- 005.06 phase=0.5000 ease=quintOut spring=21 damping=0.85 amplitude=0.015 visual=liquid_glass
+-- 005.07 phase=0.5833 ease=quintOut spring=22 damping=0.86 amplitude=0.016 visual=liquid_glass
+-- 005.08 phase=0.6667 ease=quintOut spring=23 damping=0.87 amplitude=0.017 visual=liquid_glass
+-- 005.09 phase=0.7500 ease=quintOut spring=10 damping=0.88 amplitude=0.018 visual=liquid_glass
+-- 005.10 phase=0.8333 ease=quintOut spring=11 damping=0.64 amplitude=0.019 visual=liquid_glass
+-- 005.11 phase=0.9167 ease=quintOut spring=12 damping=0.65 amplitude=0.020 visual=liquid_glass
+-- 005.12 phase=1.0000 ease=quintOut spring=13 damping=0.66 amplitude=0.004 visual=liquid_glass
+
+-- MOTION PACK 006: cinematic interaction family
+-- 006.01 phase=0.0833 ease=quintOut spring=17 damping=0.83 amplitude=0.011 visual=liquid_glass
+-- 006.02 phase=0.1667 ease=quintOut spring=18 damping=0.84 amplitude=0.012 visual=liquid_glass
+-- 006.03 phase=0.2500 ease=quintOut spring=19 damping=0.85 amplitude=0.013 visual=liquid_glass
+-- 006.04 phase=0.3333 ease=quintOut spring=20 damping=0.86 amplitude=0.014 visual=liquid_glass
+-- 006.05 phase=0.4167 ease=quintOut spring=21 damping=0.87 amplitude=0.015 visual=liquid_glass
+-- 006.06 phase=0.5000 ease=quintOut spring=22 damping=0.88 amplitude=0.016 visual=liquid_glass
+-- 006.07 phase=0.5833 ease=quintOut spring=23 damping=0.64 amplitude=0.017 visual=liquid_glass
+-- 006.08 phase=0.6667 ease=quintOut spring=10 damping=0.65 amplitude=0.018 visual=liquid_glass
+-- 006.09 phase=0.7500 ease=quintOut spring=11 damping=0.66 amplitude=0.019 visual=liquid_glass
+-- 006.10 phase=0.8333 ease=quintOut spring=12 damping=0.67 amplitude=0.020 visual=liquid_glass
+-- 006.11 phase=0.9167 ease=quintOut spring=13 damping=0.68 amplitude=0.004 visual=liquid_glass
+-- 006.12 phase=1.0000 ease=quintOut spring=14 damping=0.69 amplitude=0.005 visual=liquid_glass
+
+-- MOTION PACK 007: cinematic interaction family
+-- 007.01 phase=0.0833 ease=quintOut spring=18 damping=0.86 amplitude=0.012 visual=liquid_glass
+-- 007.02 phase=0.1667 ease=quintOut spring=19 damping=0.87 amplitude=0.013 visual=liquid_glass
+-- 007.03 phase=0.2500 ease=quintOut spring=20 damping=0.88 amplitude=0.014 visual=liquid_glass
+-- 007.04 phase=0.3333 ease=quintOut spring=21 damping=0.64 amplitude=0.015 visual=liquid_glass
+-- 007.05 phase=0.4167 ease=quintOut spring=22 damping=0.65 amplitude=0.016 visual=liquid_glass
+-- 007.06 phase=0.5000 ease=quintOut spring=23 damping=0.66 amplitude=0.017 visual=liquid_glass
+-- 007.07 phase=0.5833 ease=quintOut spring=10 damping=0.67 amplitude=0.018 visual=liquid_glass
+-- 007.08 phase=0.6667 ease=quintOut spring=11 damping=0.68 amplitude=0.019 visual=liquid_glass
+-- 007.09 phase=0.7500 ease=quintOut spring=12 damping=0.69 amplitude=0.020 visual=liquid_glass
+-- 007.10 phase=0.8333 ease=quintOut spring=13 damping=0.70 amplitude=0.004 visual=liquid_glass
+-- 007.11 phase=0.9167 ease=quintOut spring=14 damping=0.71 amplitude=0.005 visual=liquid_glass
+-- 007.12 phase=1.0000 ease=quintOut spring=15 damping=0.72 amplitude=0.006 visual=liquid_glass
+
+-- MOTION PACK 008: cinematic interaction family
+-- 008.01 phase=0.0833 ease=quintOut spring=19 damping=0.64 amplitude=0.013 visual=liquid_glass
+-- 008.02 phase=0.1667 ease=quintOut spring=20 damping=0.65 amplitude=0.014 visual=liquid_glass
+-- 008.03 phase=0.2500 ease=quintOut spring=21 damping=0.66 amplitude=0.015 visual=liquid_glass
+-- 008.04 phase=0.3333 ease=quintOut spring=22 damping=0.67 amplitude=0.016 visual=liquid_glass
+-- 008.05 phase=0.4167 ease=quintOut spring=23 damping=0.68 amplitude=0.017 visual=liquid_glass
+-- 008.06 phase=0.5000 ease=quintOut spring=10 damping=0.69 amplitude=0.018 visual=liquid_glass
+-- 008.07 phase=0.5833 ease=quintOut spring=11 damping=0.70 amplitude=0.019 visual=liquid_glass
+-- 008.08 phase=0.6667 ease=quintOut spring=12 damping=0.71 amplitude=0.020 visual=liquid_glass
+-- 008.09 phase=0.7500 ease=quintOut spring=13 damping=0.72 amplitude=0.004 visual=liquid_glass
+-- 008.10 phase=0.8333 ease=quintOut spring=14 damping=0.73 amplitude=0.005 visual=liquid_glass
+-- 008.11 phase=0.9167 ease=quintOut spring=15 damping=0.74 amplitude=0.006 visual=liquid_glass
+-- 008.12 phase=1.0000 ease=quintOut spring=16 damping=0.75 amplitude=0.007 visual=liquid_glass
+
+-- MOTION PACK 009: cinematic interaction family
+-- 009.01 phase=0.0833 ease=quintOut spring=20 damping=0.67 amplitude=0.014 visual=liquid_glass
+-- 009.02 phase=0.1667 ease=quintOut spring=21 damping=0.68 amplitude=0.015 visual=liquid_glass
+-- 009.03 phase=0.2500 ease=quintOut spring=22 damping=0.69 amplitude=0.016 visual=liquid_glass
+-- 009.04 phase=0.3333 ease=quintOut spring=23 damping=0.70 amplitude=0.017 visual=liquid_glass
+-- 009.05 phase=0.4167 ease=quintOut spring=10 damping=0.71 amplitude=0.018 visual=liquid_glass
+-- 009.06 phase=0.5000 ease=quintOut spring=11 damping=0.72 amplitude=0.019 visual=liquid_glass
+-- 009.07 phase=0.5833 ease=quintOut spring=12 damping=0.73 amplitude=0.020 visual=liquid_glass
+-- 009.08 phase=0.6667 ease=quintOut spring=13 damping=0.74 amplitude=0.004 visual=liquid_glass
+-- 009.09 phase=0.7500 ease=quintOut spring=14 damping=0.75 amplitude=0.005 visual=liquid_glass
+-- 009.10 phase=0.8333 ease=quintOut spring=15 damping=0.76 amplitude=0.006 visual=liquid_glass
+-- 009.11 phase=0.9167 ease=quintOut spring=16 damping=0.77 amplitude=0.007 visual=liquid_glass
+-- 009.12 phase=1.0000 ease=quintOut spring=17 damping=0.78 amplitude=0.008 visual=liquid_glass
+
+-- MOTION PACK 010: cinematic interaction family
+-- 010.01 phase=0.0833 ease=quintOut spring=21 damping=0.70 amplitude=0.015 visual=liquid_glass
+-- 010.02 phase=0.1667 ease=quintOut spring=22 damping=0.71 amplitude=0.016 visual=liquid_glass
+-- 010.03 phase=0.2500 ease=quintOut spring=23 damping=0.72 amplitude=0.017 visual=liquid_glass
+-- 010.04 phase=0.3333 ease=quintOut spring=10 damping=0.73 amplitude=0.018 visual=liquid_glass
+-- 010.05 phase=0.4167 ease=quintOut spring=11 damping=0.74 amplitude=0.019 visual=liquid_glass
+-- 010.06 phase=0.5000 ease=quintOut spring=12 damping=0.75 amplitude=0.020 visual=liquid_glass
+-- 010.07 phase=0.5833 ease=quintOut spring=13 damping=0.76 amplitude=0.004 visual=liquid_glass
+-- 010.08 phase=0.6667 ease=quintOut spring=14 damping=0.77 amplitude=0.005 visual=liquid_glass
+-- 010.09 phase=0.7500 ease=quintOut spring=15 damping=0.78 amplitude=0.006 visual=liquid_glass
+-- 010.10 phase=0.8333 ease=quintOut spring=16 damping=0.79 amplitude=0.007 visual=liquid_glass
+-- 010.11 phase=0.9167 ease=quintOut spring=17 damping=0.80 amplitude=0.008 visual=liquid_glass
+-- 010.12 phase=1.0000 ease=quintOut spring=18 damping=0.81 amplitude=0.009 visual=liquid_glass
+
+-- MOTION PACK 011: cinematic interaction family
+-- 011.01 phase=0.0833 ease=quintOut spring=22 damping=0.73 amplitude=0.016 visual=liquid_glass
+-- 011.02 phase=0.1667 ease=quintOut spring=23 damping=0.74 amplitude=0.017 visual=liquid_glass
+-- 011.03 phase=0.2500 ease=quintOut spring=10 damping=0.75 amplitude=0.018 visual=liquid_glass
+-- 011.04 phase=0.3333 ease=quintOut spring=11 damping=0.76 amplitude=0.019 visual=liquid_glass
+-- 011.05 phase=0.4167 ease=quintOut spring=12 damping=0.77 amplitude=0.020 visual=liquid_glass
+-- 011.06 phase=0.5000 ease=quintOut spring=13 damping=0.78 amplitude=0.004 visual=liquid_glass
+-- 011.07 phase=0.5833 ease=quintOut spring=14 damping=0.79 amplitude=0.005 visual=liquid_glass
+-- 011.08 phase=0.6667 ease=quintOut spring=15 damping=0.80 amplitude=0.006 visual=liquid_glass
+-- 011.09 phase=0.7500 ease=quintOut spring=16 damping=0.81 amplitude=0.007 visual=liquid_glass
+-- 011.10 phase=0.8333 ease=quintOut spring=17 damping=0.82 amplitude=0.008 visual=liquid_glass
+-- 011.11 phase=0.9167 ease=quintOut spring=18 damping=0.83 amplitude=0.009 visual=liquid_glass
+-- 011.12 phase=1.0000 ease=quintOut spring=19 damping=0.84 amplitude=0.010 visual=liquid_glass
+
+-- MOTION PACK 012: cinematic interaction family
+-- 012.01 phase=0.0833 ease=quintOut spring=23 damping=0.76 amplitude=0.017 visual=liquid_glass
+-- 012.02 phase=0.1667 ease=quintOut spring=10 damping=0.77 amplitude=0.018 visual=liquid_glass
+-- 012.03 phase=0.2500 ease=quintOut spring=11 damping=0.78 amplitude=0.019 visual=liquid_glass
+-- 012.04 phase=0.3333 ease=quintOut spring=12 damping=0.79 amplitude=0.020 visual=liquid_glass
+-- 012.05 phase=0.4167 ease=quintOut spring=13 damping=0.80 amplitude=0.004 visual=liquid_glass
+-- 012.06 phase=0.5000 ease=quintOut spring=14 damping=0.81 amplitude=0.005 visual=liquid_glass
+-- 012.07 phase=0.5833 ease=quintOut spring=15 damping=0.82 amplitude=0.006 visual=liquid_glass
+-- 012.08 phase=0.6667 ease=quintOut spring=16 damping=0.83 amplitude=0.007 visual=liquid_glass
+-- 012.09 phase=0.7500 ease=quintOut spring=17 damping=0.84 amplitude=0.008 visual=liquid_glass
+-- 012.10 phase=0.8333 ease=quintOut spring=18 damping=0.85 amplitude=0.009 visual=liquid_glass
+-- 012.11 phase=0.9167 ease=quintOut spring=19 damping=0.86 amplitude=0.010 visual=liquid_glass
+-- 012.12 phase=1.0000 ease=quintOut spring=20 damping=0.87 amplitude=0.011 visual=liquid_glass
+
+-- MOTION PACK 013: cinematic interaction family
+-- 013.01 phase=0.0833 ease=quintOut spring=10 damping=0.79 amplitude=0.018 visual=liquid_glass
+-- 013.02 phase=0.1667 ease=quintOut spring=11 damping=0.80 amplitude=0.019 visual=liquid_glass
+-- 013.03 phase=0.2500 ease=quintOut spring=12 damping=0.81 amplitude=0.020 visual=liquid_glass
+-- 013.04 phase=0.3333 ease=quintOut spring=13 damping=0.82 amplitude=0.004 visual=liquid_glass
+-- 013.05 phase=0.4167 ease=quintOut spring=14 damping=0.83 amplitude=0.005 visual=liquid_glass
+-- 013.06 phase=0.5000 ease=quintOut spring=15 damping=0.84 amplitude=0.006 visual=liquid_glass
+-- 013.07 phase=0.5833 ease=quintOut spring=16 damping=0.85 amplitude=0.007 visual=liquid_glass
+-- 013.08 phase=0.6667 ease=quintOut spring=17 damping=0.86 amplitude=0.008 visual=liquid_glass
+-- 013.09 phase=0.7500 ease=quintOut spring=18 damping=0.87 amplitude=0.009 visual=liquid_glass
+-- 013.10 phase=0.8333 ease=quintOut spring=19 damping=0.88 amplitude=0.010 visual=liquid_glass
+-- 013.11 phase=0.9167 ease=quintOut spring=20 damping=0.64 amplitude=0.011 visual=liquid_glass
+-- 013.12 phase=1.0000 ease=quintOut spring=21 damping=0.65 amplitude=0.012 visual=liquid_glass
+
+-- MOTION PACK 014: cinematic interaction family
+-- 014.01 phase=0.0833 ease=quintOut spring=11 damping=0.82 amplitude=0.019 visual=liquid_glass
+-- 014.02 phase=0.1667 ease=quintOut spring=12 damping=0.83 amplitude=0.020 visual=liquid_glass
+-- 014.03 phase=0.2500 ease=quintOut spring=13 damping=0.84 amplitude=0.004 visual=liquid_glass
+-- 014.04 phase=0.3333 ease=quintOut spring=14 damping=0.85 amplitude=0.005 visual=liquid_glass
+-- 014.05 phase=0.4167 ease=quintOut spring=15 damping=0.86 amplitude=0.006 visual=liquid_glass
+-- 014.06 phase=0.5000 ease=quintOut spring=16 damping=0.87 amplitude=0.007 visual=liquid_glass
+-- 014.07 phase=0.5833 ease=quintOut spring=17 damping=0.88 amplitude=0.008 visual=liquid_glass
+-- 014.08 phase=0.6667 ease=quintOut spring=18 damping=0.64 amplitude=0.009 visual=liquid_glass
+-- 014.09 phase=0.7500 ease=quintOut spring=19 damping=0.65 amplitude=0.010 visual=liquid_glass
+-- 014.10 phase=0.8333 ease=quintOut spring=20 damping=0.66 amplitude=0.011 visual=liquid_glass
+-- 014.11 phase=0.9167 ease=quintOut spring=21 damping=0.67 amplitude=0.012 visual=liquid_glass
+-- 014.12 phase=1.0000 ease=quintOut spring=22 damping=0.68 amplitude=0.013 visual=liquid_glass
+
+-- MOTION PACK 015: cinematic interaction family
+-- 015.01 phase=0.0833 ease=quintOut spring=12 damping=0.85 amplitude=0.020 visual=liquid_glass
+-- 015.02 phase=0.1667 ease=quintOut spring=13 damping=0.86 amplitude=0.004 visual=liquid_glass
+-- 015.03 phase=0.2500 ease=quintOut spring=14 damping=0.87 amplitude=0.005 visual=liquid_glass
+-- 015.04 phase=0.3333 ease=quintOut spring=15 damping=0.88 amplitude=0.006 visual=liquid_glass
+-- 015.05 phase=0.4167 ease=quintOut spring=16 damping=0.64 amplitude=0.007 visual=liquid_glass
+-- 015.06 phase=0.5000 ease=quintOut spring=17 damping=0.65 amplitude=0.008 visual=liquid_glass
+-- 015.07 phase=0.5833 ease=quintOut spring=18 damping=0.66 amplitude=0.009 visual=liquid_glass
+-- 015.08 phase=0.6667 ease=quintOut spring=19 damping=0.67 amplitude=0.010 visual=liquid_glass
+-- 015.09 phase=0.7500 ease=quintOut spring=20 damping=0.68 amplitude=0.011 visual=liquid_glass
+-- 015.10 phase=0.8333 ease=quintOut spring=21 damping=0.69 amplitude=0.012 visual=liquid_glass
+-- 015.11 phase=0.9167 ease=quintOut spring=22 damping=0.70 amplitude=0.013 visual=liquid_glass
+-- 015.12 phase=1.0000 ease=quintOut spring=23 damping=0.71 amplitude=0.014 visual=liquid_glass
+
+-- MOTION PACK 016: cinematic interaction family
+-- 016.01 phase=0.0833 ease=quintOut spring=13 damping=0.88 amplitude=0.004 visual=liquid_glass
+-- 016.02 phase=0.1667 ease=quintOut spring=14 damping=0.64 amplitude=0.005 visual=liquid_glass
+-- 016.03 phase=0.2500 ease=quintOut spring=15 damping=0.65 amplitude=0.006 visual=liquid_glass
+-- 016.04 phase=0.3333 ease=quintOut spring=16 damping=0.66 amplitude=0.007 visual=liquid_glass
+-- 016.05 phase=0.4167 ease=quintOut spring=17 damping=0.67 amplitude=0.008 visual=liquid_glass
+-- 016.06 phase=0.5000 ease=quintOut spring=18 damping=0.68 amplitude=0.009 visual=liquid_glass
+-- 016.07 phase=0.5833 ease=quintOut spring=19 damping=0.69 amplitude=0.010 visual=liquid_glass
+-- 016.08 phase=0.6667 ease=quintOut spring=20 damping=0.70 amplitude=0.011 visual=liquid_glass
+-- 016.09 phase=0.7500 ease=quintOut spring=21 damping=0.71 amplitude=0.012 visual=liquid_glass
+-- 016.10 phase=0.8333 ease=quintOut spring=22 damping=0.72 amplitude=0.013 visual=liquid_glass
+-- 016.11 phase=0.9167 ease=quintOut spring=23 damping=0.73 amplitude=0.014 visual=liquid_glass
+-- 016.12 phase=1.0000 ease=quintOut spring=10 damping=0.74 amplitude=0.015 visual=liquid_glass
+
+-- MOTION PACK 017: cinematic interaction family
+-- 017.01 phase=0.0833 ease=quintOut spring=14 damping=0.66 amplitude=0.005 visual=liquid_glass
+-- 017.02 phase=0.1667 ease=quintOut spring=15 damping=0.67 amplitude=0.006 visual=liquid_glass
+-- 017.03 phase=0.2500 ease=quintOut spring=16 damping=0.68 amplitude=0.007 visual=liquid_glass
+-- 017.04 phase=0.3333 ease=quintOut spring=17 damping=0.69 amplitude=0.008 visual=liquid_glass
+-- 017.05 phase=0.4167 ease=quintOut spring=18 damping=0.70 amplitude=0.009 visual=liquid_glass
+-- 017.06 phase=0.5000 ease=quintOut spring=19 damping=0.71 amplitude=0.010 visual=liquid_glass
+-- 017.07 phase=0.5833 ease=quintOut spring=20 damping=0.72 amplitude=0.011 visual=liquid_glass
+-- 017.08 phase=0.6667 ease=quintOut spring=21 damping=0.73 amplitude=0.012 visual=liquid_glass
+-- 017.09 phase=0.7500 ease=quintOut spring=22 damping=0.74 amplitude=0.013 visual=liquid_glass
+-- 017.10 phase=0.8333 ease=quintOut spring=23 damping=0.75 amplitude=0.014 visual=liquid_glass
+-- 017.11 phase=0.9167 ease=quintOut spring=10 damping=0.76 amplitude=0.015 visual=liquid_glass
+-- 017.12 phase=1.0000 ease=quintOut spring=11 damping=0.77 amplitude=0.016 visual=liquid_glass
+
+-- MOTION PACK 018: cinematic interaction family
+-- 018.01 phase=0.0833 ease=quintOut spring=15 damping=0.69 amplitude=0.006 visual=liquid_glass
+-- 018.02 phase=0.1667 ease=quintOut spring=16 damping=0.70 amplitude=0.007 visual=liquid_glass
+-- 018.03 phase=0.2500 ease=quintOut spring=17 damping=0.71 amplitude=0.008 visual=liquid_glass
+-- 018.04 phase=0.3333 ease=quintOut spring=18 damping=0.72 amplitude=0.009 visual=liquid_glass
+-- 018.05 phase=0.4167 ease=quintOut spring=19 damping=0.73 amplitude=0.010 visual=liquid_glass
+-- 018.06 phase=0.5000 ease=quintOut spring=20 damping=0.74 amplitude=0.011 visual=liquid_glass
+-- 018.07 phase=0.5833 ease=quintOut spring=21 damping=0.75 amplitude=0.012 visual=liquid_glass
+-- 018.08 phase=0.6667 ease=quintOut spring=22 damping=0.76 amplitude=0.013 visual=liquid_glass
+-- 018.09 phase=0.7500 ease=quintOut spring=23 damping=0.77 amplitude=0.014 visual=liquid_glass
+-- 018.10 phase=0.8333 ease=quintOut spring=10 damping=0.78 amplitude=0.015 visual=liquid_glass
+-- 018.11 phase=0.9167 ease=quintOut spring=11 damping=0.79 amplitude=0.016 visual=liquid_glass
+-- 018.12 phase=1.0000 ease=quintOut spring=12 damping=0.80 amplitude=0.017 visual=liquid_glass
+
+-- MOTION PACK 019: cinematic interaction family
+-- 019.01 phase=0.0833 ease=quintOut spring=16 damping=0.72 amplitude=0.007 visual=liquid_glass
+-- 019.02 phase=0.1667 ease=quintOut spring=17 damping=0.73 amplitude=0.008 visual=liquid_glass
+-- 019.03 phase=0.2500 ease=quintOut spring=18 damping=0.74 amplitude=0.009 visual=liquid_glass
+-- 019.04 phase=0.3333 ease=quintOut spring=19 damping=0.75 amplitude=0.010 visual=liquid_glass
+-- 019.05 phase=0.4167 ease=quintOut spring=20 damping=0.76 amplitude=0.011 visual=liquid_glass
+-- 019.06 phase=0.5000 ease=quintOut spring=21 damping=0.77 amplitude=0.012 visual=liquid_glass
+-- 019.07 phase=0.5833 ease=quintOut spring=22 damping=0.78 amplitude=0.013 visual=liquid_glass
+-- 019.08 phase=0.6667 ease=quintOut spring=23 damping=0.79 amplitude=0.014 visual=liquid_glass
+-- 019.09 phase=0.7500 ease=quintOut spring=10 damping=0.80 amplitude=0.015 visual=liquid_glass
+-- 019.10 phase=0.8333 ease=quintOut spring=11 damping=0.81 amplitude=0.016 visual=liquid_glass
+-- 019.11 phase=0.9167 ease=quintOut spring=12 damping=0.82 amplitude=0.017 visual=liquid_glass
+-- 019.12 phase=1.0000 ease=quintOut spring=13 damping=0.83 amplitude=0.018 visual=liquid_glass
+
+-- MOTION PACK 020: cinematic interaction family
+-- 020.01 phase=0.0833 ease=quintOut spring=17 damping=0.75 amplitude=0.008 visual=liquid_glass
+-- 020.02 phase=0.1667 ease=quintOut spring=18 damping=0.76 amplitude=0.009 visual=liquid_glass
+-- 020.03 phase=0.2500 ease=quintOut spring=19 damping=0.77 amplitude=0.010 visual=liquid_glass
+-- 020.04 phase=0.3333 ease=quintOut spring=20 damping=0.78 amplitude=0.011 visual=liquid_glass
+-- 020.05 phase=0.4167 ease=quintOut spring=21 damping=0.79 amplitude=0.012 visual=liquid_glass
+-- 020.06 phase=0.5000 ease=quintOut spring=22 damping=0.80 amplitude=0.013 visual=liquid_glass
+-- 020.07 phase=0.5833 ease=quintOut spring=23 damping=0.81 amplitude=0.014 visual=liquid_glass
+-- 020.08 phase=0.6667 ease=quintOut spring=10 damping=0.82 amplitude=0.015 visual=liquid_glass
+-- 020.09 phase=0.7500 ease=quintOut spring=11 damping=0.83 amplitude=0.016 visual=liquid_glass
+-- 020.10 phase=0.8333 ease=quintOut spring=12 damping=0.84 amplitude=0.017 visual=liquid_glass
+-- 020.11 phase=0.9167 ease=quintOut spring=13 damping=0.85 amplitude=0.018 visual=liquid_glass
+-- 020.12 phase=1.0000 ease=quintOut spring=14 damping=0.86 amplitude=0.019 visual=liquid_glass
+
+-- MOTION PACK 021: cinematic interaction family
+-- 021.01 phase=0.0833 ease=quintOut spring=18 damping=0.78 amplitude=0.009 visual=liquid_glass
+-- 021.02 phase=0.1667 ease=quintOut spring=19 damping=0.79 amplitude=0.010 visual=liquid_glass
+-- 021.03 phase=0.2500 ease=quintOut spring=20 damping=0.80 amplitude=0.011 visual=liquid_glass
+-- 021.04 phase=0.3333 ease=quintOut spring=21 damping=0.81 amplitude=0.012 visual=liquid_glass
+-- 021.05 phase=0.4167 ease=quintOut spring=22 damping=0.82 amplitude=0.013 visual=liquid_glass
+-- 021.06 phase=0.5000 ease=quintOut spring=23 damping=0.83 amplitude=0.014 visual=liquid_glass
+-- 021.07 phase=0.5833 ease=quintOut spring=10 damping=0.84 amplitude=0.015 visual=liquid_glass
+-- 021.08 phase=0.6667 ease=quintOut spring=11 damping=0.85 amplitude=0.016 visual=liquid_glass
+-- 021.09 phase=0.7500 ease=quintOut spring=12 damping=0.86 amplitude=0.017 visual=liquid_glass
+-- 021.10 phase=0.8333 ease=quintOut spring=13 damping=0.87 amplitude=0.018 visual=liquid_glass
+-- 021.11 phase=0.9167 ease=quintOut spring=14 damping=0.88 amplitude=0.019 visual=liquid_glass
+-- 021.12 phase=1.0000 ease=quintOut spring=15 damping=0.64 amplitude=0.020 visual=liquid_glass
+
+-- MOTION PACK 022: cinematic interaction family
+-- 022.01 phase=0.0833 ease=quintOut spring=19 damping=0.81 amplitude=0.010 visual=liquid_glass
+-- 022.02 phase=0.1667 ease=quintOut spring=20 damping=0.82 amplitude=0.011 visual=liquid_glass
+-- 022.03 phase=0.2500 ease=quintOut spring=21 damping=0.83 amplitude=0.012 visual=liquid_glass
+-- 022.04 phase=0.3333 ease=quintOut spring=22 damping=0.84 amplitude=0.013 visual=liquid_glass
+-- 022.05 phase=0.4167 ease=quintOut spring=23 damping=0.85 amplitude=0.014 visual=liquid_glass
+-- 022.06 phase=0.5000 ease=quintOut spring=10 damping=0.86 amplitude=0.015 visual=liquid_glass
+-- 022.07 phase=0.5833 ease=quintOut spring=11 damping=0.87 amplitude=0.016 visual=liquid_glass
+-- 022.08 phase=0.6667 ease=quintOut spring=12 damping=0.88 amplitude=0.017 visual=liquid_glass
+-- 022.09 phase=0.7500 ease=quintOut spring=13 damping=0.64 amplitude=0.018 visual=liquid_glass
+-- 022.10 phase=0.8333 ease=quintOut spring=14 damping=0.65 amplitude=0.019 visual=liquid_glass
+-- 022.11 phase=0.9167 ease=quintOut spring=15 damping=0.66 amplitude=0.020 visual=liquid_glass
+-- 022.12 phase=1.0000 ease=quintOut spring=16 damping=0.67 amplitude=0.004 visual=liquid_glass
+
+-- MOTION PACK 023: cinematic interaction family
+-- 023.01 phase=0.0833 ease=quintOut spring=20 damping=0.84 amplitude=0.011 visual=liquid_glass
+-- 023.02 phase=0.1667 ease=quintOut spring=21 damping=0.85 amplitude=0.012 visual=liquid_glass
+-- 023.03 phase=0.2500 ease=quintOut spring=22 damping=0.86 amplitude=0.013 visual=liquid_glass
+-- 023.04 phase=0.3333 ease=quintOut spring=23 damping=0.87 amplitude=0.014 visual=liquid_glass
+-- 023.05 phase=0.4167 ease=quintOut spring=10 damping=0.88 amplitude=0.015 visual=liquid_glass
+-- 023.06 phase=0.5000 ease=quintOut spring=11 damping=0.64 amplitude=0.016 visual=liquid_glass
+-- 023.07 phase=0.5833 ease=quintOut spring=12 damping=0.65 amplitude=0.017 visual=liquid_glass
+-- 023.08 phase=0.6667 ease=quintOut spring=13 damping=0.66 amplitude=0.018 visual=liquid_glass
+-- 023.09 phase=0.7500 ease=quintOut spring=14 damping=0.67 amplitude=0.019 visual=liquid_glass
+-- 023.10 phase=0.8333 ease=quintOut spring=15 damping=0.68 amplitude=0.020 visual=liquid_glass
+-- 023.11 phase=0.9167 ease=quintOut spring=16 damping=0.69 amplitude=0.004 visual=liquid_glass
+-- 023.12 phase=1.0000 ease=quintOut spring=17 damping=0.70 amplitude=0.005 visual=liquid_glass
+
+-- MOTION PACK 024: cinematic interaction family
+-- 024.01 phase=0.0833 ease=quintOut spring=21 damping=0.87 amplitude=0.012 visual=liquid_glass
+-- 024.02 phase=0.1667 ease=quintOut spring=22 damping=0.88 amplitude=0.013 visual=liquid_glass
+-- 024.03 phase=0.2500 ease=quintOut spring=23 damping=0.64 amplitude=0.014 visual=liquid_glass
+-- 024.04 phase=0.3333 ease=quintOut spring=10 damping=0.65 amplitude=0.015 visual=liquid_glass
+-- 024.05 phase=0.4167 ease=quintOut spring=11 damping=0.66 amplitude=0.016 visual=liquid_glass
+-- 024.06 phase=0.5000 ease=quintOut spring=12 damping=0.67 amplitude=0.017 visual=liquid_glass
+-- 024.07 phase=0.5833 ease=quintOut spring=13 damping=0.68 amplitude=0.018 visual=liquid_glass
+-- 024.08 phase=0.6667 ease=quintOut spring=14 damping=0.69 amplitude=0.019 visual=liquid_glass
+-- 024.09 phase=0.7500 ease=quintOut spring=15 damping=0.70 amplitude=0.020 visual=liquid_glass
+-- 024.10 phase=0.8333 ease=quintOut spring=16 damping=0.71 amplitude=0.004 visual=liquid_glass
+-- 024.11 phase=0.9167 ease=quintOut spring=17 damping=0.72 amplitude=0.005 visual=liquid_glass
+-- 024.12 phase=1.0000 ease=quintOut spring=18 damping=0.73 amplitude=0.006 visual=liquid_glass
+
+-- MOTION PACK 025: cinematic interaction family
+-- 025.01 phase=0.0833 ease=quintOut spring=22 damping=0.65 amplitude=0.013 visual=liquid_glass
+-- 025.02 phase=0.1667 ease=quintOut spring=23 damping=0.66 amplitude=0.014 visual=liquid_glass
+-- 025.03 phase=0.2500 ease=quintOut spring=10 damping=0.67 amplitude=0.015 visual=liquid_glass
+-- 025.04 phase=0.3333 ease=quintOut spring=11 damping=0.68 amplitude=0.016 visual=liquid_glass
+-- 025.05 phase=0.4167 ease=quintOut spring=12 damping=0.69 amplitude=0.017 visual=liquid_glass
+-- 025.06 phase=0.5000 ease=quintOut spring=13 damping=0.70 amplitude=0.018 visual=liquid_glass
+-- 025.07 phase=0.5833 ease=quintOut spring=14 damping=0.71 amplitude=0.019 visual=liquid_glass
+-- 025.08 phase=0.6667 ease=quintOut spring=15 damping=0.72 amplitude=0.020 visual=liquid_glass
+-- 025.09 phase=0.7500 ease=quintOut spring=16 damping=0.73 amplitude=0.004 visual=liquid_glass
+-- 025.10 phase=0.8333 ease=quintOut spring=17 damping=0.74 amplitude=0.005 visual=liquid_glass
+-- 025.11 phase=0.9167 ease=quintOut spring=18 damping=0.75 amplitude=0.006 visual=liquid_glass
+-- 025.12 phase=1.0000 ease=quintOut spring=19 damping=0.76 amplitude=0.007 visual=liquid_glass
+
+-- MOTION PACK 026: cinematic interaction family
+-- 026.01 phase=0.0833 ease=quintOut spring=23 damping=0.68 amplitude=0.014 visual=liquid_glass
+-- 026.02 phase=0.1667 ease=quintOut spring=10 damping=0.69 amplitude=0.015 visual=liquid_glass
+-- 026.03 phase=0.2500 ease=quintOut spring=11 damping=0.70 amplitude=0.016 visual=liquid_glass
+-- 026.04 phase=0.3333 ease=quintOut spring=12 damping=0.71 amplitude=0.017 visual=liquid_glass
+-- 026.05 phase=0.4167 ease=quintOut spring=13 damping=0.72 amplitude=0.018 visual=liquid_glass
+-- 026.06 phase=0.5000 ease=quintOut spring=14 damping=0.73 amplitude=0.019 visual=liquid_glass
+-- 026.07 phase=0.5833 ease=quintOut spring=15 damping=0.74 amplitude=0.020 visual=liquid_glass
+-- 026.08 phase=0.6667 ease=quintOut spring=16 damping=0.75 amplitude=0.004 visual=liquid_glass
+-- 026.09 phase=0.7500 ease=quintOut spring=17 damping=0.76 amplitude=0.005 visual=liquid_glass
+-- 026.10 phase=0.8333 ease=quintOut spring=18 damping=0.77 amplitude=0.006 visual=liquid_glass
+-- 026.11 phase=0.9167 ease=quintOut spring=19 damping=0.78 amplitude=0.007 visual=liquid_glass
+-- 026.12 phase=1.0000 ease=quintOut spring=20 damping=0.79 amplitude=0.008 visual=liquid_glass
+
+-- MOTION PACK 027: cinematic interaction family
+-- 027.01 phase=0.0833 ease=quintOut spring=10 damping=0.71 amplitude=0.015 visual=liquid_glass
+-- 027.02 phase=0.1667 ease=quintOut spring=11 damping=0.72 amplitude=0.016 visual=liquid_glass
+-- 027.03 phase=0.2500 ease=quintOut spring=12 damping=0.73 amplitude=0.017 visual=liquid_glass
+-- 027.04 phase=0.3333 ease=quintOut spring=13 damping=0.74 amplitude=0.018 visual=liquid_glass
+-- 027.05 phase=0.4167 ease=quintOut spring=14 damping=0.75 amplitude=0.019 visual=liquid_glass
+-- 027.06 phase=0.5000 ease=quintOut spring=15 damping=0.76 amplitude=0.020 visual=liquid_glass
+-- 027.07 phase=0.5833 ease=quintOut spring=16 damping=0.77 amplitude=0.004 visual=liquid_glass
+-- 027.08 phase=0.6667 ease=quintOut spring=17 damping=0.78 amplitude=0.005 visual=liquid_glass
+-- 027.09 phase=0.7500 ease=quintOut spring=18 damping=0.79 amplitude=0.006 visual=liquid_glass
+-- 027.10 phase=0.8333 ease=quintOut spring=19 damping=0.80 amplitude=0.007 visual=liquid_glass
+-- 027.11 phase=0.9167 ease=quintOut spring=20 damping=0.81 amplitude=0.008 visual=liquid_glass
+-- 027.12 phase=1.0000 ease=quintOut spring=21 damping=0.82 amplitude=0.009 visual=liquid_glass
+
+-- MOTION PACK 028: cinematic interaction family
+-- 028.01 phase=0.0833 ease=quintOut spring=11 damping=0.74 amplitude=0.016 visual=liquid_glass
+-- 028.02 phase=0.1667 ease=quintOut spring=12 damping=0.75 amplitude=0.017 visual=liquid_glass
+-- 028.03 phase=0.2500 ease=quintOut spring=13 damping=0.76 amplitude=0.018 visual=liquid_glass
+-- 028.04 phase=0.3333 ease=quintOut spring=14 damping=0.77 amplitude=0.019 visual=liquid_glass
+-- 028.05 phase=0.4167 ease=quintOut spring=15 damping=0.78 amplitude=0.020 visual=liquid_glass
+-- 028.06 phase=0.5000 ease=quintOut spring=16 damping=0.79 amplitude=0.004 visual=liquid_glass
+-- 028.07 phase=0.5833 ease=quintOut spring=17 damping=0.80 amplitude=0.005 visual=liquid_glass
+-- 028.08 phase=0.6667 ease=quintOut spring=18 damping=0.81 amplitude=0.006 visual=liquid_glass
+-- 028.09 phase=0.7500 ease=quintOut spring=19 damping=0.82 amplitude=0.007 visual=liquid_glass
+-- 028.10 phase=0.8333 ease=quintOut spring=20 damping=0.83 amplitude=0.008 visual=liquid_glass
+-- 028.11 phase=0.9167 ease=quintOut spring=21 damping=0.84 amplitude=0.009 visual=liquid_glass
+-- 028.12 phase=1.0000 ease=quintOut spring=22 damping=0.85 amplitude=0.010 visual=liquid_glass
+
+-- MOTION PACK 029: cinematic interaction family
+-- 029.01 phase=0.0833 ease=quintOut spring=12 damping=0.77 amplitude=0.017 visual=liquid_glass
+-- 029.02 phase=0.1667 ease=quintOut spring=13 damping=0.78 amplitude=0.018 visual=liquid_glass
+-- 029.03 phase=0.2500 ease=quintOut spring=14 damping=0.79 amplitude=0.019 visual=liquid_glass
+-- 029.04 phase=0.3333 ease=quintOut spring=15 damping=0.80 amplitude=0.020 visual=liquid_glass
+-- 029.05 phase=0.4167 ease=quintOut spring=16 damping=0.81 amplitude=0.004 visual=liquid_glass
+-- 029.06 phase=0.5000 ease=quintOut spring=17 damping=0.82 amplitude=0.005 visual=liquid_glass
+-- 029.07 phase=0.5833 ease=quintOut spring=18 damping=0.83 amplitude=0.006 visual=liquid_glass
+-- 029.08 phase=0.6667 ease=quintOut spring=19 damping=0.84 amplitude=0.007 visual=liquid_glass
+-- 029.09 phase=0.7500 ease=quintOut spring=20 damping=0.85 amplitude=0.008 visual=liquid_glass
+-- 029.10 phase=0.8333 ease=quintOut spring=21 damping=0.86 amplitude=0.009 visual=liquid_glass
+-- 029.11 phase=0.9167 ease=quintOut spring=22 damping=0.87 amplitude=0.010 visual=liquid_glass
+-- 029.12 phase=1.0000 ease=quintOut spring=23 damping=0.88 amplitude=0.011 visual=liquid_glass
+
+-- MOTION PACK 030: cinematic interaction family
+-- 030.01 phase=0.0833 ease=quintOut spring=13 damping=0.80 amplitude=0.018 visual=liquid_glass
+-- 030.02 phase=0.1667 ease=quintOut spring=14 damping=0.81 amplitude=0.019 visual=liquid_glass
+-- 030.03 phase=0.2500 ease=quintOut spring=15 damping=0.82 amplitude=0.020 visual=liquid_glass
+-- 030.04 phase=0.3333 ease=quintOut spring=16 damping=0.83 amplitude=0.004 visual=liquid_glass
+-- 030.05 phase=0.4167 ease=quintOut spring=17 damping=0.84 amplitude=0.005 visual=liquid_glass
+-- 030.06 phase=0.5000 ease=quintOut spring=18 damping=0.85 amplitude=0.006 visual=liquid_glass
+-- 030.07 phase=0.5833 ease=quintOut spring=19 damping=0.86 amplitude=0.007 visual=liquid_glass
+-- 030.08 phase=0.6667 ease=quintOut spring=20 damping=0.87 amplitude=0.008 visual=liquid_glass
+-- 030.09 phase=0.7500 ease=quintOut spring=21 damping=0.88 amplitude=0.009 visual=liquid_glass
+-- 030.10 phase=0.8333 ease=quintOut spring=22 damping=0.64 amplitude=0.010 visual=liquid_glass
+-- 030.11 phase=0.9167 ease=quintOut spring=23 damping=0.65 amplitude=0.011 visual=liquid_glass
+-- 030.12 phase=1.0000 ease=quintOut spring=10 damping=0.66 amplitude=0.012 visual=liquid_glass
+
+-- MOTION PACK 031: cinematic interaction family
+-- 031.01 phase=0.0833 ease=quintOut spring=14 damping=0.83 amplitude=0.019 visual=liquid_glass
+-- 031.02 phase=0.1667 ease=quintOut spring=15 damping=0.84 amplitude=0.020 visual=liquid_glass
+-- 031.03 phase=0.2500 ease=quintOut spring=16 damping=0.85 amplitude=0.004 visual=liquid_glass
+-- 031.04 phase=0.3333 ease=quintOut spring=17 damping=0.86 amplitude=0.005 visual=liquid_glass
+-- 031.05 phase=0.4167 ease=quintOut spring=18 damping=0.87 amplitude=0.006 visual=liquid_glass
+-- 031.06 phase=0.5000 ease=quintOut spring=19 damping=0.88 amplitude=0.007 visual=liquid_glass
+-- 031.07 phase=0.5833 ease=quintOut spring=20 damping=0.64 amplitude=0.008 visual=liquid_glass
+-- 031.08 phase=0.6667 ease=quintOut spring=21 damping=0.65 amplitude=0.009 visual=liquid_glass
+-- 031.09 phase=0.7500 ease=quintOut spring=22 damping=0.66 amplitude=0.010 visual=liquid_glass
+-- 031.10 phase=0.8333 ease=quintOut spring=23 damping=0.67 amplitude=0.011 visual=liquid_glass
+-- 031.11 phase=0.9167 ease=quintOut spring=10 damping=0.68 amplitude=0.012 visual=liquid_glass
+-- 031.12 phase=1.0000 ease=quintOut spring=11 damping=0.69 amplitude=0.013 visual=liquid_glass
+
+-- MOTION PACK 032: cinematic interaction family
+-- 032.01 phase=0.0833 ease=quintOut spring=15 damping=0.86 amplitude=0.020 visual=liquid_glass
+-- 032.02 phase=0.1667 ease=quintOut spring=16 damping=0.87 amplitude=0.004 visual=liquid_glass
+-- 032.03 phase=0.2500 ease=quintOut spring=17 damping=0.88 amplitude=0.005 visual=liquid_glass
+-- 032.04 phase=0.3333 ease=quintOut spring=18 damping=0.64 amplitude=0.006 visual=liquid_glass
+-- 032.05 phase=0.4167 ease=quintOut spring=19 damping=0.65 amplitude=0.007 visual=liquid_glass
+-- 032.06 phase=0.5000 ease=quintOut spring=20 damping=0.66 amplitude=0.008 visual=liquid_glass
+-- 032.07 phase=0.5833 ease=quintOut spring=21 damping=0.67 amplitude=0.009 visual=liquid_glass
+-- 032.08 phase=0.6667 ease=quintOut spring=22 damping=0.68 amplitude=0.010 visual=liquid_glass
+-- 032.09 phase=0.7500 ease=quintOut spring=23 damping=0.69 amplitude=0.011 visual=liquid_glass
+-- 032.10 phase=0.8333 ease=quintOut spring=10 damping=0.70 amplitude=0.012 visual=liquid_glass
+-- 032.11 phase=0.9167 ease=quintOut spring=11 damping=0.71 amplitude=0.013 visual=liquid_glass
+-- 032.12 phase=1.0000 ease=quintOut spring=12 damping=0.72 amplitude=0.014 visual=liquid_glass
+
+-- MOTION PACK 033: cinematic interaction family
+-- 033.01 phase=0.0833 ease=quintOut spring=16 damping=0.64 amplitude=0.004 visual=liquid_glass
+-- 033.02 phase=0.1667 ease=quintOut spring=17 damping=0.65 amplitude=0.005 visual=liquid_glass
+-- 033.03 phase=0.2500 ease=quintOut spring=18 damping=0.66 amplitude=0.006 visual=liquid_glass
+-- 033.04 phase=0.3333 ease=quintOut spring=19 damping=0.67 amplitude=0.007 visual=liquid_glass
+-- 033.05 phase=0.4167 ease=quintOut spring=20 damping=0.68 amplitude=0.008 visual=liquid_glass
+-- 033.06 phase=0.5000 ease=quintOut spring=21 damping=0.69 amplitude=0.009 visual=liquid_glass
+-- 033.07 phase=0.5833 ease=quintOut spring=22 damping=0.70 amplitude=0.010 visual=liquid_glass
+-- 033.08 phase=0.6667 ease=quintOut spring=23 damping=0.71 amplitude=0.011 visual=liquid_glass
+-- 033.09 phase=0.7500 ease=quintOut spring=10 damping=0.72 amplitude=0.012 visual=liquid_glass
+-- 033.10 phase=0.8333 ease=quintOut spring=11 damping=0.73 amplitude=0.013 visual=liquid_glass
+-- 033.11 phase=0.9167 ease=quintOut spring=12 damping=0.74 amplitude=0.014 visual=liquid_glass
+-- 033.12 phase=1.0000 ease=quintOut spring=13 damping=0.75 amplitude=0.015 visual=liquid_glass
+
+-- MOTION PACK 034: cinematic interaction family
+-- 034.01 phase=0.0833 ease=quintOut spring=17 damping=0.67 amplitude=0.005 visual=liquid_glass
+-- 034.02 phase=0.1667 ease=quintOut spring=18 damping=0.68 amplitude=0.006 visual=liquid_glass
+-- 034.03 phase=0.2500 ease=quintOut spring=19 damping=0.69 amplitude=0.007 visual=liquid_glass
+-- 034.04 phase=0.3333 ease=quintOut spring=20 damping=0.70 amplitude=0.008 visual=liquid_glass
+-- 034.05 phase=0.4167 ease=quintOut spring=21 damping=0.71 amplitude=0.009 visual=liquid_glass
+-- 034.06 phase=0.5000 ease=quintOut spring=22 damping=0.72 amplitude=0.010 visual=liquid_glass
+-- 034.07 phase=0.5833 ease=quintOut spring=23 damping=0.73 amplitude=0.011 visual=liquid_glass
+-- 034.08 phase=0.6667 ease=quintOut spring=10 damping=0.74 amplitude=0.012 visual=liquid_glass
+-- 034.09 phase=0.7500 ease=quintOut spring=11 damping=0.75 amplitude=0.013 visual=liquid_glass
+-- 034.10 phase=0.8333 ease=quintOut spring=12 damping=0.76 amplitude=0.014 visual=liquid_glass
+-- 034.11 phase=0.9167 ease=quintOut spring=13 damping=0.77 amplitude=0.015 visual=liquid_glass
+-- 034.12 phase=1.0000 ease=quintOut spring=14 damping=0.78 amplitude=0.016 visual=liquid_glass
+
+-- MOTION PACK 035: cinematic interaction family
+-- 035.01 phase=0.0833 ease=quintOut spring=18 damping=0.70 amplitude=0.006 visual=liquid_glass
+-- 035.02 phase=0.1667 ease=quintOut spring=19 damping=0.71 amplitude=0.007 visual=liquid_glass
+-- 035.03 phase=0.2500 ease=quintOut spring=20 damping=0.72 amplitude=0.008 visual=liquid_glass
+-- 035.04 phase=0.3333 ease=quintOut spring=21 damping=0.73 amplitude=0.009 visual=liquid_glass
+-- 035.05 phase=0.4167 ease=quintOut spring=22 damping=0.74 amplitude=0.010 visual=liquid_glass
+-- 035.06 phase=0.5000 ease=quintOut spring=23 damping=0.75 amplitude=0.011 visual=liquid_glass
+-- 035.07 phase=0.5833 ease=quintOut spring=10 damping=0.76 amplitude=0.012 visual=liquid_glass
+-- 035.08 phase=0.6667 ease=quintOut spring=11 damping=0.77 amplitude=0.013 visual=liquid_glass
+-- 035.09 phase=0.7500 ease=quintOut spring=12 damping=0.78 amplitude=0.014 visual=liquid_glass
+-- 035.10 phase=0.8333 ease=quintOut spring=13 damping=0.79 amplitude=0.015 visual=liquid_glass
+-- 035.11 phase=0.9167 ease=quintOut spring=14 damping=0.80 amplitude=0.016 visual=liquid_glass
+-- 035.12 phase=1.0000 ease=quintOut spring=15 damping=0.81 amplitude=0.017 visual=liquid_glass
+
+-- MOTION PACK 036: cinematic interaction family
+-- 036.01 phase=0.0833 ease=quintOut spring=19 damping=0.73 amplitude=0.007 visual=liquid_glass
+-- 036.02 phase=0.1667 ease=quintOut spring=20 damping=0.74 amplitude=0.008 visual=liquid_glass
+-- 036.03 phase=0.2500 ease=quintOut spring=21 damping=0.75 amplitude=0.009 visual=liquid_glass
+-- 036.04 phase=0.3333 ease=quintOut spring=22 damping=0.76 amplitude=0.010 visual=liquid_glass
+-- 036.05 phase=0.4167 ease=quintOut spring=23 damping=0.77 amplitude=0.011 visual=liquid_glass
+-- 036.06 phase=0.5000 ease=quintOut spring=10 damping=0.78 amplitude=0.012 visual=liquid_glass
+-- 036.07 phase=0.5833 ease=quintOut spring=11 damping=0.79 amplitude=0.013 visual=liquid_glass
+-- 036.08 phase=0.6667 ease=quintOut spring=12 damping=0.80 amplitude=0.014 visual=liquid_glass
+-- 036.09 phase=0.7500 ease=quintOut spring=13 damping=0.81 amplitude=0.015 visual=liquid_glass
+-- 036.10 phase=0.8333 ease=quintOut spring=14 damping=0.82 amplitude=0.016 visual=liquid_glass
+-- 036.11 phase=0.9167 ease=quintOut spring=15 damping=0.83 amplitude=0.017 visual=liquid_glass
+-- 036.12 phase=1.0000 ease=quintOut spring=16 damping=0.84 amplitude=0.018 visual=liquid_glass
+
+-- MOTION PACK 037: cinematic interaction family
+-- 037.01 phase=0.0833 ease=quintOut spring=20 damping=0.76 amplitude=0.008 visual=liquid_glass
+-- 037.02 phase=0.1667 ease=quintOut spring=21 damping=0.77 amplitude=0.009 visual=liquid_glass
+-- 037.03 phase=0.2500 ease=quintOut spring=22 damping=0.78 amplitude=0.010 visual=liquid_glass
+-- 037.04 phase=0.3333 ease=quintOut spring=23 damping=0.79 amplitude=0.011 visual=liquid_glass
+-- 037.05 phase=0.4167 ease=quintOut spring=10 damping=0.80 amplitude=0.012 visual=liquid_glass
+-- 037.06 phase=0.5000 ease=quintOut spring=11 damping=0.81 amplitude=0.013 visual=liquid_glass
+-- 037.07 phase=0.5833 ease=quintOut spring=12 damping=0.82 amplitude=0.014 visual=liquid_glass
+-- 037.08 phase=0.6667 ease=quintOut spring=13 damping=0.83 amplitude=0.015 visual=liquid_glass
+-- 037.09 phase=0.7500 ease=quintOut spring=14 damping=0.84 amplitude=0.016 visual=liquid_glass
+-- 037.10 phase=0.8333 ease=quintOut spring=15 damping=0.85 amplitude=0.017 visual=liquid_glass
+-- 037.11 phase=0.9167 ease=quintOut spring=16 damping=0.86 amplitude=0.018 visual=liquid_glass
+-- 037.12 phase=1.0000 ease=quintOut spring=17 damping=0.87 amplitude=0.019 visual=liquid_glass
+
+-- MOTION PACK 038: cinematic interaction family
+-- 038.01 phase=0.0833 ease=quintOut spring=21 damping=0.79 amplitude=0.009 visual=liquid_glass
+-- 038.02 phase=0.1667 ease=quintOut spring=22 damping=0.80 amplitude=0.010 visual=liquid_glass
+-- 038.03 phase=0.2500 ease=quintOut spring=23 damping=0.81 amplitude=0.011 visual=liquid_glass
+-- 038.04 phase=0.3333 ease=quintOut spring=10 damping=0.82 amplitude=0.012 visual=liquid_glass
+-- 038.05 phase=0.4167 ease=quintOut spring=11 damping=0.83 amplitude=0.013 visual=liquid_glass
+-- 038.06 phase=0.5000 ease=quintOut spring=12 damping=0.84 amplitude=0.014 visual=liquid_glass
+-- 038.07 phase=0.5833 ease=quintOut spring=13 damping=0.85 amplitude=0.015 visual=liquid_glass
+-- 038.08 phase=0.6667 ease=quintOut spring=14 damping=0.86 amplitude=0.016 visual=liquid_glass
+-- 038.09 phase=0.7500 ease=quintOut spring=15 damping=0.87 amplitude=0.017 visual=liquid_glass
+-- 038.10 phase=0.8333 ease=quintOut spring=16 damping=0.88 amplitude=0.018 visual=liquid_glass
+-- 038.11 phase=0.9167 ease=quintOut spring=17 damping=0.64 amplitude=0.019 visual=liquid_glass
+-- 038.12 phase=1.0000 ease=quintOut spring=18 damping=0.65 amplitude=0.020 visual=liquid_glass
+
+-- MOTION PACK 039: cinematic interaction family
+-- 039.01 phase=0.0833 ease=quintOut spring=22 damping=0.82 amplitude=0.010 visual=liquid_glass
+-- 039.02 phase=0.1667 ease=quintOut spring=23 damping=0.83 amplitude=0.011 visual=liquid_glass
+-- 039.03 phase=0.2500 ease=quintOut spring=10 damping=0.84 amplitude=0.012 visual=liquid_glass
+-- 039.04 phase=0.3333 ease=quintOut spring=11 damping=0.85 amplitude=0.013 visual=liquid_glass
+-- 039.05 phase=0.4167 ease=quintOut spring=12 damping=0.86 amplitude=0.014 visual=liquid_glass
+-- 039.06 phase=0.5000 ease=quintOut spring=13 damping=0.87 amplitude=0.015 visual=liquid_glass
+-- 039.07 phase=0.5833 ease=quintOut spring=14 damping=0.88 amplitude=0.016 visual=liquid_glass
+-- 039.08 phase=0.6667 ease=quintOut spring=15 damping=0.64 amplitude=0.017 visual=liquid_glass
+-- 039.09 phase=0.7500 ease=quintOut spring=16 damping=0.65 amplitude=0.018 visual=liquid_glass
+-- 039.10 phase=0.8333 ease=quintOut spring=17 damping=0.66 amplitude=0.019 visual=liquid_glass
+-- 039.11 phase=0.9167 ease=quintOut spring=18 damping=0.67 amplitude=0.020 visual=liquid_glass
+-- 039.12 phase=1.0000 ease=quintOut spring=19 damping=0.68 amplitude=0.004 visual=liquid_glass
+
+-- MOTION PACK 040: cinematic interaction family
+-- 040.01 phase=0.0833 ease=quintOut spring=23 damping=0.85 amplitude=0.011 visual=liquid_glass
+-- 040.02 phase=0.1667 ease=quintOut spring=10 damping=0.86 amplitude=0.012 visual=liquid_glass
+-- 040.03 phase=0.2500 ease=quintOut spring=11 damping=0.87 amplitude=0.013 visual=liquid_glass
+-- 040.04 phase=0.3333 ease=quintOut spring=12 damping=0.88 amplitude=0.014 visual=liquid_glass
+-- 040.05 phase=0.4167 ease=quintOut spring=13 damping=0.64 amplitude=0.015 visual=liquid_glass
+-- 040.06 phase=0.5000 ease=quintOut spring=14 damping=0.65 amplitude=0.016 visual=liquid_glass
+-- 040.07 phase=0.5833 ease=quintOut spring=15 damping=0.66 amplitude=0.017 visual=liquid_glass
+-- 040.08 phase=0.6667 ease=quintOut spring=16 damping=0.67 amplitude=0.018 visual=liquid_glass
+-- 040.09 phase=0.7500 ease=quintOut spring=17 damping=0.68 amplitude=0.019 visual=liquid_glass
+-- 040.10 phase=0.8333 ease=quintOut spring=18 damping=0.69 amplitude=0.020 visual=liquid_glass
+-- 040.11 phase=0.9167 ease=quintOut spring=19 damping=0.70 amplitude=0.004 visual=liquid_glass
+-- 040.12 phase=1.0000 ease=quintOut spring=20 damping=0.71 amplitude=0.005 visual=liquid_glass
+
+-- MOTION PACK 041: cinematic interaction family
+-- 041.01 phase=0.0833 ease=quintOut spring=10 damping=0.88 amplitude=0.012 visual=liquid_glass
+-- 041.02 phase=0.1667 ease=quintOut spring=11 damping=0.64 amplitude=0.013 visual=liquid_glass
+-- 041.03 phase=0.2500 ease=quintOut spring=12 damping=0.65 amplitude=0.014 visual=liquid_glass
+-- 041.04 phase=0.3333 ease=quintOut spring=13 damping=0.66 amplitude=0.015 visual=liquid_glass
+-- 041.05 phase=0.4167 ease=quintOut spring=14 damping=0.67 amplitude=0.016 visual=liquid_glass
+-- 041.06 phase=0.5000 ease=quintOut spring=15 damping=0.68 amplitude=0.017 visual=liquid_glass
+-- 041.07 phase=0.5833 ease=quintOut spring=16 damping=0.69 amplitude=0.018 visual=liquid_glass
+-- 041.08 phase=0.6667 ease=quintOut spring=17 damping=0.70 amplitude=0.019 visual=liquid_glass
+-- 041.09 phase=0.7500 ease=quintOut spring=18 damping=0.71 amplitude=0.020 visual=liquid_glass
+-- 041.10 phase=0.8333 ease=quintOut spring=19 damping=0.72 amplitude=0.004 visual=liquid_glass
+-- 041.11 phase=0.9167 ease=quintOut spring=20 damping=0.73 amplitude=0.005 visual=liquid_glass
+-- 041.12 phase=1.0000 ease=quintOut spring=21 damping=0.74 amplitude=0.006 visual=liquid_glass
+
+-- MOTION PACK 042: cinematic interaction family
+-- 042.01 phase=0.0833 ease=quintOut spring=11 damping=0.66 amplitude=0.013 visual=liquid_glass
+-- 042.02 phase=0.1667 ease=quintOut spring=12 damping=0.67 amplitude=0.014 visual=liquid_glass
+-- 042.03 phase=0.2500 ease=quintOut spring=13 damping=0.68 amplitude=0.015 visual=liquid_glass
+-- 042.04 phase=0.3333 ease=quintOut spring=14 damping=0.69 amplitude=0.016 visual=liquid_glass
+-- 042.05 phase=0.4167 ease=quintOut spring=15 damping=0.70 amplitude=0.017 visual=liquid_glass
+-- 042.06 phase=0.5000 ease=quintOut spring=16 damping=0.71 amplitude=0.018 visual=liquid_glass
+-- 042.07 phase=0.5833 ease=quintOut spring=17 damping=0.72 amplitude=0.019 visual=liquid_glass
+-- 042.08 phase=0.6667 ease=quintOut spring=18 damping=0.73 amplitude=0.020 visual=liquid_glass
+-- 042.09 phase=0.7500 ease=quintOut spring=19 damping=0.74 amplitude=0.004 visual=liquid_glass
+-- 042.10 phase=0.8333 ease=quintOut spring=20 damping=0.75 amplitude=0.005 visual=liquid_glass
+-- 042.11 phase=0.9167 ease=quintOut spring=21 damping=0.76 amplitude=0.006 visual=liquid_glass
+-- 042.12 phase=1.0000 ease=quintOut spring=22 damping=0.77 amplitude=0.007 visual=liquid_glass
+
+-- MOTION PACK 043: cinematic interaction family
+-- 043.01 phase=0.0833 ease=quintOut spring=12 damping=0.69 amplitude=0.014 visual=liquid_glass
+-- 043.02 phase=0.1667 ease=quintOut spring=13 damping=0.70 amplitude=0.015 visual=liquid_glass
+-- 043.03 phase=0.2500 ease=quintOut spring=14 damping=0.71 amplitude=0.016 visual=liquid_glass
+-- 043.04 phase=0.3333 ease=quintOut spring=15 damping=0.72 amplitude=0.017 visual=liquid_glass
+-- 043.05 phase=0.4167 ease=quintOut spring=16 damping=0.73 amplitude=0.018 visual=liquid_glass
+-- 043.06 phase=0.5000 ease=quintOut spring=17 damping=0.74 amplitude=0.019 visual=liquid_glass
+-- 043.07 phase=0.5833 ease=quintOut spring=18 damping=0.75 amplitude=0.020 visual=liquid_glass
+-- 043.08 phase=0.6667 ease=quintOut spring=19 damping=0.76 amplitude=0.004 visual=liquid_glass
+-- 043.09 phase=0.7500 ease=quintOut spring=20 damping=0.77 amplitude=0.005 visual=liquid_glass
+-- 043.10 phase=0.8333 ease=quintOut spring=21 damping=0.78 amplitude=0.006 visual=liquid_glass
+-- 043.11 phase=0.9167 ease=quintOut spring=22 damping=0.79 amplitude=0.007 visual=liquid_glass
+-- 043.12 phase=1.0000 ease=quintOut spring=23 damping=0.80 amplitude=0.008 visual=liquid_glass
+
+-- MOTION PACK 044: cinematic interaction family
+-- 044.01 phase=0.0833 ease=quintOut spring=13 damping=0.72 amplitude=0.015 visual=liquid_glass
+-- 044.02 phase=0.1667 ease=quintOut spring=14 damping=0.73 amplitude=0.016 visual=liquid_glass
+-- 044.03 phase=0.2500 ease=quintOut spring=15 damping=0.74 amplitude=0.017 visual=liquid_glass
+-- 044.04 phase=0.3333 ease=quintOut spring=16 damping=0.75 amplitude=0.018 visual=liquid_glass
+-- 044.05 phase=0.4167 ease=quintOut spring=17 damping=0.76 amplitude=0.019 visual=liquid_glass
+-- 044.06 phase=0.5000 ease=quintOut spring=18 damping=0.77 amplitude=0.020 visual=liquid_glass
+-- 044.07 phase=0.5833 ease=quintOut spring=19 damping=0.78 amplitude=0.004 visual=liquid_glass
+-- 044.08 phase=0.6667 ease=quintOut spring=20 damping=0.79 amplitude=0.005 visual=liquid_glass
+-- 044.09 phase=0.7500 ease=quintOut spring=21 damping=0.80 amplitude=0.006 visual=liquid_glass
+-- 044.10 phase=0.8333 ease=quintOut spring=22 damping=0.81 amplitude=0.007 visual=liquid_glass
+-- 044.11 phase=0.9167 ease=quintOut spring=23 damping=0.82 amplitude=0.008 visual=liquid_glass
+-- 044.12 phase=1.0000 ease=quintOut spring=10 damping=0.83 amplitude=0.009 visual=liquid_glass
+
+-- MOTION PACK 045: cinematic interaction family
+-- 045.01 phase=0.0833 ease=quintOut spring=14 damping=0.75 amplitude=0.016 visual=liquid_glass
+-- 045.02 phase=0.1667 ease=quintOut spring=15 damping=0.76 amplitude=0.017 visual=liquid_glass
+-- 045.03 phase=0.2500 ease=quintOut spring=16 damping=0.77 amplitude=0.018 visual=liquid_glass
+-- 045.04 phase=0.3333 ease=quintOut spring=17 damping=0.78 amplitude=0.019 visual=liquid_glass
+-- 045.05 phase=0.4167 ease=quintOut spring=18 damping=0.79 amplitude=0.020 visual=liquid_glass
+-- 045.06 phase=0.5000 ease=quintOut spring=19 damping=0.80 amplitude=0.004 visual=liquid_glass
+-- 045.07 phase=0.5833 ease=quintOut spring=20 damping=0.81 amplitude=0.005 visual=liquid_glass
+-- 045.08 phase=0.6667 ease=quintOut spring=21 damping=0.82 amplitude=0.006 visual=liquid_glass
+-- 045.09 phase=0.7500 ease=quintOut spring=22 damping=0.83 amplitude=0.007 visual=liquid_glass
+-- 045.10 phase=0.8333 ease=quintOut spring=23 damping=0.84 amplitude=0.008 visual=liquid_glass
+-- 045.11 phase=0.9167 ease=quintOut spring=10 damping=0.85 amplitude=0.009 visual=liquid_glass
+-- 045.12 phase=1.0000 ease=quintOut spring=11 damping=0.86 amplitude=0.010 visual=liquid_glass
+
+-- MOTION PACK 046: cinematic interaction family
+-- 046.01 phase=0.0833 ease=quintOut spring=15 damping=0.78 amplitude=0.017 visual=liquid_glass
+-- 046.02 phase=0.1667 ease=quintOut spring=16 damping=0.79 amplitude=0.018 visual=liquid_glass
+-- 046.03 phase=0.2500 ease=quintOut spring=17 damping=0.80 amplitude=0.019 visual=liquid_glass
+-- 046.04 phase=0.3333 ease=quintOut spring=18 damping=0.81 amplitude=0.020 visual=liquid_glass
+-- 046.05 phase=0.4167 ease=quintOut spring=19 damping=0.82 amplitude=0.004 visual=liquid_glass
+-- 046.06 phase=0.5000 ease=quintOut spring=20 damping=0.83 amplitude=0.005 visual=liquid_glass
+-- 046.07 phase=0.5833 ease=quintOut spring=21 damping=0.84 amplitude=0.006 visual=liquid_glass
+-- 046.08 phase=0.6667 ease=quintOut spring=22 damping=0.85 amplitude=0.007 visual=liquid_glass
+-- 046.09 phase=0.7500 ease=quintOut spring=23 damping=0.86 amplitude=0.008 visual=liquid_glass
+-- 046.10 phase=0.8333 ease=quintOut spring=10 damping=0.87 amplitude=0.009 visual=liquid_glass
+-- 046.11 phase=0.9167 ease=quintOut spring=11 damping=0.88 amplitude=0.010 visual=liquid_glass
+-- 046.12 phase=1.0000 ease=quintOut spring=12 damping=0.64 amplitude=0.011 visual=liquid_glass
+
+-- MOTION PACK 047: cinematic interaction family
+-- 047.01 phase=0.0833 ease=quintOut spring=16 damping=0.81 amplitude=0.018 visual=liquid_glass
+-- 047.02 phase=0.1667 ease=quintOut spring=17 damping=0.82 amplitude=0.019 visual=liquid_glass
+-- 047.03 phase=0.2500 ease=quintOut spring=18 damping=0.83 amplitude=0.020 visual=liquid_glass
+-- 047.04 phase=0.3333 ease=quintOut spring=19 damping=0.84 amplitude=0.004 visual=liquid_glass
+-- 047.05 phase=0.4167 ease=quintOut spring=20 damping=0.85 amplitude=0.005 visual=liquid_glass
+-- 047.06 phase=0.5000 ease=quintOut spring=21 damping=0.86 amplitude=0.006 visual=liquid_glass
+-- 047.07 phase=0.5833 ease=quintOut spring=22 damping=0.87 amplitude=0.007 visual=liquid_glass
+-- 047.08 phase=0.6667 ease=quintOut spring=23 damping=0.88 amplitude=0.008 visual=liquid_glass
+-- 047.09 phase=0.7500 ease=quintOut spring=10 damping=0.64 amplitude=0.009 visual=liquid_glass
+-- 047.10 phase=0.8333 ease=quintOut spring=11 damping=0.65 amplitude=0.010 visual=liquid_glass
+-- 047.11 phase=0.9167 ease=quintOut spring=12 damping=0.66 amplitude=0.011 visual=liquid_glass
+-- 047.12 phase=1.0000 ease=quintOut spring=13 damping=0.67 amplitude=0.012 visual=liquid_glass
+
+-- MOTION PACK 048: cinematic interaction family
+-- 048.01 phase=0.0833 ease=quintOut spring=17 damping=0.84 amplitude=0.019 visual=liquid_glass
+-- 048.02 phase=0.1667 ease=quintOut spring=18 damping=0.85 amplitude=0.020 visual=liquid_glass
+-- 048.03 phase=0.2500 ease=quintOut spring=19 damping=0.86 amplitude=0.004 visual=liquid_glass
+-- 048.04 phase=0.3333 ease=quintOut spring=20 damping=0.87 amplitude=0.005 visual=liquid_glass
+-- 048.05 phase=0.4167 ease=quintOut spring=21 damping=0.88 amplitude=0.006 visual=liquid_glass
+-- 048.06 phase=0.5000 ease=quintOut spring=22 damping=0.64 amplitude=0.007 visual=liquid_glass
+-- 048.07 phase=0.5833 ease=quintOut spring=23 damping=0.65 amplitude=0.008 visual=liquid_glass
+-- 048.08 phase=0.6667 ease=quintOut spring=10 damping=0.66 amplitude=0.009 visual=liquid_glass
+-- 048.09 phase=0.7500 ease=quintOut spring=11 damping=0.67 amplitude=0.010 visual=liquid_glass
+-- 048.10 phase=0.8333 ease=quintOut spring=12 damping=0.68 amplitude=0.011 visual=liquid_glass
+-- 048.11 phase=0.9167 ease=quintOut spring=13 damping=0.69 amplitude=0.012 visual=liquid_glass
+-- 048.12 phase=1.0000 ease=quintOut spring=14 damping=0.70 amplitude=0.013 visual=liquid_glass
+
+-- MOTION PACK 049: cinematic interaction family
+-- 049.01 phase=0.0833 ease=quintOut spring=18 damping=0.87 amplitude=0.020 visual=liquid_glass
+-- 049.02 phase=0.1667 ease=quintOut spring=19 damping=0.88 amplitude=0.004 visual=liquid_glass
+-- 049.03 phase=0.2500 ease=quintOut spring=20 damping=0.64 amplitude=0.005 visual=liquid_glass
+-- 049.04 phase=0.3333 ease=quintOut spring=21 damping=0.65 amplitude=0.006 visual=liquid_glass
+-- 049.05 phase=0.4167 ease=quintOut spring=22 damping=0.66 amplitude=0.007 visual=liquid_glass
+-- 049.06 phase=0.5000 ease=quintOut spring=23 damping=0.67 amplitude=0.008 visual=liquid_glass
+-- 049.07 phase=0.5833 ease=quintOut spring=10 damping=0.68 amplitude=0.009 visual=liquid_glass
+-- 049.08 phase=0.6667 ease=quintOut spring=11 damping=0.69 amplitude=0.010 visual=liquid_glass
+-- 049.09 phase=0.7500 ease=quintOut spring=12 damping=0.70 amplitude=0.011 visual=liquid_glass
+-- 049.10 phase=0.8333 ease=quintOut spring=13 damping=0.71 amplitude=0.012 visual=liquid_glass
+-- 049.11 phase=0.9167 ease=quintOut spring=14 damping=0.72 amplitude=0.013 visual=liquid_glass
+-- 049.12 phase=1.0000 ease=quintOut spring=15 damping=0.73 amplitude=0.014 visual=liquid_glass
+
+-- MOTION PACK 050: cinematic interaction family
+-- 050.01 phase=0.0833 ease=quintOut spring=19 damping=0.65 amplitude=0.004 visual=liquid_glass
+-- 050.02 phase=0.1667 ease=quintOut spring=20 damping=0.66 amplitude=0.005 visual=liquid_glass
+-- 050.03 phase=0.2500 ease=quintOut spring=21 damping=0.67 amplitude=0.006 visual=liquid_glass
+-- 050.04 phase=0.3333 ease=quintOut spring=22 damping=0.68 amplitude=0.007 visual=liquid_glass
+-- 050.05 phase=0.4167 ease=quintOut spring=23 damping=0.69 amplitude=0.008 visual=liquid_glass
+-- 050.06 phase=0.5000 ease=quintOut spring=10 damping=0.70 amplitude=0.009 visual=liquid_glass
+-- 050.07 phase=0.5833 ease=quintOut spring=11 damping=0.71 amplitude=0.010 visual=liquid_glass
+-- 050.08 phase=0.6667 ease=quintOut spring=12 damping=0.72 amplitude=0.011 visual=liquid_glass
+-- 050.09 phase=0.7500 ease=quintOut spring=13 damping=0.73 amplitude=0.012 visual=liquid_glass
+-- 050.10 phase=0.8333 ease=quintOut spring=14 damping=0.74 amplitude=0.013 visual=liquid_glass
+-- 050.11 phase=0.9167 ease=quintOut spring=15 damping=0.75 amplitude=0.014 visual=liquid_glass
+-- 050.12 phase=1.0000 ease=quintOut spring=16 damping=0.76 amplitude=0.015 visual=liquid_glass
+
+-- MOTION PACK 051: cinematic interaction family
+-- 051.01 phase=0.0833 ease=quintOut spring=20 damping=0.68 amplitude=0.005 visual=liquid_glass
+-- 051.02 phase=0.1667 ease=quintOut spring=21 damping=0.69 amplitude=0.006 visual=liquid_glass
+-- 051.03 phase=0.2500 ease=quintOut spring=22 damping=0.70 amplitude=0.007 visual=liquid_glass
+-- 051.04 phase=0.3333 ease=quintOut spring=23 damping=0.71 amplitude=0.008 visual=liquid_glass
+-- 051.05 phase=0.4167 ease=quintOut spring=10 damping=0.72 amplitude=0.009 visual=liquid_glass
+-- 051.06 phase=0.5000 ease=quintOut spring=11 damping=0.73 amplitude=0.010 visual=liquid_glass
+-- 051.07 phase=0.5833 ease=quintOut spring=12 damping=0.74 amplitude=0.011 visual=liquid_glass
+-- 051.08 phase=0.6667 ease=quintOut spring=13 damping=0.75 amplitude=0.012 visual=liquid_glass
+-- 051.09 phase=0.7500 ease=quintOut spring=14 damping=0.76 amplitude=0.013 visual=liquid_glass
+-- 051.10 phase=0.8333 ease=quintOut spring=15 damping=0.77 amplitude=0.014 visual=liquid_glass
+-- 051.11 phase=0.9167 ease=quintOut spring=16 damping=0.78 amplitude=0.015 visual=liquid_glass
+-- 051.12 phase=1.0000 ease=quintOut spring=17 damping=0.79 amplitude=0.016 visual=liquid_glass
+
+-- MOTION PACK 052: cinematic interaction family
+-- 052.01 phase=0.0833 ease=quintOut spring=21 damping=0.71 amplitude=0.006 visual=liquid_glass
+-- 052.02 phase=0.1667 ease=quintOut spring=22 damping=0.72 amplitude=0.007 visual=liquid_glass
+-- 052.03 phase=0.2500 ease=quintOut spring=23 damping=0.73 amplitude=0.008 visual=liquid_glass
+-- 052.04 phase=0.3333 ease=quintOut spring=10 damping=0.74 amplitude=0.009 visual=liquid_glass
+-- 052.05 phase=0.4167 ease=quintOut spring=11 damping=0.75 amplitude=0.010 visual=liquid_glass
+-- 052.06 phase=0.5000 ease=quintOut spring=12 damping=0.76 amplitude=0.011 visual=liquid_glass
+-- 052.07 phase=0.5833 ease=quintOut spring=13 damping=0.77 amplitude=0.012 visual=liquid_glass
+-- 052.08 phase=0.6667 ease=quintOut spring=14 damping=0.78 amplitude=0.013 visual=liquid_glass
+-- 052.09 phase=0.7500 ease=quintOut spring=15 damping=0.79 amplitude=0.014 visual=liquid_glass
+-- 052.10 phase=0.8333 ease=quintOut spring=16 damping=0.80 amplitude=0.015 visual=liquid_glass
+-- 052.11 phase=0.9167 ease=quintOut spring=17 damping=0.81 amplitude=0.016 visual=liquid_glass
+-- 052.12 phase=1.0000 ease=quintOut spring=18 damping=0.82 amplitude=0.017 visual=liquid_glass
+
+-- MOTION PACK 053: cinematic interaction family
+-- 053.01 phase=0.0833 ease=quintOut spring=22 damping=0.74 amplitude=0.007 visual=liquid_glass
+-- 053.02 phase=0.1667 ease=quintOut spring=23 damping=0.75 amplitude=0.008 visual=liquid_glass
+-- 053.03 phase=0.2500 ease=quintOut spring=10 damping=0.76 amplitude=0.009 visual=liquid_glass
+-- 053.04 phase=0.3333 ease=quintOut spring=11 damping=0.77 amplitude=0.010 visual=liquid_glass
+-- 053.05 phase=0.4167 ease=quintOut spring=12 damping=0.78 amplitude=0.011 visual=liquid_glass
+-- 053.06 phase=0.5000 ease=quintOut spring=13 damping=0.79 amplitude=0.012 visual=liquid_glass
+-- 053.07 phase=0.5833 ease=quintOut spring=14 damping=0.80 amplitude=0.013 visual=liquid_glass
+-- 053.08 phase=0.6667 ease=quintOut spring=15 damping=0.81 amplitude=0.014 visual=liquid_glass
+-- 053.09 phase=0.7500 ease=quintOut spring=16 damping=0.82 amplitude=0.015 visual=liquid_glass
+-- 053.10 phase=0.8333 ease=quintOut spring=17 damping=0.83 amplitude=0.016 visual=liquid_glass
+-- 053.11 phase=0.9167 ease=quintOut spring=18 damping=0.84 amplitude=0.017 visual=liquid_glass
+-- 053.12 phase=1.0000 ease=quintOut spring=19 damping=0.85 amplitude=0.018 visual=liquid_glass
+
+-- MOTION PACK 054: cinematic interaction family
+-- 054.01 phase=0.0833 ease=quintOut spring=23 damping=0.77 amplitude=0.008 visual=liquid_glass
+-- 054.02 phase=0.1667 ease=quintOut spring=10 damping=0.78 amplitude=0.009 visual=liquid_glass
+-- 054.03 phase=0.2500 ease=quintOut spring=11 damping=0.79 amplitude=0.010 visual=liquid_glass
+-- 054.04 phase=0.3333 ease=quintOut spring=12 damping=0.80 amplitude=0.011 visual=liquid_glass
+-- 054.05 phase=0.4167 ease=quintOut spring=13 damping=0.81 amplitude=0.012 visual=liquid_glass
+-- 054.06 phase=0.5000 ease=quintOut spring=14 damping=0.82 amplitude=0.013 visual=liquid_glass
+-- 054.07 phase=0.5833 ease=quintOut spring=15 damping=0.83 amplitude=0.014 visual=liquid_glass
+-- 054.08 phase=0.6667 ease=quintOut spring=16 damping=0.84 amplitude=0.015 visual=liquid_glass
+-- 054.09 phase=0.7500 ease=quintOut spring=17 damping=0.85 amplitude=0.016 visual=liquid_glass
+-- 054.10 phase=0.8333 ease=quintOut spring=18 damping=0.86 amplitude=0.017 visual=liquid_glass
+-- 054.11 phase=0.9167 ease=quintOut spring=19 damping=0.87 amplitude=0.018 visual=liquid_glass
+-- 054.12 phase=1.0000 ease=quintOut spring=20 damping=0.88 amplitude=0.019 visual=liquid_glass
+
+-- MOTION PACK 055: cinematic interaction family
+-- 055.01 phase=0.0833 ease=quintOut spring=10 damping=0.80 amplitude=0.009 visual=liquid_glass
+-- 055.02 phase=0.1667 ease=quintOut spring=11 damping=0.81 amplitude=0.010 visual=liquid_glass
+-- 055.03 phase=0.2500 ease=quintOut spring=12 damping=0.82 amplitude=0.011 visual=liquid_glass
+-- 055.04 phase=0.3333 ease=quintOut spring=13 damping=0.83 amplitude=0.012 visual=liquid_glass
+-- 055.05 phase=0.4167 ease=quintOut spring=14 damping=0.84 amplitude=0.013 visual=liquid_glass
+-- 055.06 phase=0.5000 ease=quintOut spring=15 damping=0.85 amplitude=0.014 visual=liquid_glass
+-- 055.07 phase=0.5833 ease=quintOut spring=16 damping=0.86 amplitude=0.015 visual=liquid_glass
+-- 055.08 phase=0.6667 ease=quintOut spring=17 damping=0.87 amplitude=0.016 visual=liquid_glass
+-- 055.09 phase=0.7500 ease=quintOut spring=18 damping=0.88 amplitude=0.017 visual=liquid_glass
+-- 055.10 phase=0.8333 ease=quintOut spring=19 damping=0.64 amplitude=0.018 visual=liquid_glass
+-- 055.11 phase=0.9167 ease=quintOut spring=20 damping=0.65 amplitude=0.019 visual=liquid_glass
+-- 055.12 phase=1.0000 ease=quintOut spring=21 damping=0.66 amplitude=0.020 visual=liquid_glass
+
+-- MOTION PACK 056: cinematic interaction family
+-- 056.01 phase=0.0833 ease=quintOut spring=11 damping=0.83 amplitude=0.010 visual=liquid_glass
+-- 056.02 phase=0.1667 ease=quintOut spring=12 damping=0.84 amplitude=0.011 visual=liquid_glass
+-- 056.03 phase=0.2500 ease=quintOut spring=13 damping=0.85 amplitude=0.012 visual=liquid_glass
+-- 056.04 phase=0.3333 ease=quintOut spring=14 damping=0.86 amplitude=0.013 visual=liquid_glass
+-- 056.05 phase=0.4167 ease=quintOut spring=15 damping=0.87 amplitude=0.014 visual=liquid_glass
+-- 056.06 phase=0.5000 ease=quintOut spring=16 damping=0.88 amplitude=0.015 visual=liquid_glass
+-- 056.07 phase=0.5833 ease=quintOut spring=17 damping=0.64 amplitude=0.016 visual=liquid_glass
+-- 056.08 phase=0.6667 ease=quintOut spring=18 damping=0.65 amplitude=0.017 visual=liquid_glass
+-- 056.09 phase=0.7500 ease=quintOut spring=19 damping=0.66 amplitude=0.018 visual=liquid_glass
+-- 056.10 phase=0.8333 ease=quintOut spring=20 damping=0.67 amplitude=0.019 visual=liquid_glass
+-- 056.11 phase=0.9167 ease=quintOut spring=21 damping=0.68 amplitude=0.020 visual=liquid_glass
+-- 056.12 phase=1.0000 ease=quintOut spring=22 damping=0.69 amplitude=0.004 visual=liquid_glass
+
+-- MOTION PACK 057: cinematic interaction family
+-- 057.01 phase=0.0833 ease=quintOut spring=12 damping=0.86 amplitude=0.011 visual=liquid_glass
+-- 057.02 phase=0.1667 ease=quintOut spring=13 damping=0.87 amplitude=0.012 visual=liquid_glass
+-- 057.03 phase=0.2500 ease=quintOut spring=14 damping=0.88 amplitude=0.013 visual=liquid_glass
+-- 057.04 phase=0.3333 ease=quintOut spring=15 damping=0.64 amplitude=0.014 visual=liquid_glass
+-- 057.05 phase=0.4167 ease=quintOut spring=16 damping=0.65 amplitude=0.015 visual=liquid_glass
+-- 057.06 phase=0.5000 ease=quintOut spring=17 damping=0.66 amplitude=0.016 visual=liquid_glass
+-- 057.07 phase=0.5833 ease=quintOut spring=18 damping=0.67 amplitude=0.017 visual=liquid_glass
+-- 057.08 phase=0.6667 ease=quintOut spring=19 damping=0.68 amplitude=0.018 visual=liquid_glass
+-- 057.09 phase=0.7500 ease=quintOut spring=20 damping=0.69 amplitude=0.019 visual=liquid_glass
+-- 057.10 phase=0.8333 ease=quintOut spring=21 damping=0.70 amplitude=0.020 visual=liquid_glass
+-- 057.11 phase=0.9167 ease=quintOut spring=22 damping=0.71 amplitude=0.004 visual=liquid_glass
+-- 057.12 phase=1.0000 ease=quintOut spring=23 damping=0.72 amplitude=0.005 visual=liquid_glass
+
+-- MOTION PACK 058: cinematic interaction family
+-- 058.01 phase=0.0833 ease=quintOut spring=13 damping=0.64 amplitude=0.012 visual=liquid_glass
+-- 058.02 phase=0.1667 ease=quintOut spring=14 damping=0.65 amplitude=0.013 visual=liquid_glass
+-- 058.03 phase=0.2500 ease=quintOut spring=15 damping=0.66 amplitude=0.014 visual=liquid_glass
+-- 058.04 phase=0.3333 ease=quintOut spring=16 damping=0.67 amplitude=0.015 visual=liquid_glass
+-- 058.05 phase=0.4167 ease=quintOut spring=17 damping=0.68 amplitude=0.016 visual=liquid_glass
+-- 058.06 phase=0.5000 ease=quintOut spring=18 damping=0.69 amplitude=0.017 visual=liquid_glass
+-- 058.07 phase=0.5833 ease=quintOut spring=19 damping=0.70 amplitude=0.018 visual=liquid_glass
+-- 058.08 phase=0.6667 ease=quintOut spring=20 damping=0.71 amplitude=0.019 visual=liquid_glass
+-- 058.09 phase=0.7500 ease=quintOut spring=21 damping=0.72 amplitude=0.020 visual=liquid_glass
+-- 058.10 phase=0.8333 ease=quintOut spring=22 damping=0.73 amplitude=0.004 visual=liquid_glass
+-- 058.11 phase=0.9167 ease=quintOut spring=23 damping=0.74 amplitude=0.005 visual=liquid_glass
+-- 058.12 phase=1.0000 ease=quintOut spring=10 damping=0.75 amplitude=0.006 visual=liquid_glass
+
+-- MOTION PACK 059: cinematic interaction family
+-- 059.01 phase=0.0833 ease=quintOut spring=14 damping=0.67 amplitude=0.013 visual=liquid_glass
+-- 059.02 phase=0.1667 ease=quintOut spring=15 damping=0.68 amplitude=0.014 visual=liquid_glass
+-- 059.03 phase=0.2500 ease=quintOut spring=16 damping=0.69 amplitude=0.015 visual=liquid_glass
+-- 059.04 phase=0.3333 ease=quintOut spring=17 damping=0.70 amplitude=0.016 visual=liquid_glass
+-- 059.05 phase=0.4167 ease=quintOut spring=18 damping=0.71 amplitude=0.017 visual=liquid_glass
+-- 059.06 phase=0.5000 ease=quintOut spring=19 damping=0.72 amplitude=0.018 visual=liquid_glass
+-- 059.07 phase=0.5833 ease=quintOut spring=20 damping=0.73 amplitude=0.019 visual=liquid_glass
+-- 059.08 phase=0.6667 ease=quintOut spring=21 damping=0.74 amplitude=0.020 visual=liquid_glass
+-- 059.09 phase=0.7500 ease=quintOut spring=22 damping=0.75 amplitude=0.004 visual=liquid_glass
+-- 059.10 phase=0.8333 ease=quintOut spring=23 damping=0.76 amplitude=0.005 visual=liquid_glass
+-- 059.11 phase=0.9167 ease=quintOut spring=10 damping=0.77 amplitude=0.006 visual=liquid_glass
+-- 059.12 phase=1.0000 ease=quintOut spring=11 damping=0.78 amplitude=0.007 visual=liquid_glass
+
+-- MOTION PACK 060: cinematic interaction family
+-- 060.01 phase=0.0833 ease=quintOut spring=15 damping=0.70 amplitude=0.014 visual=liquid_glass
+-- 060.02 phase=0.1667 ease=quintOut spring=16 damping=0.71 amplitude=0.015 visual=liquid_glass
+-- 060.03 phase=0.2500 ease=quintOut spring=17 damping=0.72 amplitude=0.016 visual=liquid_glass
+-- 060.04 phase=0.3333 ease=quintOut spring=18 damping=0.73 amplitude=0.017 visual=liquid_glass
+-- 060.05 phase=0.4167 ease=quintOut spring=19 damping=0.74 amplitude=0.018 visual=liquid_glass
+-- 060.06 phase=0.5000 ease=quintOut spring=20 damping=0.75 amplitude=0.019 visual=liquid_glass
+-- 060.07 phase=0.5833 ease=quintOut spring=21 damping=0.76 amplitude=0.020 visual=liquid_glass
+-- 060.08 phase=0.6667 ease=quintOut spring=22 damping=0.77 amplitude=0.004 visual=liquid_glass
+-- 060.09 phase=0.7500 ease=quintOut spring=23 damping=0.78 amplitude=0.005 visual=liquid_glass
+-- 060.10 phase=0.8333 ease=quintOut spring=10 damping=0.79 amplitude=0.006 visual=liquid_glass
+-- 060.11 phase=0.9167 ease=quintOut spring=11 damping=0.80 amplitude=0.007 visual=liquid_glass
+-- 060.12 phase=1.0000 ease=quintOut spring=12 damping=0.81 amplitude=0.008 visual=liquid_glass
+
+-- MOTION PACK 061: cinematic interaction family
+-- 061.01 phase=0.0833 ease=quintOut spring=16 damping=0.73 amplitude=0.015 visual=liquid_glass
+-- 061.02 phase=0.1667 ease=quintOut spring=17 damping=0.74 amplitude=0.016 visual=liquid_glass
+-- 061.03 phase=0.2500 ease=quintOut spring=18 damping=0.75 amplitude=0.017 visual=liquid_glass
+-- 061.04 phase=0.3333 ease=quintOut spring=19 damping=0.76 amplitude=0.018 visual=liquid_glass
+-- 061.05 phase=0.4167 ease=quintOut spring=20 damping=0.77 amplitude=0.019 visual=liquid_glass
+-- 061.06 phase=0.5000 ease=quintOut spring=21 damping=0.78 amplitude=0.020 visual=liquid_glass
+-- 061.07 phase=0.5833 ease=quintOut spring=22 damping=0.79 amplitude=0.004 visual=liquid_glass
+-- 061.08 phase=0.6667 ease=quintOut spring=23 damping=0.80 amplitude=0.005 visual=liquid_glass
+-- 061.09 phase=0.7500 ease=quintOut spring=10 damping=0.81 amplitude=0.006 visual=liquid_glass
+-- 061.10 phase=0.8333 ease=quintOut spring=11 damping=0.82 amplitude=0.007 visual=liquid_glass
+-- 061.11 phase=0.9167 ease=quintOut spring=12 damping=0.83 amplitude=0.008 visual=liquid_glass
+-- 061.12 phase=1.0000 ease=quintOut spring=13 damping=0.84 amplitude=0.009 visual=liquid_glass
+
+-- MOTION PACK 062: cinematic interaction family
+-- 062.01 phase=0.0833 ease=quintOut spring=17 damping=0.76 amplitude=0.016 visual=liquid_glass
+-- 062.02 phase=0.1667 ease=quintOut spring=18 damping=0.77 amplitude=0.017 visual=liquid_glass
+-- 062.03 phase=0.2500 ease=quintOut spring=19 damping=0.78 amplitude=0.018 visual=liquid_glass
+-- 062.04 phase=0.3333 ease=quintOut spring=20 damping=0.79 amplitude=0.019 visual=liquid_glass
+-- 062.05 phase=0.4167 ease=quintOut spring=21 damping=0.80 amplitude=0.020 visual=liquid_glass
+-- 062.06 phase=0.5000 ease=quintOut spring=22 damping=0.81 amplitude=0.004 visual=liquid_glass
+-- 062.07 phase=0.5833 ease=quintOut spring=23 damping=0.82 amplitude=0.005 visual=liquid_glass
+-- 062.08 phase=0.6667 ease=quintOut spring=10 damping=0.83 amplitude=0.006 visual=liquid_glass
+-- 062.09 phase=0.7500 ease=quintOut spring=11 damping=0.84 amplitude=0.007 visual=liquid_glass
+-- 062.10 phase=0.8333 ease=quintOut spring=12 damping=0.85 amplitude=0.008 visual=liquid_glass
+-- 062.11 phase=0.9167 ease=quintOut spring=13 damping=0.86 amplitude=0.009 visual=liquid_glass
+-- 062.12 phase=1.0000 ease=quintOut spring=14 damping=0.87 amplitude=0.010 visual=liquid_glass
+
+-- MOTION PACK 063: cinematic interaction family
+-- 063.01 phase=0.0833 ease=quintOut spring=18 damping=0.79 amplitude=0.017 visual=liquid_glass
+-- 063.02 phase=0.1667 ease=quintOut spring=19 damping=0.80 amplitude=0.018 visual=liquid_glass
+-- 063.03 phase=0.2500 ease=quintOut spring=20 damping=0.81 amplitude=0.019 visual=liquid_glass
+-- 063.04 phase=0.3333 ease=quintOut spring=21 damping=0.82 amplitude=0.020 visual=liquid_glass
+-- 063.05 phase=0.4167 ease=quintOut spring=22 damping=0.83 amplitude=0.004 visual=liquid_glass
+-- 063.06 phase=0.5000 ease=quintOut spring=23 damping=0.84 amplitude=0.005 visual=liquid_glass
+-- 063.07 phase=0.5833 ease=quintOut spring=10 damping=0.85 amplitude=0.006 visual=liquid_glass
+-- 063.08 phase=0.6667 ease=quintOut spring=11 damping=0.86 amplitude=0.007 visual=liquid_glass
+-- 063.09 phase=0.7500 ease=quintOut spring=12 damping=0.87 amplitude=0.008 visual=liquid_glass
+-- 063.10 phase=0.8333 ease=quintOut spring=13 damping=0.88 amplitude=0.009 visual=liquid_glass
+-- 063.11 phase=0.9167 ease=quintOut spring=14 damping=0.64 amplitude=0.010 visual=liquid_glass
+-- 063.12 phase=1.0000 ease=quintOut spring=15 damping=0.65 amplitude=0.011 visual=liquid_glass
+
+-- MOTION PACK 064: cinematic interaction family
+-- 064.01 phase=0.0833 ease=quintOut spring=19 damping=0.82 amplitude=0.018 visual=liquid_glass
+-- 064.02 phase=0.1667 ease=quintOut spring=20 damping=0.83 amplitude=0.019 visual=liquid_glass
+-- 064.03 phase=0.2500 ease=quintOut spring=21 damping=0.84 amplitude=0.020 visual=liquid_glass
+-- 064.04 phase=0.3333 ease=quintOut spring=22 damping=0.85 amplitude=0.004 visual=liquid_glass
+-- 064.05 phase=0.4167 ease=quintOut spring=23 damping=0.86 amplitude=0.005 visual=liquid_glass
+-- 064.06 phase=0.5000 ease=quintOut spring=10 damping=0.87 amplitude=0.006 visual=liquid_glass
+-- 064.07 phase=0.5833 ease=quintOut spring=11 damping=0.88 amplitude=0.007 visual=liquid_glass
+-- 064.08 phase=0.6667 ease=quintOut spring=12 damping=0.64 amplitude=0.008 visual=liquid_glass
+-- 064.09 phase=0.7500 ease=quintOut spring=13 damping=0.65 amplitude=0.009 visual=liquid_glass
+-- 064.10 phase=0.8333 ease=quintOut spring=14 damping=0.66 amplitude=0.010 visual=liquid_glass
+-- 064.11 phase=0.9167 ease=quintOut spring=15 damping=0.67 amplitude=0.011 visual=liquid_glass
+-- 064.12 phase=1.0000 ease=quintOut spring=16 damping=0.68 amplitude=0.012 visual=liquid_glass
+
+-- MOTION PACK 065: cinematic interaction family
+-- 065.01 phase=0.0833 ease=quintOut spring=20 damping=0.85 amplitude=0.019 visual=liquid_glass
+-- 065.02 phase=0.1667 ease=quintOut spring=21 damping=0.86 amplitude=0.020 visual=liquid_glass
+-- 065.03 phase=0.2500 ease=quintOut spring=22 damping=0.87 amplitude=0.004 visual=liquid_glass
+-- 065.04 phase=0.3333 ease=quintOut spring=23 damping=0.88 amplitude=0.005 visual=liquid_glass
+-- 065.05 phase=0.4167 ease=quintOut spring=10 damping=0.64 amplitude=0.006 visual=liquid_glass
+-- 065.06 phase=0.5000 ease=quintOut spring=11 damping=0.65 amplitude=0.007 visual=liquid_glass
+-- 065.07 phase=0.5833 ease=quintOut spring=12 damping=0.66 amplitude=0.008 visual=liquid_glass
+-- 065.08 phase=0.6667 ease=quintOut spring=13 damping=0.67 amplitude=0.009 visual=liquid_glass
+-- 065.09 phase=0.7500 ease=quintOut spring=14 damping=0.68 amplitude=0.010 visual=liquid_glass
+-- 065.10 phase=0.8333 ease=quintOut spring=15 damping=0.69 amplitude=0.011 visual=liquid_glass
+-- 065.11 phase=0.9167 ease=quintOut spring=16 damping=0.70 amplitude=0.012 visual=liquid_glass
+-- 065.12 phase=1.0000 ease=quintOut spring=17 damping=0.71 amplitude=0.013 visual=liquid_glass
+
+-- MOTION PACK 066: cinematic interaction family
+-- 066.01 phase=0.0833 ease=quintOut spring=21 damping=0.88 amplitude=0.020 visual=liquid_glass
+-- 066.02 phase=0.1667 ease=quintOut spring=22 damping=0.64 amplitude=0.004 visual=liquid_glass
+-- 066.03 phase=0.2500 ease=quintOut spring=23 damping=0.65 amplitude=0.005 visual=liquid_glass
+-- 066.04 phase=0.3333 ease=quintOut spring=10 damping=0.66 amplitude=0.006 visual=liquid_glass
+-- 066.05 phase=0.4167 ease=quintOut spring=11 damping=0.67 amplitude=0.007 visual=liquid_glass
+-- 066.06 phase=0.5000 ease=quintOut spring=12 damping=0.68 amplitude=0.008 visual=liquid_glass
+-- 066.07 phase=0.5833 ease=quintOut spring=13 damping=0.69 amplitude=0.009 visual=liquid_glass
+-- 066.08 phase=0.6667 ease=quintOut spring=14 damping=0.70 amplitude=0.010 visual=liquid_glass
+-- 066.09 phase=0.7500 ease=quintOut spring=15 damping=0.71 amplitude=0.011 visual=liquid_glass
+-- 066.10 phase=0.8333 ease=quintOut spring=16 damping=0.72 amplitude=0.012 visual=liquid_glass
+-- 066.11 phase=0.9167 ease=quintOut spring=17 damping=0.73 amplitude=0.013 visual=liquid_glass
+-- 066.12 phase=1.0000 ease=quintOut spring=18 damping=0.74 amplitude=0.014 visual=liquid_glass
+
+-- MOTION PACK 067: cinematic interaction family
+-- 067.01 phase=0.0833 ease=quintOut spring=22 damping=0.66 amplitude=0.004 visual=liquid_glass
+-- 067.02 phase=0.1667 ease=quintOut spring=23 damping=0.67 amplitude=0.005 visual=liquid_glass
+-- 067.03 phase=0.2500 ease=quintOut spring=10 damping=0.68 amplitude=0.006 visual=liquid_glass
+-- 067.04 phase=0.3333 ease=quintOut spring=11 damping=0.69 amplitude=0.007 visual=liquid_glass
+-- 067.05 phase=0.4167 ease=quintOut spring=12 damping=0.70 amplitude=0.008 visual=liquid_glass
+-- 067.06 phase=0.5000 ease=quintOut spring=13 damping=0.71 amplitude=0.009 visual=liquid_glass
+-- 067.07 phase=0.5833 ease=quintOut spring=14 damping=0.72 amplitude=0.010 visual=liquid_glass
+-- 067.08 phase=0.6667 ease=quintOut spring=15 damping=0.73 amplitude=0.011 visual=liquid_glass
+-- 067.09 phase=0.7500 ease=quintOut spring=16 damping=0.74 amplitude=0.012 visual=liquid_glass
+-- 067.10 phase=0.8333 ease=quintOut spring=17 damping=0.75 amplitude=0.013 visual=liquid_glass
+-- 067.11 phase=0.9167 ease=quintOut spring=18 damping=0.76 amplitude=0.014 visual=liquid_glass
+-- 067.12 phase=1.0000 ease=quintOut spring=19 damping=0.77 amplitude=0.015 visual=liquid_glass
+
+-- MOTION PACK 068: cinematic interaction family
+-- 068.01 phase=0.0833 ease=quintOut spring=23 damping=0.69 amplitude=0.005 visual=liquid_glass
+-- 068.02 phase=0.1667 ease=quintOut spring=10 damping=0.70 amplitude=0.006 visual=liquid_glass
+-- 068.03 phase=0.2500 ease=quintOut spring=11 damping=0.71 amplitude=0.007 visual=liquid_glass
+-- 068.04 phase=0.3333 ease=quintOut spring=12 damping=0.72 amplitude=0.008 visual=liquid_glass
+-- 068.05 phase=0.4167 ease=quintOut spring=13 damping=0.73 amplitude=0.009 visual=liquid_glass
+-- 068.06 phase=0.5000 ease=quintOut spring=14 damping=0.74 amplitude=0.010 visual=liquid_glass
+-- 068.07 phase=0.5833 ease=quintOut spring=15 damping=0.75 amplitude=0.011 visual=liquid_glass
+-- 068.08 phase=0.6667 ease=quintOut spring=16 damping=0.76 amplitude=0.012 visual=liquid_glass
+-- 068.09 phase=0.7500 ease=quintOut spring=17 damping=0.77 amplitude=0.013 visual=liquid_glass
+-- 068.10 phase=0.8333 ease=quintOut spring=18 damping=0.78 amplitude=0.014 visual=liquid_glass
+-- 068.11 phase=0.9167 ease=quintOut spring=19 damping=0.79 amplitude=0.015 visual=liquid_glass
+-- 068.12 phase=1.0000 ease=quintOut spring=20 damping=0.80 amplitude=0.016 visual=liquid_glass
+
+-- MOTION PACK 069: cinematic interaction family
+-- 069.01 phase=0.0833 ease=quintOut spring=10 damping=0.72 amplitude=0.006 visual=liquid_glass
+-- 069.02 phase=0.1667 ease=quintOut spring=11 damping=0.73 amplitude=0.007 visual=liquid_glass
+-- 069.03 phase=0.2500 ease=quintOut spring=12 damping=0.74 amplitude=0.008 visual=liquid_glass
+-- 069.04 phase=0.3333 ease=quintOut spring=13 damping=0.75 amplitude=0.009 visual=liquid_glass
+-- 069.05 phase=0.4167 ease=quintOut spring=14 damping=0.76 amplitude=0.010 visual=liquid_glass
+-- 069.06 phase=0.5000 ease=quintOut spring=15 damping=0.77 amplitude=0.011 visual=liquid_glass
+-- 069.07 phase=0.5833 ease=quintOut spring=16 damping=0.78 amplitude=0.012 visual=liquid_glass
+-- 069.08 phase=0.6667 ease=quintOut spring=17 damping=0.79 amplitude=0.013 visual=liquid_glass
+-- 069.09 phase=0.7500 ease=quintOut spring=18 damping=0.80 amplitude=0.014 visual=liquid_glass
+-- 069.10 phase=0.8333 ease=quintOut spring=19 damping=0.81 amplitude=0.015 visual=liquid_glass
+-- 069.11 phase=0.9167 ease=quintOut spring=20 damping=0.82 amplitude=0.016 visual=liquid_glass
+-- 069.12 phase=1.0000 ease=quintOut spring=21 damping=0.83 amplitude=0.017 visual=liquid_glass
+
+-- MOTION PACK 070: cinematic interaction family
+-- 070.01 phase=0.0833 ease=quintOut spring=11 damping=0.75 amplitude=0.007 visual=liquid_glass
+-- 070.02 phase=0.1667 ease=quintOut spring=12 damping=0.76 amplitude=0.008 visual=liquid_glass
+-- 070.03 phase=0.2500 ease=quintOut spring=13 damping=0.77 amplitude=0.009 visual=liquid_glass
+-- 070.04 phase=0.3333 ease=quintOut spring=14 damping=0.78 amplitude=0.010 visual=liquid_glass
+-- 070.05 phase=0.4167 ease=quintOut spring=15 damping=0.79 amplitude=0.011 visual=liquid_glass
+-- 070.06 phase=0.5000 ease=quintOut spring=16 damping=0.80 amplitude=0.012 visual=liquid_glass
+-- 070.07 phase=0.5833 ease=quintOut spring=17 damping=0.81 amplitude=0.013 visual=liquid_glass
+-- 070.08 phase=0.6667 ease=quintOut spring=18 damping=0.82 amplitude=0.014 visual=liquid_glass
+-- 070.09 phase=0.7500 ease=quintOut spring=19 damping=0.83 amplitude=0.015 visual=liquid_glass
+-- 070.10 phase=0.8333 ease=quintOut spring=20 damping=0.84 amplitude=0.016 visual=liquid_glass
+-- 070.11 phase=0.9167 ease=quintOut spring=21 damping=0.85 amplitude=0.017 visual=liquid_glass
+-- 070.12 phase=1.0000 ease=quintOut spring=22 damping=0.86 amplitude=0.018 visual=liquid_glass
+
+-- MOTION PACK 071: cinematic interaction family
+-- 071.01 phase=0.0833 ease=quintOut spring=12 damping=0.78 amplitude=0.008 visual=liquid_glass
+-- 071.02 phase=0.1667 ease=quintOut spring=13 damping=0.79 amplitude=0.009 visual=liquid_glass
+-- 071.03 phase=0.2500 ease=quintOut spring=14 damping=0.80 amplitude=0.010 visual=liquid_glass
+-- 071.04 phase=0.3333 ease=quintOut spring=15 damping=0.81 amplitude=0.011 visual=liquid_glass
+-- 071.05 phase=0.4167 ease=quintOut spring=16 damping=0.82 amplitude=0.012 visual=liquid_glass
+-- 071.06 phase=0.5000 ease=quintOut spring=17 damping=0.83 amplitude=0.013 visual=liquid_glass
+-- 071.07 phase=0.5833 ease=quintOut spring=18 damping=0.84 amplitude=0.014 visual=liquid_glass
+-- 071.08 phase=0.6667 ease=quintOut spring=19 damping=0.85 amplitude=0.015 visual=liquid_glass
+-- 071.09 phase=0.7500 ease=quintOut spring=20 damping=0.86 amplitude=0.016 visual=liquid_glass
+-- 071.10 phase=0.8333 ease=quintOut spring=21 damping=0.87 amplitude=0.017 visual=liquid_glass
+-- 071.11 phase=0.9167 ease=quintOut spring=22 damping=0.88 amplitude=0.018 visual=liquid_glass
+-- 071.12 phase=1.0000 ease=quintOut spring=23 damping=0.64 amplitude=0.019 visual=liquid_glass
+
+-- MOTION PACK 072: cinematic interaction family
+-- 072.01 phase=0.0833 ease=quintOut spring=13 damping=0.81 amplitude=0.009 visual=liquid_glass
+-- 072.02 phase=0.1667 ease=quintOut spring=14 damping=0.82 amplitude=0.010 visual=liquid_glass
+-- 072.03 phase=0.2500 ease=quintOut spring=15 damping=0.83 amplitude=0.011 visual=liquid_glass
+-- 072.04 phase=0.3333 ease=quintOut spring=16 damping=0.84 amplitude=0.012 visual=liquid_glass
+-- 072.05 phase=0.4167 ease=quintOut spring=17 damping=0.85 amplitude=0.013 visual=liquid_glass
+-- 072.06 phase=0.5000 ease=quintOut spring=18 damping=0.86 amplitude=0.014 visual=liquid_glass
+-- 072.07 phase=0.5833 ease=quintOut spring=19 damping=0.87 amplitude=0.015 visual=liquid_glass
+-- 072.08 phase=0.6667 ease=quintOut spring=20 damping=0.88 amplitude=0.016 visual=liquid_glass
+-- 072.09 phase=0.7500 ease=quintOut spring=21 damping=0.64 amplitude=0.017 visual=liquid_glass
+-- 072.10 phase=0.8333 ease=quintOut spring=22 damping=0.65 amplitude=0.018 visual=liquid_glass
+-- 072.11 phase=0.9167 ease=quintOut spring=23 damping=0.66 amplitude=0.019 visual=liquid_glass
+-- 072.12 phase=1.0000 ease=quintOut spring=10 damping=0.67 amplitude=0.020 visual=liquid_glass
+
+-- MOTION PACK 073: cinematic interaction family
+-- 073.01 phase=0.0833 ease=quintOut spring=14 damping=0.84 amplitude=0.010 visual=liquid_glass
+-- 073.02 phase=0.1667 ease=quintOut spring=15 damping=0.85 amplitude=0.011 visual=liquid_glass
+-- 073.03 phase=0.2500 ease=quintOut spring=16 damping=0.86 amplitude=0.012 visual=liquid_glass
+-- 073.04 phase=0.3333 ease=quintOut spring=17 damping=0.87 amplitude=0.013 visual=liquid_glass
+-- 073.05 phase=0.4167 ease=quintOut spring=18 damping=0.88 amplitude=0.014 visual=liquid_glass
+-- 073.06 phase=0.5000 ease=quintOut spring=19 damping=0.64 amplitude=0.015 visual=liquid_glass
+-- 073.07 phase=0.5833 ease=quintOut spring=20 damping=0.65 amplitude=0.016 visual=liquid_glass
+-- 073.08 phase=0.6667 ease=quintOut spring=21 damping=0.66 amplitude=0.017 visual=liquid_glass
+-- 073.09 phase=0.7500 ease=quintOut spring=22 damping=0.67 amplitude=0.018 visual=liquid_glass
+-- 073.10 phase=0.8333 ease=quintOut spring=23 damping=0.68 amplitude=0.019 visual=liquid_glass
+-- 073.11 phase=0.9167 ease=quintOut spring=10 damping=0.69 amplitude=0.020 visual=liquid_glass
+-- 073.12 phase=1.0000 ease=quintOut spring=11 damping=0.70 amplitude=0.004 visual=liquid_glass
+
+-- MOTION PACK 074: cinematic interaction family
+-- 074.01 phase=0.0833 ease=quintOut spring=15 damping=0.87 amplitude=0.011 visual=liquid_glass
+-- 074.02 phase=0.1667 ease=quintOut spring=16 damping=0.88 amplitude=0.012 visual=liquid_glass
+-- 074.03 phase=0.2500 ease=quintOut spring=17 damping=0.64 amplitude=0.013 visual=liquid_glass
+-- 074.04 phase=0.3333 ease=quintOut spring=18 damping=0.65 amplitude=0.014 visual=liquid_glass
+-- 074.05 phase=0.4167 ease=quintOut spring=19 damping=0.66 amplitude=0.015 visual=liquid_glass
+-- 074.06 phase=0.5000 ease=quintOut spring=20 damping=0.67 amplitude=0.016 visual=liquid_glass
+-- 074.07 phase=0.5833 ease=quintOut spring=21 damping=0.68 amplitude=0.017 visual=liquid_glass
+-- 074.08 phase=0.6667 ease=quintOut spring=22 damping=0.69 amplitude=0.018 visual=liquid_glass
+-- 074.09 phase=0.7500 ease=quintOut spring=23 damping=0.70 amplitude=0.019 visual=liquid_glass
+-- 074.10 phase=0.8333 ease=quintOut spring=10 damping=0.71 amplitude=0.020 visual=liquid_glass
+-- 074.11 phase=0.9167 ease=quintOut spring=11 damping=0.72 amplitude=0.004 visual=liquid_glass
+-- 074.12 phase=1.0000 ease=quintOut spring=12 damping=0.73 amplitude=0.005 visual=liquid_glass
+
+-- MOTION PACK 075: cinematic interaction family
+-- 075.01 phase=0.0833 ease=quintOut spring=16 damping=0.65 amplitude=0.012 visual=liquid_glass
+-- 075.02 phase=0.1667 ease=quintOut spring=17 damping=0.66 amplitude=0.013 visual=liquid_glass
+-- 075.03 phase=0.2500 ease=quintOut spring=18 damping=0.67 amplitude=0.014 visual=liquid_glass
+-- 075.04 phase=0.3333 ease=quintOut spring=19 damping=0.68 amplitude=0.015 visual=liquid_glass
+-- 075.05 phase=0.4167 ease=quintOut spring=20 damping=0.69 amplitude=0.016 visual=liquid_glass
+-- 075.06 phase=0.5000 ease=quintOut spring=21 damping=0.70 amplitude=0.017 visual=liquid_glass
+-- 075.07 phase=0.5833 ease=quintOut spring=22 damping=0.71 amplitude=0.018 visual=liquid_glass
+-- 075.08 phase=0.6667 ease=quintOut spring=23 damping=0.72 amplitude=0.019 visual=liquid_glass
+-- 075.09 phase=0.7500 ease=quintOut spring=10 damping=0.73 amplitude=0.020 visual=liquid_glass
+-- 075.10 phase=0.8333 ease=quintOut spring=11 damping=0.74 amplitude=0.004 visual=liquid_glass
+-- 075.11 phase=0.9167 ease=quintOut spring=12 damping=0.75 amplitude=0.005 visual=liquid_glass
+-- 075.12 phase=1.0000 ease=quintOut spring=13 damping=0.76 amplitude=0.006 visual=liquid_glass
