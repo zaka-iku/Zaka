@@ -87,534 +87,137 @@ local C = {
 }
 
 local TAB_DATA = {
-    {id=1, name="HOME", icon="⌂", description="Trang chủ & tổng quan"},
-    {id=2, name="STYLE", icon="✦", description="Phong cách & màu sắc"},
-    {id=3, name="MOTION", icon="◌", description="Animation & chuyển động"},
-    {id=4, name="FLOWER", icon="✿", description="Hoa trung tâm"},
-    {id=5, name="PANTHER", icon="🐆", description="Báo hồng & silhouette"},
-    {id=6, name="GLASS", icon="◈", description="Glass & transparency"},
-    {id=7, name="LIGHT", icon="☼", description="Glow & ánh sáng"},
-    {id=8, name="RINGS", icon="◎", description="Vòng xoay"},
-    {id=9, name="DROPLET", icon="◉", description="Giọt nước"},
-    {id=10, name="CURVE", icon="⌁", description="Đường cong UI"},
-    {id=11, name="TABS", icon="▤", description="Tab system"},
-    {id=12, name="CARDS", icon="▦", description="Function cards"},
-    {id=13, name="SEARCH", icon="⌕", description="Search system"},
-    {id=14, name="TOUCH", icon="☝", description="Touch & mobile"},
-    {id=15, name="DRAG", icon="✥", description="Drag system"},
-    {id=16, name="SOUND", icon="♫", description="UI sound design"},
-    {id=17, name="FX", icon="✧", description="Particles & effects"},
-    {id=18, name="THEME", icon="◐", description="Theme presets"},
-    {id=19, name="PREVIEW", icon="▣", description="Preview lab"},
-    {id=20, name="SETTINGS", icon="⚙", description="Cài đặt menu"},
+    {id=1, name="COMBAT", icon="⚔", description="Khu Combat — đang để dành cho bản sau"},
+    {id=2, name="ESP", icon="◉", description="Debug/visual tools an toàn cho trải nghiệm của bạn"},
+    {id=3, name="PLAYER", icon="♙", description="Thông tin nhân vật & camera cục bộ"},
+    {id=4, name="TROLL", icon="✦", description="Hiệu ứng vui chỉ tác động lên UI của bạn"},
+    {id=5, name="ULTRA", icon="⚡", description="Hiệu năng, chất lượng và kiểm tra hệ thống"},
+    {id=6, name="SERVER", icon="◎", description="Thông tin phiên/server hiện tại"},
+    {id=7, name="SETTING", icon="⚙", description="Điều khiển giao diện Pink Panther"},
+    {id=8, name="HOME", icon="⌂", description="Hub tổng hợp 20 module giao diện V4"},
 }
 
-local CARD_DATA = {
-    [1] = {
-        {title="Petal • Tắt hiệu ứng", description="HOME: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Ring • Xem trước", description="HOME: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Droplet • Làm mới", description="HOME: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Curve • Đổi kiểu", description="HOME: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Tab • Tăng nhẹ", description="HOME: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Card • Giảm nhẹ", description="HOME: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Search • Mặc định", description="HOME: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Touch • Ngẫu nhiên", description="HOME: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Drag • Tinh chỉnh", description="HOME: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Particle • Đồng bộ", description="HOME: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Theme • Khôi phục", description="HOME: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Panther • Bật hiệu ứng", description="HOME: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [2] = {
-        {title="Curve • Xem trước", description="STYLE: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Tab • Làm mới", description="STYLE: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Card • Đổi kiểu", description="STYLE: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Search • Tăng nhẹ", description="STYLE: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Touch • Giảm nhẹ", description="STYLE: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Drag • Mặc định", description="STYLE: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Particle • Ngẫu nhiên", description="STYLE: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Theme • Tinh chỉnh", description="STYLE: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Panther • Đồng bộ", description="STYLE: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Flower • Khôi phục", description="STYLE: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Border • Bật hiệu ứng", description="STYLE: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Shadow • Tắt hiệu ứng", description="STYLE: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [3] = {
-        {title="Search • Làm mới", description="MOTION: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Touch • Đổi kiểu", description="MOTION: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Drag • Tăng nhẹ", description="MOTION: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Particle • Giảm nhẹ", description="MOTION: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Theme • Mặc định", description="MOTION: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Panther • Ngẫu nhiên", description="MOTION: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Flower • Tinh chỉnh", description="MOTION: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Border • Đồng bộ", description="MOTION: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Shadow • Khôi phục", description="MOTION: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Pulse • Bật hiệu ứng", description="MOTION: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Trail • Tắt hiệu ứng", description="MOTION: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Glow • Xem trước", description="MOTION: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [4] = {
-        {title="Particle • Đổi kiểu", description="FLOWER: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Theme • Tăng nhẹ", description="FLOWER: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Panther • Giảm nhẹ", description="FLOWER: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Flower • Mặc định", description="FLOWER: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Border • Ngẫu nhiên", description="FLOWER: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Shadow • Tinh chỉnh", description="FLOWER: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Pulse • Đồng bộ", description="FLOWER: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Trail • Khôi phục", description="FLOWER: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Glow • Bật hiệu ứng", description="FLOWER: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Glass • Tắt hiệu ứng", description="FLOWER: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Ripple • Xem trước", description="FLOWER: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Petal • Làm mới", description="FLOWER: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [5] = {
-        {title="Flower • Tăng nhẹ", description="PANTHER: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Border • Giảm nhẹ", description="PANTHER: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Shadow • Mặc định", description="PANTHER: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Pulse • Ngẫu nhiên", description="PANTHER: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Trail • Tinh chỉnh", description="PANTHER: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Glow • Đồng bộ", description="PANTHER: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Glass • Khôi phục", description="PANTHER: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Ripple • Bật hiệu ứng", description="PANTHER: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Petal • Tắt hiệu ứng", description="PANTHER: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Ring • Xem trước", description="PANTHER: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Droplet • Làm mới", description="PANTHER: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Curve • Đổi kiểu", description="PANTHER: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [6] = {
-        {title="Pulse • Giảm nhẹ", description="GLASS: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Trail • Mặc định", description="GLASS: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Glow • Ngẫu nhiên", description="GLASS: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Glass • Tinh chỉnh", description="GLASS: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Ripple • Đồng bộ", description="GLASS: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Petal • Khôi phục", description="GLASS: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Ring • Bật hiệu ứng", description="GLASS: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Droplet • Tắt hiệu ứng", description="GLASS: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Curve • Xem trước", description="GLASS: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Tab • Làm mới", description="GLASS: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Card • Đổi kiểu", description="GLASS: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Search • Tăng nhẹ", description="GLASS: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [7] = {
-        {title="Glass • Mặc định", description="LIGHT: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Ripple • Ngẫu nhiên", description="LIGHT: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Petal • Tinh chỉnh", description="LIGHT: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Ring • Đồng bộ", description="LIGHT: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Droplet • Khôi phục", description="LIGHT: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Curve • Bật hiệu ứng", description="LIGHT: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Tab • Tắt hiệu ứng", description="LIGHT: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Card • Xem trước", description="LIGHT: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Search • Làm mới", description="LIGHT: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Touch • Đổi kiểu", description="LIGHT: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Drag • Tăng nhẹ", description="LIGHT: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Particle • Giảm nhẹ", description="LIGHT: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [8] = {
-        {title="Ring • Ngẫu nhiên", description="RINGS: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Droplet • Tinh chỉnh", description="RINGS: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Curve • Đồng bộ", description="RINGS: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Tab • Khôi phục", description="RINGS: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Card • Bật hiệu ứng", description="RINGS: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Search • Tắt hiệu ứng", description="RINGS: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Touch • Xem trước", description="RINGS: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Drag • Làm mới", description="RINGS: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Particle • Đổi kiểu", description="RINGS: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Theme • Tăng nhẹ", description="RINGS: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Panther • Giảm nhẹ", description="RINGS: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Flower • Mặc định", description="RINGS: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [9] = {
-        {title="Tab • Tinh chỉnh", description="DROPLET: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Card • Đồng bộ", description="DROPLET: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Search • Khôi phục", description="DROPLET: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Touch • Bật hiệu ứng", description="DROPLET: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Drag • Tắt hiệu ứng", description="DROPLET: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Particle • Xem trước", description="DROPLET: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Theme • Làm mới", description="DROPLET: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Panther • Đổi kiểu", description="DROPLET: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Flower • Tăng nhẹ", description="DROPLET: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Border • Giảm nhẹ", description="DROPLET: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Shadow • Mặc định", description="DROPLET: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Pulse • Ngẫu nhiên", description="DROPLET: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [10] = {
-        {title="Touch • Đồng bộ", description="CURVE: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Drag • Khôi phục", description="CURVE: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Particle • Bật hiệu ứng", description="CURVE: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Theme • Tắt hiệu ứng", description="CURVE: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Panther • Xem trước", description="CURVE: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Flower • Làm mới", description="CURVE: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Border • Đổi kiểu", description="CURVE: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Shadow • Tăng nhẹ", description="CURVE: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Pulse • Giảm nhẹ", description="CURVE: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Trail • Mặc định", description="CURVE: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Glow • Ngẫu nhiên", description="CURVE: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Glass • Tinh chỉnh", description="CURVE: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [11] = {
-        {title="Theme • Khôi phục", description="TABS: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Panther • Bật hiệu ứng", description="TABS: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Flower • Tắt hiệu ứng", description="TABS: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Border • Xem trước", description="TABS: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Shadow • Làm mới", description="TABS: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Pulse • Đổi kiểu", description="TABS: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Trail • Tăng nhẹ", description="TABS: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Glow • Giảm nhẹ", description="TABS: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Glass • Mặc định", description="TABS: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Ripple • Ngẫu nhiên", description="TABS: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Petal • Tinh chỉnh", description="TABS: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Ring • Đồng bộ", description="TABS: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [12] = {
-        {title="Border • Bật hiệu ứng", description="CARDS: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Shadow • Tắt hiệu ứng", description="CARDS: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Pulse • Xem trước", description="CARDS: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Trail • Làm mới", description="CARDS: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Glow • Đổi kiểu", description="CARDS: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Glass • Tăng nhẹ", description="CARDS: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Ripple • Giảm nhẹ", description="CARDS: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Petal • Mặc định", description="CARDS: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Ring • Ngẫu nhiên", description="CARDS: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Droplet • Tinh chỉnh", description="CARDS: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Curve • Đồng bộ", description="CARDS: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Tab • Khôi phục", description="CARDS: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [13] = {
-        {title="Trail • Tắt hiệu ứng", description="SEARCH: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Glow • Xem trước", description="SEARCH: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Glass • Làm mới", description="SEARCH: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Ripple • Đổi kiểu", description="SEARCH: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Petal • Tăng nhẹ", description="SEARCH: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Ring • Giảm nhẹ", description="SEARCH: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Droplet • Mặc định", description="SEARCH: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Curve • Ngẫu nhiên", description="SEARCH: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Tab • Tinh chỉnh", description="SEARCH: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Card • Đồng bộ", description="SEARCH: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Search • Khôi phục", description="SEARCH: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Touch • Bật hiệu ứng", description="SEARCH: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [14] = {
-        {title="Ripple • Xem trước", description="TOUCH: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Petal • Làm mới", description="TOUCH: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Ring • Đổi kiểu", description="TOUCH: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Droplet • Tăng nhẹ", description="TOUCH: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Curve • Giảm nhẹ", description="TOUCH: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Tab • Mặc định", description="TOUCH: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Card • Ngẫu nhiên", description="TOUCH: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Search • Tinh chỉnh", description="TOUCH: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Touch • Đồng bộ", description="TOUCH: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Drag • Khôi phục", description="TOUCH: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Particle • Bật hiệu ứng", description="TOUCH: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Theme • Tắt hiệu ứng", description="TOUCH: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [15] = {
-        {title="Droplet • Làm mới", description="DRAG: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Curve • Đổi kiểu", description="DRAG: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Tab • Tăng nhẹ", description="DRAG: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Card • Giảm nhẹ", description="DRAG: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Search • Mặc định", description="DRAG: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Touch • Ngẫu nhiên", description="DRAG: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Drag • Tinh chỉnh", description="DRAG: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Particle • Đồng bộ", description="DRAG: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Theme • Khôi phục", description="DRAG: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Panther • Bật hiệu ứng", description="DRAG: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Flower • Tắt hiệu ứng", description="DRAG: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Border • Xem trước", description="DRAG: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [16] = {
-        {title="Card • Đổi kiểu", description="SOUND: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Search • Tăng nhẹ", description="SOUND: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Touch • Giảm nhẹ", description="SOUND: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Drag • Mặc định", description="SOUND: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Particle • Ngẫu nhiên", description="SOUND: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Theme • Tinh chỉnh", description="SOUND: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Panther • Đồng bộ", description="SOUND: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Flower • Khôi phục", description="SOUND: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Border • Bật hiệu ứng", description="SOUND: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Shadow • Tắt hiệu ứng", description="SOUND: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Pulse • Xem trước", description="SOUND: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Trail • Làm mới", description="SOUND: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [17] = {
-        {title="Drag • Tăng nhẹ", description="FX: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Particle • Giảm nhẹ", description="FX: tinh chỉnh particle bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Theme • Mặc định", description="FX: tinh chỉnh theme bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Panther • Ngẫu nhiên", description="FX: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Flower • Tinh chỉnh", description="FX: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Border • Đồng bộ", description="FX: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Shadow • Khôi phục", description="FX: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Pulse • Bật hiệu ứng", description="FX: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Trail • Tắt hiệu ứng", description="FX: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Glow • Xem trước", description="FX: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Glass • Làm mới", description="FX: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Ripple • Đổi kiểu", description="FX: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [18] = {
-        {title="Panther • Giảm nhẹ", description="THEME: tinh chỉnh panther bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Flower • Mặc định", description="THEME: tinh chỉnh flower bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Border • Ngẫu nhiên", description="THEME: tinh chỉnh border bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Shadow • Tinh chỉnh", description="THEME: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Pulse • Đồng bộ", description="THEME: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Trail • Khôi phục", description="THEME: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Glow • Bật hiệu ứng", description="THEME: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Glass • Tắt hiệu ứng", description="THEME: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Ripple • Xem trước", description="THEME: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Petal • Làm mới", description="THEME: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Ring • Đổi kiểu", description="THEME: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Droplet • Tăng nhẹ", description="THEME: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [19] = {
-        {title="Shadow • Mặc định", description="PREVIEW: tinh chỉnh shadow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Pulse • Ngẫu nhiên", description="PREVIEW: tinh chỉnh pulse bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Trail • Tinh chỉnh", description="PREVIEW: tinh chỉnh trail bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Glow • Đồng bộ", description="PREVIEW: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Glass • Khôi phục", description="PREVIEW: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Ripple • Bật hiệu ứng", description="PREVIEW: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Petal • Tắt hiệu ứng", description="PREVIEW: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Ring • Xem trước", description="PREVIEW: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Droplet • Làm mới", description="PREVIEW: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Curve • Đổi kiểu", description="PREVIEW: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Tab • Tăng nhẹ", description="PREVIEW: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Card • Giảm nhẹ", description="PREVIEW: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
-    [20] = {
-        {title="Glow • Ngẫu nhiên", description="SETTINGS: tinh chỉnh glow bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.08},
-        {title="Glass • Tinh chỉnh", description="SETTINGS: tinh chỉnh glass bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.17},
-        {title="Ripple • Đồng bộ", description="SETTINGS: tinh chỉnh ripple bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.25},
-        {title="Petal • Khôi phục", description="SETTINGS: tinh chỉnh petal bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.33},
-        {title="Ring • Bật hiệu ứng", description="SETTINGS: tinh chỉnh ring bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.42},
-        {title="Droplet • Tắt hiệu ứng", description="SETTINGS: tinh chỉnh droplet bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.5},
-        {title="Curve • Xem trước", description="SETTINGS: tinh chỉnh curve bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.58},
-        {title="Tab • Làm mới", description="SETTINGS: tinh chỉnh tab bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.67},
-        {title="Card • Đổi kiểu", description="SETTINGS: tinh chỉnh card bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=0.75},
-        {title="Search • Tăng nhẹ", description="SETTINGS: tinh chỉnh search bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Slider", value=0.83},
-        {title="Touch • Giảm nhẹ", description="SETTINGS: tinh chỉnh touch bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Button", value=0.92},
-        {title="Drag • Mặc định", description="SETTINGS: tinh chỉnh drag bằng component thật; thay đổi được lưu trong trạng thái menu và có animation phản hồi trên mobile.", mode="Toggle", value=1.0},
-    },
+- ZAKA PINK PANTHER DROP FLOWER V4 — FIXED BUILD
+-- Repairs: Orb Activated compatibility + CARD_REGISTRY brace syntax.
+--[[
+=====================================================================
+ ZAKA PINK PANTHER — DROP FLOWER V4
+ 100KB+ REAL ANIMATED MENU EDITION
+ ---------------------------------------------------------------------
+ UI/animation package only. No gameplay automation is connected here.
+ Designed for touch-first Roblox UI prototypes and experiences you own.
+
+ CORE VISUAL PIPELINE
+   Z ORB -> LIQUID DROPLET -> FLOWER CORE -> GLASS BODY -> PANTHER
+
+ V4 goals:
+ - Circular Z orb, never a plain text Z button.
+ - Circle stretches into a droplet before the menu appears.
+ - Closing reverses the liquid morph and returns to the orb.
+ - Pink Panther is rendered with a transparent local asset when present.
+ - 20 animated tabs, curved function rails, glass layers, rings, petals.
+ - Mobile touch drag, press ripple, tab growth, search filtering.
+ - Reusable UI component system instead of dead placeholder controls.
+ - GitHub asset loader hooks are included in CONFIG.
+=====================================================================
+]]
+
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local function safeParent(gui)
+    local ok = pcall(function() gui.Parent = CoreGui end)
+    if not ok or not gui.Parent then gui.Parent = PlayerGui end
+end
+
+local OLD_NAMES = {
+    "ZAKA_PINK_PANTHER_DROP_FLOWER",
+    "ZAKA_PINK_PANTHER_DROP_FLOWER_V3",
+    "ZAKA_PINK_PANTHER_DROP_FLOWER_V4",
+}
+for _,name in ipairs(OLD_NAMES) do
+    local old = PlayerGui:FindFirstChild(name)
+    if old then old:Destroy() end
+    local oldCore = CoreGui:FindFirstChild(name)
+    if oldCore then oldCore:Destroy() end
+end
+
+local CONFIG = {
+    AssetBase = "", -- Example: https://raw.githubusercontent.com/USERNAME/REPO/main/assets
+    PantherFile = "ZAKA_PinkPanther_Transparent_V4.png",
+    BackgroundFile = "ZAKA_PinkPanther_Background_V4.jpg",
+    LocalPantherFile = "PinkPanther_Transparent_V4.png",
+    LocalBackgroundFile = "PinkPanther_Background.jpg",
+    UseGitHubAssets = false,
+    AnimationSpeed = 1.0,
+    GlassTransparency = 0.20,
+    PanelTransparency = 0.30,
+    CardTransparency = 0.42,
+    GlowStrength = 0.55,
+    CurveAmplitude = 34,
+    CurveWidth = 250,
+    TouchScale = 1,
+    StartWithOrb = true,
+    RainbowBorder = true,
+    SoftBlur = true,
+    EnableUIAudio = false,
 }
 
-local function clamp(x,a,b) return math.max(a,math.min(b,x)) end
-local function lerp(a,b,t) return a+(b-a)*t end
-local function c3lerp(a,b,t) return a:Lerp(b,t) end
-local function tw(t,style,dir) return TweenInfo.new(t,style or Enum.EasingStyle.Quint,dir or Enum.EasingDirection.Out) end
+local C = {
+    Pink = Color3.fromRGB(255, 125, 184),
+    Pink2 = Color3.fromRGB(255, 170, 210),
+    Pink3 = Color3.fromRGB(255, 215, 235),
+    DeepPink = Color3.fromRGB(218, 64, 133),
+    Rose = Color3.fromRGB(182, 48, 105),
+    White = Color3.fromRGB(255, 250, 254),
+    Ink = Color3.fromRGB(53, 18, 39),
+    Glass = Color3.fromRGB(255, 155, 200),
+    GlassDark = Color3.fromRGB(135, 40, 82),
+    Shadow = Color3.fromRGB(90, 18, 54),
+    Soft = Color3.fromRGB(255, 235, 246),
+}
 
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "ZAKA_PINK_PANTHER_DROP_FLOWER_V4"
-GUI.IgnoreGuiInset = true
-GUI.ResetOnSpawn = false
-GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-safeParent(GUI)
+local TAB_DATA = {
+    {id=1, name="COMBAT", icon="⚔", description="Khu Combat — đang để dành cho bản sau"},
+    {id=2, name="ESP", icon="◉", description="Debug/visual tools an toàn cho trải nghiệm của bạn"},
+    {id=3, name="PLAYER", icon="♙", description="Thông tin nhân vật & camera cục bộ"},
+    {id=4, name="TROLL", icon="✦", description="Hiệu ứng vui chỉ tác động lên UI của bạn"},
+    {id=5, name="ULTRA", icon="⚡", description="Hiệu năng, chất lượng và kiểm tra hệ thống"},
+    {id=6, name="SERVER", icon="◎", description="Thông tin phiên/server hiện tại"},
+    {id=7, name="SETTING", icon="⚙", description="Điều khiển giao diện Pink Panther"},
+    {id=8, name="HOME", icon="⌂", description="Hub tổng hợp 20 module giao diện V4"},
+}
 
-local Root = Instance.new("Frame")
-Root.Name = "Root"
-Root.Size = UDim2.fromScale(1,1)
-Root.BackgroundTransparency = 1
-Root.Parent = GUI
-
-local FXLayer = Instance.new("Frame")
-FXLayer.Name = "FXLayer"
-FXLayer.Size = UDim2.fromScale(1,1)
-FXLayer.BackgroundTransparency = 1
-FXLayer.ClipsDescendants = false
-FXLayer.Parent = Root
-
-local function corner(obj,r)
-    local c=Instance.new("UICorner")
-    c.CornerRadius=UDim.new(0,r)
-    c.Parent=obj
-    return c
-end
-
-local function stroke(obj,color,thickness,transparency)
-    local s=Instance.new("UIStroke")
-    s.Color=color or C.Pink3
-    s.Thickness=thickness or 1
-    s.Transparency=transparency or 0
-    s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
-    s.Parent=obj
-    return s
-end
-
-local function gradient(obj, colors, rotation, transparency)
-    local g=Instance.new("UIGradient")
-    g.Color=ColorSequence.new(colors)
-    g.Rotation=rotation or 0
-    if transparency then g.Transparency=transparency end
-    g.Parent=obj
-    return g
-end
-
-local function label(parent,text,size,pos,font,color,z)
-    local l=Instance.new("TextLabel")
-    l.BackgroundTransparency=1
-    l.Text=text
-    l.TextColor3=color or C.White
-    l.Font=font or Enum.Font.GothamBold
-    l.TextSize=size or 12
-    l.Position=pos or UDim2.new()
-    l.Size=UDim2.new(1,0,0,24)
-    l.ZIndex=z or 10
-    l.TextXAlignment=Enum.TextXAlignment.Center
-    l.TextYAlignment=Enum.TextYAlignment.Center
-    l.Parent=parent
-    return l
-end
-
-local function button(parent,text,size,pos,z)
-    local b=Instance.new("TextButton")
-    b.AutoButtonColor=false
-    b.Text=text or ""
-    b.Size=size
-    b.Position=pos
-    b.BackgroundTransparency=1
-    b.BorderSizePixel=0
-    b.ZIndex=z or 20
-    b.Parent=parent
-    return b
-end
-
-local function image(parent,name,size,pos,image,z,trans)
-    local im=Instance.new("ImageLabel")
-    im.Name=name
-    im.BackgroundTransparency=1
-    im.Size=size
-    im.Position=pos
-    im.Image=image or ""
-    im.ImageTransparency=trans or 0
-    im.ScaleType=Enum.ScaleType.Fit
-    im.ZIndex=z or 5
-    im.Parent=parent
-    return im
-end
-
-local function newFrame(parent,name,size,pos,color,trans,z)
-    local f=Instance.new("Frame")
-    f.Name=name
-    f.Size=size
-    f.Position=pos
-    f.BackgroundColor3=color or C.Pink
-    f.BackgroundTransparency=trans or 0
-    f.BorderSizePixel=0
-    f.ZIndex=z or 1
-    f.Parent=parent
-    return f
-end
-
---==============================================================
--- ASSET RESOLUTION
---==============================================================
-local function getAsset(localFile, remoteFile)
-    if CONFIG.UseGitHubAssets and CONFIG.AssetBase ~= "" and isfile and writefile and getcustomasset then
-        local path=localFile
-        local ok=pcall(function()
-            if not isfile(path) then
-                local url=CONFIG.AssetBase.."/"..remoteFile
-                writefile(path,game:HttpGet(url))
-            end
-        end)
-        if ok then
-            local ok2,result=pcall(function() return getcustomasset(path) end)
-            if ok2 then return result end
-        end
-    end
-    if isfile and getcustomasset then
-        local ok,result=pcall(function()
-            if isfile(localFile) then return getcustomasset(localFile) end
-        end)
-        if ok and result then return result end
-    end
-    return ""
-end
-
-local PantherAsset=getAsset(CONFIG.LocalPantherFile,CONFIG.PantherFile)
-local BackgroundAsset=getAsset(CONFIG.LocalBackgroundFile,CONFIG.BackgroundFile)
-
---==============================================================
--- START ORB / LIQUID SYSTEM
---==============================================================
-local Orb=Instance.new("TextButton")
-Orb.Name="ZOrb"
-Orb.Text=""
-Orb.AutoButtonColor=false
-Orb.Selectable=false
-Orb.Name="ZOrb"
-Orb.AnchorPoint=Vector2.new(.5,.5)
-Orb.Position=UDim2.fromScale(.5,.5)
-Orb.Size=UDim2.fromOffset(92,92)
-Orb.BackgroundColor3=C.Pink
-Orb.BackgroundTransparency=.08
-Orb.ZIndex=200
-Orb.Parent=Root
-corner(Orb,999)
-local OrbStroke=stroke(Orb,C.Pink3,2,.05)
-local OrbGrad=gradient(Orb,{ColorSequenceKeypoint.new(0,C.Pink3),ColorSequenceKeypoint.new(.45,C.Pink),ColorSequenceKeypoint.new(1,C.DeepPink)},45)
-
-local OrbInner=newFrame(Orb,"Inner",UDim2.fromScale(.76,.76),UDim2.fromScale(.12,.12),C.Pink2,.08,201)
-corner(OrbInner,999)
-local OrbInnerStroke=stroke(OrbInner,C.White,1,.35)
-local OrbShine=newFrame(Orb,"Shine",UDim2.fromOffset(25,8),UDim2.fromOffset(17,15),C.White,.72,203)
-corner(OrbShine,999)
-OrbShine.Rotation=-28
-local ZLabel=label(Orb,"Z",44,UDim2.fromScale(0,0),Enum.Font.GothamBlack,C.White,204)
-ZLabel.Size=UDim2.fromScale(1,1)
-
-local OrbRing1=newFrame(FXLayer,"OrbRing1",UDim2.fromOffset(118,118),UDim2.new(.5,-59,.5,-59),C.Pink2,1,120)
-corner(OrbRing1,999); stroke(OrbRing1,C.Pink2,2,.55)
-local OrbRing2=newFrame(FXLayer,"OrbRing2",UDim2.fromOffset(150,150),UDim2.new(.5,-75,.5,-75),C.Pink3,1,119)
-corner(OrbRing2,999); stroke(OrbRing2,C.Pink3,1,.75)
-
-local Drop=newFrame(FXLayer,"LiquidDrop",UDim2.fromOffset(20,20),UDim2.new(.5,-10,.5,-10),C.Pink,.02,190)
-corner(Drop,999)
-local DropStroke=stroke(Drop,C.Pink3,2,.05)
-Drop.Visible=false
-
---==============================================================
--- MAIN CURVED MENU SHELL
---==============================================================
-local Menu=newFrame(Root,"Menu",UDim2.fromScale(.84,.78),UDim2.fromScale(.08,.11),C.Pink,.24,20)
-corner(Menu,70)
-local MenuStroke=stroke(Menu,C.Pink3,2,.18)
-local MenuGrad=gradient(Menu,{ColorSequenceKeypoint.new(0,Color3.fromRGB(255,176,213)),ColorSequenceKeypoint.new(.5,Color3.fromRGB(238,111,169)),ColorSequenceKeypoint.new(1,Color3.fromRGB(203,69,127))},90)
-Menu.Visible=false
-
-local BackGlow=newFrame(Menu,"BackGlow",UDim2.fromScale(1.04,1.04),UDim2.fromScale(-.02,-.02),C.Pink2,.70,21)
-corner(BackGlow,80); stroke(BackGlow,C.Pink2,7,.82)
-local InnerGlass=newFrame(Menu,"InnerGlass",UDim2.fromScale(.98,.96),UDim2.fromScale(.01,.02),C.White,.84,22)
-corner(InnerGlass,66)
-local GlassStroke=stroke(InnerGlass,C.White,1,.72)
-local GlassGradient=gradient(InnerGlass,{ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),ColorSequenceKeypoint.new(.35,Color3.fromRGB(255,188,220)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,108,169))},35,NumberSequence.new({NumberSequenceKeypoint.new(0,.85),NumberSequenceKeypoint.new(.45,.92),NumberSequenceKeypoint.new(1,.98)}))
-
-local BG=image(Menu,"Background",UDim2.fromScale(.97,.94),UDim2.fromScale(.015,.035),BackgroundAsset,23,.58)
-BG.ScaleType=Enum.ScaleType.Crop
-corner(BG,65)
-
--- Decorative curved side plates keep tabs visually inside the panther body.
-local LeftBody=newFrame(Menu,"LeftBody",UDim2.fromScale(.29,.76),UDim2.fromScale(.035,.17),C.Pink,.52,30)
-corner(LeftBody,80); stroke(LeftBody,C.DeepPink,2,.45)
-local RightBody=newFrame(Menu,"RightBody",UDim2.fromScale(.29,.76),UDim2.fromScale(.675,.17),C.Pink,.52,30)
-corner(RightBody,80); stroke(RightBody,C.DeepPink,2,.45)
-
-local CenterHalo=newFrame(Menu,"CenterHalo",UDim2.fromScale(.38,.66),UDim2.fromScale(.31,.20),C.Pink2,.78,25)
-corner(CenterHalo,999); stroke(CenterHalo,C.White,2,.60)
-
--- Panther silhouette layer.
-local Panther=image(Menu,"Panther",UDim2.fromScale(.54,.88),UDim2.fromScale(.23,.10),PantherAsset,28,.08)
-Panther.ScaleType=Enum.ScaleType.Fit
-
--- Soft glass veil above art but below controls.
-local Veil=newFrame(Menu,"Veil",UDim2.fromScale(.97,.94),UDim2.fromScale(.015,.035),C.Pink2,.74,29)
-corner(Veil,65)
-
-local Header=newFrame(Menu,"Header",UDim2.new(1,-40,0,66),UDim2.fromOffset(20,14),C.Pink2,.63,80)
-corner(Header,28); stroke(Header,C.White,1,.62)
-local Title=label(Header,"PINK PANTHER",18,UDim2.fromOffset(0,4),Enum.Font.GothamBlack,C.White,82)
-Title.Size=UDim2.new(1,0,0,27)
-local Subtitle=label(Header,"ZAKA • DROP FLOWER • V4",9,UDim2.fromOffset(0,33),Enum.Font.GothamBold,C.Soft,82)
-Subtitle.Size=UDim2.new(1,0,0,18)
-
-local StatusDot=newFrame(Header,"StatusDot",UDim2.fromOffset(9,9),UDim2.fromOffset(12,12),C.Pink3,.02,84)
-corner(StatusDot,999)
-local StatusText=label(Header,"LIQUID GLASS",8,UDim2.fromOffset(25,7),Enum.Font.GothamBold,C.Pink3,83)
-StatusText.Size=UDim2.fromOffset(100,18); StatusText.TextXAlignment=Enum.TextXAlignment.Left
+local CARD_DATA = {    [1] = {
+        {title="HOME", description="Tổng quan menu và trạng thái", mode="ACTION", value=0.72, icon="⌂", action="toast"},
+        {title="STYLE", description="Màu sắc và phong cách", mode="ACTION", value=0.72, icon="✦", action="theme"},
+        {title="MOTION", description="Animation và chuyển động", mode="ACTION", value=0.72, icon="◌", action="animation"},
+        {title="FLOWER", description="Hoa trung tâm", mode="ACTION", value=0.72, icon="✿", action="flower"},
+        {title="PANTHER", description="Silhouette và hiệu ứng Panther", mode="ACTION", value=0.72, icon="🐆", action="panther"},
+        {title="GLASS", description="Glass và transparency", mode="ACTION", value=0.72, icon="◈", action="glass"},
+        {title="LIGHT", description="Glow và ánh sáng", mode="ACTION", value=0.72, icon="☼", action="glow"},
+        {title="RINGS", description="Vòng xoay", mode="ACTION", value=0.72, icon="◎", action="rings"},
+        {title="DROPLET", description="Liquid droplet", mode="ACTION", value=0.72, icon="◉", action="droplet"},
+        {title="CURVE", description="Đường cong UI", mode="ACTION", value=0.72, icon="⌁", action="curve"},
+        {title="TABS", description="Hệ thống tab", mode="ACTION", value=0.72, icon="▤", action="tabs"},
+        {title="CARDS", description="Function cards", mode="ACTION", value=0.72, icon="▦", action="cards"},
+        {title="SEARCH", description="Tìm kiếm", mode="ACTION", value=0.72, icon="⌕", action="search"},
+        {title="TOUCH", description="Touch mobile", mode="ACTION", value=0.72, icon="☝", action="touch"},
+        {title="DRAG", description="Kéo thả", mode="ACTION", value=0.72, icon="✥", action="dock"},
+        {title="SOUND", description="UI audio state", mode="ACTION", value=0.72, icon="♫", action="sound"},
+        {title="FX", description="Particle và ripple", mode="ACTION", value=0.72, icon="✧", action="fx"},
+        {title="THEME", description="Theme presets", mode="ACTION", value=0.72, icon="◐", action="theme_cycle"},
+        {title="PREVIEW", description="Preview animation", mode="ACTION", value=0.72, icon="▣", action="preview"},
+        {title="SETTINGS", description="Bảng cài đặt", mode="ACTION", value=0.72, icon="⚙", action="settings"},
+    },    [2] = {        {title="Debug Preview", description="Bật lớp preview trực quan của UI", mode="ACTION", value=0.72, icon="◉", action="esp_preview"},        {title="Focus Ring", description="Hiện vòng focus ở tâm menu", mode="ACTION", value=0.72, icon="🎯", action="focus_ring"},        {title="Screen Grid", description="Bật lưới căn chỉnh UI", mode="ACTION", value=0.72, icon="▣", action="grid"},        {title="Crosshair Preview", description="Preview tâm ngắm, chỉ là UI", mode="ACTION", value=0.72, icon="⌖", action="crosshair"},        {title="Distance Ruler", description="Thước khoảng cách trên UI", mode="ACTION", value=0.72, icon="📏", action="ruler"},        {title="Tag Overlay", description="Preview nhãn debug", mode="ACTION", value=0.72, icon="🏷", action="tags"},        {title="Color Scanner", description="Đổi màu accent theo chu kỳ", mode="ACTION", value=0.72, icon="🌈", action="accent_cycle"},        {title="Pulse Scanner", description="Pulse vòng visual", mode="ACTION", value=0.72, icon="◌", action="pulse"},        {title="Opacity Scan", description="Preview độ trong suốt", mode="ACTION", value=0.72, icon="◒", action="glass"},        {title="Outline Scan", description="Tăng viền card", mode="ACTION", value=0.72, icon="◈", action="outline"},        {title="Glow Scan", description="Tăng glow giao diện", mode="ACTION", value=0.72, icon="✦", action="glow"},        {title="Curve Scan", description="Preview curve", mode="ACTION", value=0.72, icon="⌁", action="curve"},        {title="Bounds View", description="Hiện khung căn chỉnh menu", mode="ACTION", value=0.72, icon="☷", action="bounds"},        {title="Center Marker", description="Đánh dấu tâm menu", mode="ACTION", value=0.72, icon="⊙", action="center"},        {title="Horizontal Guide", description="Guide ngang UI", mode="ACTION", value=0.72, icon="↔", action="guide_h"},        {title="Vertical Guide", description="Guide dọc UI", mode="ACTION", value=0.72, icon="↕", action="guide_v"},        {title="Radar Preview", description="Radar vòng tròn UI", mode="ACTION", value=0.72, icon="◍", action="radar"},        {title="Highlight Pulse", description="Pulse highlight", mode="ACTION", value=0.72, icon="⚡", action="highlight"},        {title="Visual Test", description="Chạy visual test", mode="ACTION", value=0.72, icon="🧪", action="visual_test"},        {title="Clear Visuals", description="Xóa preview visual", mode="ACTION", value=0.72, icon="↺", action="clear_visuals"},    },    [3] = {        {title="Player Info", description="Hiện thông tin nhân vật local", mode="ACTION", value=0.72, icon="♙", action="player_info"},        {title="Health Info", description="Hiện máu nhân vật local", mode="ACTION", value=0.72, icon="❤", action="health_info"},        {title="Movement Info", description="Hiện trạng thái di chuyển", mode="ACTION", value=0.72, icon="🏃", action="movement_info"},        {title="Camera Info", description="Hiện FOV camera", mode="ACTION", value=0.72, icon="📷", action="camera_info"},        {title="FOV +", description="Tăng FOV camera local", mode="ACTION", value=0.72, icon="🔭", action="fov_up"},        {title="FOV -", description="Giảm FOV camera local", mode="ACTION", value=0.72, icon="🔎", action="fov_down"},        {title="Reset Camera", description="Đưa FOV về mặc định", mode="ACTION", value=0.72, icon="↺", action="reset_camera"},        {title="Camera Center", description="Đưa UI về tâm", mode="ACTION", value=0.72, icon="◎", action="center"},        {title="Touch Scale +", description="Tăng kích thước touch UI", mode="ACTION", value=0.72, icon="📱", action="touch_up"},        {title="Touch Scale -", description="Giảm kích thước touch UI", mode="ACTION", value=0.72, icon="📱", action="touch_down"},        {title="Dock Menu", description="Ghim orb vào mép gần nhất", mode="ACTION", value=0.72, icon="🧭", action="dock"},        {title="Respawn UI", description="Làm mới UI sau respawn", mode="ACTION", value=0.72, icon="🔄", action="refresh"},        {title="Smooth Motion", description="Bật profile animation mượt", mode="ACTION", value=0.72, icon="⌁", action="smooth"},        {title="Fast Motion", description="Tăng profile animation", mode="ACTION", value=0.72, icon="⚡", action="fast"},        {title="Liquid Preview", description="Preview biến dạng giọt", mode="ACTION", value=0.72, icon="🫧", action="droplet"},        {title="Soft Bounce", description="Bounce toàn menu", mode="ACTION", value=0.72, icon="🎈", action="bounce"},        {title="Glass Player", description="Glass profile nhẹ", mode="ACTION", value=0.72, icon="🧊", action="glass"},        {title="Player Highlight", description="Highlight panel thông tin", mode="ACTION", value=0.72, icon="✨", action="highlight"},        {title="Stats Card", description="Hiện card thống kê local", mode="ACTION", value=0.72, icon="📊", action="stats"},        {title="Reset Player UI", description="Reset các thiết lập UI", mode="ACTION", value=0.72, icon="↺", action="reset"},    },    [4] = {        {title="Fake Alert", description="Thông báo vui trên màn hình", mode="ACTION", value=0.72, icon="😂", action="toast"},        {title="Confetti", description="Bắn confetti UI", mode="ACTION", value=0.72, icon="🎉", action="confetti"},        {title="Screen Shake", description="Rung UI nhẹ", mode="ACTION", value=0.72, icon="📳", action="shake"},        {title="Rainbow Flash", description="Flash màu nhẹ", mode="ACTION", value=0.72, icon="🌈", action="rainbow_flash"},        {title="Impact FX", description="Hiệu ứng impact UI", mode="ACTION", value=0.72, icon="💥", action="impact"},        {title="Drop Splash", description="Splash giọt nước", mode="ACTION", value=0.72, icon="💧", action="splash"},        {title="Heart Pulse", description="Pulse trái tim", mode="ACTION", value=0.72, icon="💗", action="heart"},        {title="Star Burst", description="Burst sao", mode="ACTION", value=0.72, icon="⭐", action="stars"},        {title="Spin UI", description="Xoay panel nhẹ", mode="ACTION", value=0.72, icon="🌀", action="spin"},        {title="Bounce UI", description="Nảy panel", mode="ACTION", value=0.72, icon="🎈", action="bounce"},        {title="Ghost Fade", description="Fade in/out nhẹ", mode="ACTION", value=0.72, icon="👻", action="ghost"},        {title="Ping FX", description="Ping visual", mode="ACTION", value=0.72, icon="🔔", action="ping"},        {title="Sparkle", description="Sparkle quanh menu", mode="ACTION", value=0.72, icon="✨", action="sparkle"},        {title="Petal Rain", description="Mưa cánh hoa UI", mode="ACTION", value=0.72, icon="🌸", action="petals"},        {title="Orbit FX", description="Orbit vòng quanh tâm", mode="ACTION", value=0.72, icon="💫", action="orbit"},        {title="Lightning FX", description="Flash tia UI", mode="ACTION", value=0.72, icon="⚡", action="lightning"},        {title="Prank Theme", description="Đổi theme ngẫu nhiên", mode="ACTION", value=0.72, icon="🎭", action="theme_cycle"},        {title="Sound Ping", description="Bật/tắt UI audio state", mode="ACTION", value=0.72, icon="🔊", action="sound"},        {title="Magic Ripple", description="Ripple lớn", mode="ACTION", value=0.72, icon="🪄", action="ripple"},        {title="Clear Troll FX", description="Xóa hiệu ứng vui", mode="ACTION", value=0.72, icon="↺", action="clear_fx"},    },    [5] = {        {title="Performance Mode", description="Giảm hiệu ứng phụ của UI", mode="ACTION", value=0.72, icon="⚡", action="perf"},        {title="Lite Glass", description="Glass nhẹ hơn", mode="ACTION", value=0.72, icon="🧊", action="lite_glass"},        {title="Fast Tween", description="Animation nhanh", mode="ACTION", value=0.72, icon="🚀", action="fast"},        {title="Cinematic Tween", description="Animation chậm mượt", mode="ACTION", value=0.72, icon="🐢", action="cinematic"},        {title="Soft FX", description="Giảm particle", mode="ACTION", value=0.72, icon="🌫", action="soft_fx"},        {title="Particle Boost", description="Tăng particle UI", mode="ACTION", value=0.72, icon="✧", action="particle_boost"},        {title="UI Diagnostics", description="Kiểm tra thành phần UI", mode="ACTION", value=0.72, icon="📊", action="diagnostics"},        {title="State Check", description="Kiểm tra state menu", mode="ACTION", value=0.72, icon="🧠", action="state_check"},        {title="Layout Check", description="Kiểm tra kích thước UI", mode="ACTION", value=0.72, icon="📐", action="layout_check"},        {title="Preset Memory", description="Lưu preset trong phiên", mode="ACTION", value=0.72, icon="💾", action="preset_memory"},        {title="Restore Preset", description="Khôi phục preset", mode="ACTION", value=0.72, icon="↺", action="restore_preset"},        {title="Accent Cycle", description="Đổi accent", mode="ACTION", value=0.72, icon="🎨", action="accent_cycle"},        {title="Glow Max", description="Tăng glow", mode="ACTION", value=0.72, icon="🔆", action="glow_max"},        {title="Glow Min", description="Giảm glow", mode="ACTION", value=0.72, icon="🔅", action="glow_min"},        {title="Liquid Max", description="Preview liquid mạnh", mode="ACTION", value=0.72, icon="🫧", action="liquid_max"},        {title="Mobile Mode", description="Tối ưu touch scale", mode="ACTION", value=0.72, icon="📱", action="mobile"},        {title="Background Fit", description="Đổi cách hiển thị nền", mode="ACTION", value=0.72, icon="🖼", action="bg_fit"},        {title="Panther Fit", description="Đổi cách hiển thị Panther", mode="ACTION", value=0.72, icon="🐆", action="panther_fit"},        {title="Clean Layers", description="Ẩn lớp trang trí phụ", mode="ACTION", value=0.72, icon="🧹", action="clean_layers"},        {title="Ultra Reset", description="Khôi phục profile", mode="ACTION", value=0.72, icon="↺", action="reset"},    },    [6] = {        {title="Server Info", description="Thông tin phiên hiện tại", mode="ACTION", value=0.72, icon="◎", action="server_info"},        {title="Player Count", description="Số người chơi hiện tại", mode="ACTION", value=0.72, icon="👥", action="player_count"},        {title="Place ID", description="Hiện PlaceId", mode="ACTION", value=0.72, icon="🆔", action="place_id"},        {title="Job ID", description="Hiện JobId", mode="ACTION", value=0.72, icon="🔑", action="job_id"},        {title="Session Time", description="Thời gian phiên UI", mode="ACTION", value=0.72, icon="⏱", action="session_time"},        {title="Local Time", description="Giờ thiết bị", mode="ACTION", value=0.72, icon="🕐", action="local_time"},        {title="Network Note", description="Hiện trạng thái network UI", mode="ACTION", value=0.72, icon="📡", action="network"},        {title="Device Mode", description="Nhận diện touch/mobile", mode="ACTION", value=0.72, icon="📱", action="device"},        {title="Viewport", description="Kích thước màn hình", mode="ACTION", value=0.72, icon="🖥", action="viewport"},        {title="Input Mode", description="Kiểm tra touch/mouse", mode="ACTION", value=0.72, icon="🎮", action="input"},        {title="Camera State", description="Thông tin camera", mode="ACTION", value=0.72, icon="📷", action="camera_info"},        {title="Place Name", description="Hiện tên Place nếu có", mode="ACTION", value=0.72, icon="🌐", action="place_name"},        {title="Local Player", description="Tên người chơi local", mode="ACTION", value=0.72, icon="👤", action="player_info"},        {title="UI Version", description="Hiện phiên bản UI", mode="ACTION", value=0.72, icon="⚙", action="version"},        {title="UI Objects", description="Đếm object trong menu", mode="ACTION", value=0.72, icon="📊", action="ui_objects"},        {title="Refresh Info", description="Làm mới thông tin", mode="ACTION", value=0.72, icon="🔄", action="refresh"},        {title="Dock Orb", description="Ghim orb ra mép", mode="ACTION", value=0.72, icon="📌", action="dock"},        {title="Open Home", description="Về Home", mode="ACTION", value=0.72, icon="🏠", action="home"},        {title="Open Setting", description="Mở Setting", mode="ACTION", value=0.72, icon="⚙", action="setting"},        {title="Clear Status", description="Xóa toast/status", mode="ACTION", value=0.72, icon="↺", action="clear_status"},    },    [7] = {        {title="Glass", description="Độ trong suốt menu", mode="ACTION", value=0.72, icon="◈", action="glass"},        {title="Glow", description="Cường độ glow", mode="ACTION", value=0.72, icon="✦", action="glow"},        {title="Animation", description="Tốc độ animation", mode="ACTION", value=0.72, icon="◌", action="animation"},        {title="Curve", description="Độ cong UI", mode="ACTION", value=0.72, icon="⌁", action="curve"},        {title="Touch Scale", description="Kích thước touch", mode="ACTION", value=0.72, icon="☝", action="touch"},        {title="Rainbow Border", description="Bật/tắt viền rainbow", mode="ACTION", value=0.72, icon="🌈", action="rainbow"},        {title="Particles", description="Bật/tắt particle", mode="ACTION", value=0.72, icon="✧", action="particles"},        {title="Liquid Strength", description="Độ mạnh liquid preview", mode="ACTION", value=0.72, icon="🫧", action="liquid_max"},        {title="Panther", description="Bật/tắt Panther layer", mode="ACTION", value=0.72, icon="🐆", action="panther_toggle"},        {title="Background", description="Bật/tắt background", mode="ACTION", value=0.72, icon="🖼", action="background_toggle"},        {title="Search", description="Focus ô tìm kiếm", mode="ACTION", value=0.72, icon="🔍", action="search"},        {title="Large Cards", description="Tăng card", mode="ACTION", value=0.72, icon="📐", action="cards"},        {title="Mobile Layout", description="Tối ưu layout mobile", mode="ACTION", value=0.72, icon="📱", action="mobile"},        {title="Pink Candy", description="Preset Pink Candy", mode="ACTION", value=0.72, icon="🎨", action="theme_1"},        {title="Rose Glass", description="Preset Rose Glass", mode="ACTION", value=0.72, icon="🌹", action="theme_2"},        {title="Bubblegum", description="Preset Bubblegum", mode="ACTION", value=0.72, icon="🫧", action="theme_3"},        {title="Blossom", description="Preset Blossom", mode="ACTION", value=0.72, icon="🌸", action="theme_4"},        {title="Pearl", description="Preset Pearl", mode="ACTION", value=0.72, icon="☁", action="theme_5"},        {title="Reset Settings", description="Reset setting", mode="ACTION", value=0.72, icon="↺", action="reset"},        {title="Apply", description="Áp dụng state hiện tại", mode="ACTION", value=0.72, icon="💾", action="apply"},    },    [8] = {        {title="⚔  Combat Slot 01", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 02", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 03", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 04", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 05", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 06", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 07", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 08", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 09", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 10", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 11", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 12", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 13", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 14", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 15", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 16", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 17", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 18", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 19", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},        {title="⚔  Combat Slot 20", description="Khu Combat để dành cho bản sau; card hiện đang khóa để tránh hành vi gameplay tự động.", mode="Locked", value=0.20, icon="⚔", action="locked"},    },}
 
 --==============================================================
 -- FLOWER CORE
@@ -651,31 +254,51 @@ end
 --==============================================================
 -- TAB RAIL + CURVED FUNCTION RAIL
 --==============================================================
-local TabRail=newFrame(Menu,"TabRail",UDim2.fromScale(.30,.62),UDim2.fromScale(.035,.28),C.Pink,.91,110)
-corner(TabRail,46)
+local TabRail=newFrame(Menu,"TabRail",UDim2.fromScale(.33,.66),UDim2.fromScale(.025,.25),C.Pink,.91,110)
+corner(TabRail,52)
+TabRail.Active=true
 local TabRailStroke=stroke(TabRail,C.White,1,.72)
 local TabButtons={}
 local TabText={}
 local CurrentTab=1
 
-local FunctionRail=newFrame(Menu,"FunctionRail",UDim2.fromScale(.30,.62),UDim2.fromScale(.665,.28),C.Pink,.91,110)
-corner(FunctionRail,46)
+local FunctionRail=newFrame(Menu,"FunctionRail",UDim2.fromScale(.33,.66),UDim2.fromScale(.645,.25),C.Pink,.91,110)
+corner(FunctionRail,52)
+FunctionRail.Active=true
 local FunctionRailStroke=stroke(FunctionRail,C.White,1,.72)
+gradient(FunctionRail,{
+    ColorSequenceKeypoint.new(0,Color3.fromRGB(255,220,236)),
+    ColorSequenceKeypoint.new(.5,Color3.fromRGB(255,142,192)),
+    ColorSequenceKeypoint.new(1,Color3.fromRGB(245,102,164))
+},90,NumberSequence.new({
+    NumberSequenceKeypoint.new(0,.82),
+    NumberSequenceKeypoint.new(.5,.92),
+    NumberSequenceKeypoint.new(1,.96)
+}))
+gradient(TabRail,{
+    ColorSequenceKeypoint.new(0,Color3.fromRGB(255,220,236)),
+    ColorSequenceKeypoint.new(.5,Color3.fromRGB(255,142,192)),
+    ColorSequenceKeypoint.new(1,Color3.fromRGB(245,102,164))
+},90,NumberSequence.new({
+    NumberSequenceKeypoint.new(0,.82),
+    NumberSequenceKeypoint.new(.5,.92),
+    NumberSequenceKeypoint.new(1,.96)
+}))
 local FunctionButtons={}
 
 local function tabPos(i,total)
     local t=(i-1)/math.max(1,total-1)
-    local y=.08+t*.84
+    local y=.07+t*.86
     local bend=math.sin(t*math.pi)*.055
     local x=.08+bend
     return UDim2.fromScale(x,y)
 end
 
 for i,data in ipairs(TAB_DATA) do
-    local b=button(TabRail,data.icon.."  "..data.name,UDim2.fromScale(.78,.07),tabPos(i,#TAB_DATA),125)
+    local b=button(TabRail,data.icon.."  "..data.name,UDim2.fromScale(.90,.095),tabPos(i,#TAB_DATA),125)
     b.BackgroundColor3=C.Pink2; b.BackgroundTransparency=.58; b.TextColor3=C.Ink
-    b.Font=Enum.Font.GothamBold; b.TextSize=9; b.TextXAlignment=Enum.TextXAlignment.Left
-    corner(b,22); stroke(b,C.White,1,.78)
+    b.Font=Enum.Font.GothamBold; b.TextSize=11; b.TextXAlignment=Enum.TextXAlignment.Left
+    corner(b,28); stroke(b,C.White,1,.78)
     local pad=Instance.new("UIPadding"); pad.PaddingLeft=UDim.new(0,10); pad.Parent=b
     TabButtons[i]=b
     local tx=b
@@ -684,7 +307,7 @@ end
 
 local function functionPos(i,total)
     local t=(i-1)/math.max(1,total-1)
-    local y=.06+t*.88
+    local y=.05+t*.90
     local bend=-math.sin(t*math.pi)*.075
     local x=.08+bend
     return UDim2.fromScale(x,y)
@@ -692,17 +315,23 @@ end
 
 local function makeFunctionCard(i)
     local data=CARD_DATA[CurrentTab][i]
-    local b=button(FunctionRail,"",UDim2.fromScale(.82,.065),functionPos(i,12),125)
-    b.BackgroundColor3=C.Pink2; b.BackgroundTransparency=.48; corner(b,22); stroke(b,C.White,1,.72)
-    local t=label(b,data.title,8,UDim2.fromOffset(8,1),Enum.Font.GothamBold,C.Ink,127)
-    t.Size=UDim2.new(1,-16,0,18); t.TextXAlignment=Enum.TextXAlignment.Left
-    local s=label(b,data.mode,7,UDim2.new(1,-62,0,1),Enum.Font.GothamBold,C.DeepPink,127)
+    local b=button(FunctionRail,"",UDim2.fromScale(.94,.115),functionPos(i,20),125)
+    b.BackgroundColor3=C.Pink2; b.BackgroundTransparency=.48; corner(b,28); stroke(b,C.White,1,.72)
+    local iconText=data.icon or "✦"
+    local icon=label(b,iconText,18,UDim2.fromOffset(8,3),Enum.Font.GothamBlack,C.White,129)
+    icon.Size=UDim2.fromOffset(28,28); icon.TextXAlignment=Enum.TextXAlignment.Center
+    corner(icon,999)
+    local t=label(b,data.title,11,UDim2.fromOffset(40,2),Enum.Font.GothamBold,C.Ink,127)
+    t.Size=UDim2.new(1,-104,0,22); t.TextXAlignment=Enum.TextXAlignment.Left
+    local d=label(b,data.description,8,UDim2.fromOffset(40,22),Enum.Font.Gotham, C.Soft,127)
+    d.Size=UDim2.new(1,-50,0,18); d.TextXAlignment=Enum.TextXAlignment.Left
+    local s=label(b,data.mode,9,UDim2.new(1,-62,0,1),Enum.Font.GothamBold,C.DeepPink,127)
     s.Size=UDim2.fromOffset(48,18); s.TextXAlignment=Enum.TextXAlignment.Right
     local line=newFrame(b,"Progress",UDim2.new(data.value,-10,0,2),UDim2.new(0,8,1,-5),C.Pink3,.15,126)
     corner(line,999)
     FunctionButtons[i]={button=b,title=t,mode=s,line=line}
 end
-for i=1,12 do makeFunctionCard(i) end
+for i=1,20 do makeFunctionCard(i) end
 
 -- Search field floats between header and center.
 local SearchWrap=newFrame(Menu,"SearchWrap",UDim2.fromScale(.28,.075),UDim2.fromScale(.36,.11),C.Pink,.48,150)
@@ -727,7 +356,7 @@ SearchIcon.Size=UDim2.fromOffset(22,SearchWrap.AbsoluteSize.Y)
 -- top close button and small status capsule
 local Close=button(Menu,"×",UDim2.fromOffset(42,42),UDim2.new(1,-52,0,15),180)
 Close.TextColor3=C.White; Close.Font=Enum.Font.GothamBlack; Close.TextSize=26
-local Status=label(Menu,"20 TABS • 12 CARDS",10,UDim2.new(0,20,1,-31),Enum.Font.GothamBold,C.White,170)
+local Status=label(Menu,"8 TABS • 20 FUNCTIONS",10,UDim2.new(0,20,1,-31),Enum.Font.GothamBold,C.White,170)
 Status.Size=UDim2.fromOffset(180,20); Status.TextXAlignment=Enum.TextXAlignment.Left
 
 --==============================================================
@@ -781,13 +410,49 @@ bindRipple(Close); bindRipple(CoreButton)
 --==============================================================
 -- TAB SELECTION
 --==============================================================
+local TabScroll=0
+local FunctionScroll=0
+local ScrollVelocityTab=0
+local ScrollVelocityFunction=0
+
+local function smoothScrollValue(current,target)
+    return current+(target-current)*.22
+end
+
+local function applyRailScroll()
+    local tabCount=#TAB_DATA
+    local fnCount=20
+
+    for i,b in ipairs(TabButtons) do
+        local t=((i-1)+TabScroll)/math.max(1,tabCount-1)
+        local y=.07+t*.86
+        local bend=math.sin(math.clamp(t,0,1)*math.pi)*.055
+        local x=.08+bend
+        b.Position=UDim2.fromScale(x,y)
+    end
+
+    for i,x in ipairs(FunctionButtons) do
+        local t=((i-1)+FunctionScroll)/math.max(1,fnCount-1)
+        local y=.05+t*.90
+        local bend=-math.sin(math.clamp(t,0,1)*math.pi)*.075
+        local px=.08+bend
+        x.button.Position=UDim2.fromScale(px,y)
+    end
+end
+
+local function clampScroll(v,count)
+    return math.clamp(v,0,math.max(0,count-1))
+end
+
 local function refreshFunctionCards()
     for i,x in ipairs(FunctionButtons) do
         local data=CARD_DATA[CurrentTab][i]
         x.title.Text=data.title
         x.mode.Text=data.mode
         x.line.Size=UDim2.new(data.value,-10,0,2)
-        x.button.Position=functionPos(i,12)
+        x.button.Position=functionPos(i,20 + 0) 
+        local t=((i-1)+FunctionScroll)/19
+        x.button.Position=UDim2.fromScale(.08-math.sin(math.clamp(t,0,1)*math.pi)*.075,.05+t*.90)
     end
 end
 
@@ -796,10 +461,16 @@ local function selectTab(index,instant)
     CurrentTab=index
     for i,b in ipairs(TabButtons) do
         local selected=i==index
-        local targetSize=selected and UDim2.fromScale(.86,.085) or UDim2.fromScale(.78,.07)
+        local targetSize=selected and UDim2.fromScale(.95,.115) or UDim2.fromScale(.90,.095)
         local targetPos=tabPos(i,#TAB_DATA)
         TweenService:Create(b,tw(instant and .05 or .32,Enum.EasingStyle.Quint),{Size=targetSize,Position=targetPos,BackgroundTransparency=selected and .30 or .58}):Play()
         b.TextColor3=selected and C.White or C.Ink
+        if selected then
+            TweenService:Create(b,TweenInfo.new(.12,Enum.EasingStyle.Quad),{BackgroundColor3=C.DeepPink}):Play()
+            task.delay(.13,function()
+                if b.Parent then TweenService:Create(b,TweenInfo.new(.25,Enum.EasingStyle.Quint),{BackgroundColor3=C.Pink2}):Play() end
+            end)
+        end
         local st=b:FindFirstChildOfClass("UIStroke")
         if st then st.Transparency=selected and .25 or .78 end
     end
@@ -862,6 +533,56 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 --==============================================================
+-- SMOOTH RAIL SCROLL
+--==============================================================
+local railTouch=nil
+local railName=nil
+local railLastY=0
+local railStartY=0
+local railMoved=false
+
+local function railBegin(which,input)
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+    railTouch=input
+    railName=which
+    railLastY=input.Position.Y
+    railStartY=input.Position.Y
+    railMoved=false
+end
+
+local function railMove(input)
+    if not railTouch or not railName then return end
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseMovement then return end
+    local dy=input.Position.Y-railLastY
+    if math.abs(input.Position.Y-railStartY)>5 then railMoved=true end
+    railLastY=input.Position.Y
+    local step=-dy/42
+    if railName=="tabs" then
+        TabScroll=clampScroll(TabScroll+step,#TAB_DATA)
+    else
+        FunctionScroll=clampScroll(FunctionScroll+step,20)
+    end
+end
+
+local function railEnd()
+    railTouch=nil
+    railName=nil
+end
+
+TabRail.InputBegan:Connect(function(input) railBegin("tabs",input) end)
+FunctionRail.InputBegan:Connect(function(input) railBegin("functions",input) end)
+UserInputService.InputChanged:Connect(railMove)
+UserInputService.InputEnded:Connect(railEnd)
+
+RunService.RenderStepped:Connect(function()
+    ScrollVelocityTab=ScrollVelocityTab*.82
+    ScrollVelocityFunction=ScrollVelocityFunction*.82
+    if math.abs(ScrollVelocityTab)>.001 then TabScroll=clampScroll(TabScroll+ScrollVelocityTab,#TAB_DATA) end
+    if math.abs(ScrollVelocityFunction)>.001 then FunctionScroll=clampScroll(FunctionScroll+ScrollVelocityFunction,20) end
+    applyRailScroll()
+end)
+
+--==============================================================
 -- LIQUID MORPH HELPERS
 --==============================================================
 local function setMenuAlpha(a)
@@ -873,10 +594,18 @@ end
 
 local function morphToDrop()
     Drop.Visible=true
-    Drop.Position=UDim2.new(.5,-10,.5,-10)
+    DropTail.Visible=false
+    local op=Orb.AbsolutePosition
+    local os=Orb.AbsoluteSize
+    local ox=op.X+os.X/2
+    local oy=op.Y+os.Y/2
+    Drop.Position=rootPointToPosition(Vector2.new(ox,oy))
     Drop.Size=UDim2.fromOffset(20,20)
     Drop.Rotation=0
     Drop.BackgroundTransparency=.03
+    TweenService:Create(Drop,TweenInfo.new(.30,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+        Position=UDim2.new(.5,-10,.5,-10)
+    }):Play()
     local a=TweenService:Create(Drop,tw(.28,Enum.EasingStyle.Quint),{Size=UDim2.fromOffset(32,86),Position=UDim2.new(.5,-16,.5,-43),Rotation=-7})
     a:Play(); a.Completed:Wait()
     local b=TweenService:Create(Drop,tw(.38,Enum.EasingStyle.Back),{Size=UDim2.fromOffset(66,106),Position=UDim2.new(.5,-33,.5,-53),Rotation=8})
@@ -896,7 +625,7 @@ local function openMenu()
         setMenuAlpha(.82)
         FlowerArea.Size=UDim2.fromScale(.05,.05)
         FlowerArea.Position=UDim2.fromScale(.475,.475)
-        local menuTween=TweenService:Create(Menu,tw(.82,Enum.EasingStyle.Quint),{Size=UDim2.fromScale(.84,.78),Position=UDim2.fromScale(.08,.11),Rotation=0})
+        local menuTween=TweenService:Create(Menu,tw(.82,Enum.EasingStyle.Quint),{Size=UDim2.fromScale(.90,.82),Position=UDim2.fromScale(.05,.09),Rotation=0})
         local alphaTween=TweenService:Create(Menu,tw(.72,Enum.EasingStyle.Quint),{BackgroundTransparency=.24})
         local flowerTween=TweenService:Create(FlowerArea,tw(.75,Enum.EasingStyle.Back),{Size=UDim2.fromScale(.30,.40),Position=UDim2.fromScale(.35,.37)})
         menuTween:Play(); alphaTween:Play(); flowerTween:Play()
@@ -919,6 +648,27 @@ local function openMenu()
     end)
 end
 
+local function dockOrbToEdge()
+    local size=Root.AbsoluteSize
+    if size.X<=0 or size.Y<=0 then return end
+    local center=Vector2.new(
+        Orb.AbsolutePosition.X+Orb.AbsoluteSize.X/2,
+        Orb.AbsolutePosition.Y+Orb.AbsoluteSize.Y/2
+    )
+    local pad=52
+    local distances={
+        {d=center.X,x=pad,y=math.clamp(center.Y,pad,size.Y-pad)},
+        {d=size.X-center.X,x=size.X-pad,y=math.clamp(center.Y,pad,size.Y-pad)},
+        {d=center.Y,x=math.clamp(center.X,pad,size.X-pad),y=pad},
+        {d=size.Y-center.Y,x=math.clamp(center.X,pad,size.X-pad),y=size.Y-pad},
+    }
+    table.sort(distances,function(a,b) return a.d<b.d end)
+    local p=distances[1]
+    TweenService:Create(Orb,TweenInfo.new(.45,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+        Position=UDim2.fromOffset(p.x,p.y)
+    }):Play()
+end
+
 local function closeMenu()
     if not Menu.Visible then return end
     task.spawn(function()
@@ -938,12 +688,16 @@ local function closeMenu()
         Orb.Visible=true; OrbRing1.Visible=true; OrbRing2.Visible=true
         Orb.Size=UDim2.fromOffset(8,8)
         TweenService:Create(Orb,tw(.45,Enum.EasingStyle.Back),{Size=UDim2.fromOffset(92,92)}):Play()
+        dockOrbToEdge()
     end)
 end
 
 CoreButton.Activated:Connect(closeMenu)
 Close.Activated:Connect(closeMenu)
-Orb.Activated:Connect(openMenu)
+Orb.Activated:Connect(function()
+    if orbDragging or orbMoved then return end
+    openMenu()
+end)
 
 --==============================================================
 -- ORB ROTATION / BREATHING / RINGS / HIGHLIGHT
@@ -1080,7 +834,7 @@ SettingsClose.Activated:Connect(function() SettingsOverlay.Visible=false end)
 local originalSelectTab=selectTab
 selectTab=function(index,instant)
     originalSelectTab(index,instant)
-    SettingsOverlay.Visible=(TAB_DATA[index].name=="SETTINGS")
+    SettingsOverlay.Visible=(TAB_DATA[index].name=="SETTING")
 end
 
 --==============================================================
@@ -1102,23 +856,384 @@ end
 --==============================================================
 local orbPressAt=0
 Orb.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-        local now=os.clock()
-        if now-orbPressAt<.35 then
-            for i=1,10 do spawnParticle() end
-        end
-        orbPressAt=now
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+    local now=os.clock()
+    if now-orbPressAt<.35 then
+        for i=1,10 do spawnParticle() end
+    end
+    orbPressAt=now
+    orbDragging=true
+    orbMoved=false
+    orbStart=input.Position
+    orbStartPos=Orb.Position
+    orbLastInput=input
+    setOrbDropVisual(true)
+end)
+
+Orb.InputChanged:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+        orbLastInput=input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if not orbDragging then return end
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseMovement then return end
+    local d=input.Position-orbStart
+    if d.Magnitude>6 then orbMoved=true end
+    local p=Vector2.new(
+        Orb.AbsolutePosition.X+Orb.AbsoluteSize.X/2+d.X,
+        Orb.AbsolutePosition.Y+Orb.AbsoluteSize.Y/2+d.Y
+    )
+    Orb.Position=rootPointToPosition(p)
+    if d.Magnitude>6 then
+        local stretch=1+math.clamp(d.Magnitude/170,0,1.9)
+        local angle=math.deg(math.atan2(d.Y,d.X))+90
+        showLiquidDragFX(Vector2.new(p.X,p.Y),stretch,angle)
+        Orb.Rotation=math.clamp(angle-90,-28,28)
+        Orb.Size=UDim2.fromOffset(58+math.clamp(d.Magnitude*.16,0,48),82+math.clamp(d.Magnitude*.28,0,78))
+        DropTail.Size=UDim2.fromOffset(14+math.clamp(d.Magnitude*.03,0,8),42+math.clamp(d.Magnitude*.16,0,55))
+        DropTail.Rotation=angle
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if not orbDragging then return end
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+    orbDragging=false
+    if orbMoved then
+        -- A dragged orb stays where the player released it.
+        -- The next close/open cycle can still dock it to the nearest edge.
+        setOrbDropVisual(false)
+        hideLiquidDragFX()
+        for i=1,4 do spawnParticle() end
+        task.delay(.12,function() orbMoved=false end)
+    else
+        setOrbDropVisual(false)
+        hideLiquidDragFX()
     end
 end)
 
 --==============================================================
+-- V6 MAX ACTION SYSTEM — safe client/UI/own-experience tools
+-- Combat automation is intentionally locked for a later build.
+--==============================================================
+local V6 = {
+    Rainbow = CONFIG.RainbowBorder,
+    Particles = true,
+    Panther = true,
+    Background = true,
+    BigCards = true,
+    Grid = false,
+    Guide = false,
+    Sound = CONFIG.EnableUIAudio,
+    SessionStart = os.clock(),
+    AccentIndex = 1,
+    ThemeIndex = 1,
+}
+
+local V6Themes = {
+    {name="Pink Candy", hue=.92, sat=.34, glow=.25},
+    {name="Rose Glass", hue=.96, sat=.42, glow=.20},
+    {name="Cotton", hue=.88, sat=.18, glow=.30},
+    {name="Neon Pink", hue=.89, sat=.75, glow=.16},
+    {name="Pearl", hue=.98, sat=.08, glow=.42},
+    {name="Blossom", hue=.95, sat=.50, glow=.28},
+    {name="Bubblegum", hue=.91, sat=.58, glow=.22},
+}
+
+local function v6Toast(title,msg)
+    local holder=newFrame(FXLayer,"V6Toast",UDim2.fromOffset(280,58),UDim2.new(.5,-140,0,-72),C.Pink2,.16,950)
+    corner(holder,22); stroke(holder,C.White,1,.48)
+    local h=label(holder,title,11,UDim2.fromOffset(14,7),Enum.Font.GothamBlack,C.White,952)
+    h.Size=UDim2.new(1,-28,0,18); h.TextXAlignment=Enum.TextXAlignment.Left
+    local m=label(holder,msg,8,UDim2.fromOffset(14,27),Enum.Font.Gotham,C.Soft,952)
+    m.Size=UDim2.new(1,-28,0,20); m.TextXAlignment=Enum.TextXAlignment.Left
+    TweenService:Create(holder,tw(.32,Enum.EasingStyle.Back),{Position=UDim2.new(.5,-140,0,18)}):Play()
+    task.delay(1.45,function()
+        if holder.Parent then
+            local t=TweenService:Create(holder,tw(.28,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Position=UDim2.new(.5,-140,0,-72),BackgroundTransparency=1})
+            t:Play(); t.Completed:Connect(function() if holder.Parent then holder:Destroy() end end)
+        end
+    end)
+end
+
+local function v6Pulse(obj,scale)
+    if not obj or not obj.Parent then return end
+    local s=obj.Size
+    local x=scale or 1.035
+    local goal=UDim2.new(s.X.Scale*x,s.X.Offset*x,s.Y.Scale*x,s.Y.Offset*x)
+    TweenService:Create(obj,tw(.10,Enum.EasingStyle.Quad),{Size=goal}):Play()
+    task.delay(.10,function()
+        if obj.Parent then TweenService:Create(obj,tw(.22,Enum.EasingStyle.Back),{Size=s}):Play() end
+    end)
+end
+
+local function v6Burst(amount)
+    amount=math.clamp(tonumber(amount) or 10,4,28)
+    for i=1,amount do
+        local p=newFrame(FXLayer,"V6Spark",UDim2.fromOffset(math.random(4,9),math.random(4,9)),UDim2.fromScale(.5,.5),C.Pink3,.05,940)
+        corner(p,999)
+        local a=math.random()*math.pi*2
+        local d=math.random(70,250)
+        TweenService:Create(p,tw(math.random(35,75)/100,Enum.EasingStyle.Quint),{
+            Position=UDim2.new(.5,math.cos(a)*d,.5,math.sin(a)*d),
+            BackgroundTransparency=1,
+            Size=UDim2.fromOffset(1,1)
+        }):Play()
+        task.delay(.8,function() if p.Parent then p:Destroy() end end)
+    end
+end
+
+local function v6Theme(i)
+    local th=V6Themes[((i-1)%#V6Themes)+1]
+    V6.ThemeIndex=((i-1)%#V6Themes)+1
+    local main=Color3.fromHSV(th.hue,th.sat,1)
+    local dark=Color3.fromHSV(th.hue,math.min(1,th.sat+.12),.82)
+    C.Pink=main; C.Pink2=Color3.fromHSV(th.hue,math.max(0,th.sat-.05),1)
+    C.Pink3=Color3.fromHSV(th.hue,math.min(1,th.sat+.08),1)
+    C.DeepPink=dark
+    if MenuGrad then
+        MenuGrad.Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0,C.Pink3),
+            ColorSequenceKeypoint.new(.5,C.Pink),
+            ColorSequenceKeypoint.new(1,C.DeepPink)
+        })
+    end
+    if MenuStroke then MenuStroke.Color=C.Pink3 end
+    if EdgeStroke then EdgeStroke.Color=C.Pink3 end
+    if FlowerRing then FlowerRing.BackgroundColor3=C.Pink3 end
+    v6Toast("THEME",th.name)
+end
+
+local function v6Reset()
+    setGlass(CONFIG.GlassTransparency)
+    setGlow(CONFIG.GlowStrength)
+    setAnimation(CONFIG.AnimationSpeed)
+    setCurve(CONFIG.CurveAmplitude)
+    setTouchScale(CONFIG.TouchScale)
+    V6.Rainbow=CONFIG.RainbowBorder
+    V6.Particles=true
+    V6.Panther=true
+    V6.Background=true
+    V6.Grid=false
+    V6.Guide=false
+    V6.ThemeIndex=1
+    if Panther then Panther.Visible=true end
+    if BG then BG.Visible=true end
+    v6Toast("RESET","Giao diện đã về mặc định")
+end
+
+local function v6Action(action,tabIndex,cardIndex)
+    if action=="locked" then v6Toast("COMBAT","Khu này để dành cho bản sau"); return end
+    if action=="glass" or action=="lite_glass" then
+        setGlass(UI_STATE.Glass>.55 and .24 or math.min(.72,UI_STATE.Glass+.12))
+        v6Toast("GLASS",string.format("%.2f",UI_STATE.Glass)); return
+    elseif action=="glow" or action=="glow_max" then
+        setGlow(math.min(1,UI_STATE.Glow+.16)); v6Toast("GLOW","Đã tăng glow"); return
+    elseif action=="glow_min" then
+        setGlow(math.max(0,UI_STATE.Glow-.16)); v6Toast("GLOW","Đã giảm glow"); return
+    elseif action=="animation" then
+        setAnimation(UI_STATE.Animation>=2.4 and .65 or UI_STATE.Animation+.35); v6Toast("MOTION","x"..string.format("%.1f",UI_STATE.Animation)); return
+    elseif action=="fast" then
+        setAnimation(.65); v6Toast("MOTION","Fast profile"); return
+    elseif action=="cinematic" then
+        setAnimation(2.35); v6Toast("MOTION","Cinematic profile"); return
+    elseif action=="curve" then
+        setCurve(UI_STATE.Curve>=70 and 12 or UI_STATE.Curve+12); v6Toast("CURVE","Amplitude "..math.floor(UI_STATE.Curve)); return
+    elseif action=="touch" or action=="mobile" then
+        setTouchScale(UI_STATE.TouchScale>=1.22 and .90 or UI_STATE.TouchScale+.08); v6Toast("TOUCH","Scale "..string.format("%.2f",UI_STATE.TouchScale)); return
+    elseif action=="touch_up" then
+        setTouchScale(math.min(1.25,UI_STATE.TouchScale+.08)); return
+    elseif action=="touch_down" then
+        setTouchScale(math.max(.80,UI_STATE.TouchScale-.08)); return
+    elseif action=="rainbow" then
+        V6.Rainbow=not V6.Rainbow; CONFIG.RainbowBorder=V6.Rainbow; v6Toast("RAINBOW",V6.Rainbow and "ON" or "OFF"); return
+    elseif action=="particles" or action=="soft_fx" then
+        V6.Particles=not V6.Particles; v6Toast("PARTICLES",V6.Particles and "ON" or "OFF"); return
+    elseif action=="particle_boost" or action=="fx" then
+        v6Burst(18); return
+    elseif action=="panther_toggle" then
+        V6.Panther=not V6.Panther; Panther.Visible=V6.Panther; return
+    elseif action=="background_toggle" then
+        V6.Background=not V6.Background; BG.Visible=V6.Background; return
+    elseif action=="panther" or action=="panther_fit" then
+        v6Pulse(Panther,1.045); v6Toast("PANTHER","Preview"); return
+    elseif action=="theme" then v6Theme(V6.ThemeIndex+1); return
+    elseif action=="theme_cycle" then v6Theme(V6.ThemeIndex+1); return
+    elseif action=="theme_1" then v6Theme(1); return
+    elseif action=="theme_2" then v6Theme(2); return
+    elseif action=="theme_3" then v6Theme(7); return
+    elseif action=="theme_4" then v6Theme(6); return
+    elseif action=="theme_5" then v6Theme(5); return
+    elseif action=="droplet" or action=="liquid_max" or action=="splash" then
+        if Drop then
+            Drop.Visible=true
+            Drop.Size=UDim2.fromOffset(24,30)
+            Drop.Position=UDim2.new(.5,-12,.5,-15)
+            TweenService:Create(Drop,tw(.45,Enum.EasingStyle.Elastic),{Size=UDim2.fromOffset(68,112),Rotation=math.random(-12,12)}):Play()
+            task.delay(.55,function() if Drop and not Menu.Visible then Drop.Visible=false end end)
+        end
+        v6Burst(10); return
+    elseif action=="rings" or action=="pulse" or action=="orbit" then
+        if FlowerRing then
+            TweenService:Create(FlowerRing,tw(.55,Enum.EasingStyle.Quint),{Rotation=FlowerRing.Rotation+180,Size=UDim2.fromScale(.55,.55)}):Play()
+            task.delay(.6,function() if FlowerRing.Parent then TweenService:Create(FlowerRing,tw(.3),{Size=UDim2.fromScale(.45,.45)}):Play() end end)
+        end
+        return
+    elseif action=="tabs" or action=="cards" then
+        v6Pulse(tabIndex==CurrentTab and TabButtons[tabIndex] or FunctionButtons[math.min(cardIndex,#FunctionButtons)].button,1.06); return
+    elseif action=="search" then
+        Search:CaptureFocus(); return
+    elseif action=="settings" or action=="setting" then
+        if TAB_DATA[7] then selectTab(7,false) end
+        return
+    elseif action=="home" then
+        selectTab(8,false); return
+    elseif action=="center" then
+        Menu.Position=UDim2.fromScale(.05,.09); v6Toast("LAYOUT","Menu centered"); return
+    elseif action=="dock" then
+        dockOrbToEdge(); v6Toast("DOCK","Orb đã về mép gần nhất"); return
+    elseif action=="reset" or action=="reset_camera" or action=="reset_preset" then
+        v6Reset(); return
+    elseif action=="toast" or action=="fake_alert" then
+        v6Toast("PINK PANTHER","Hiệu ứng chỉ hiển thị trên máy bạn"); return
+    elseif action=="confetti" or action=="stars" or action=="sparkle" or action=="petals" or action=="ripple" then
+        v6Burst(action=="confetti" and 24 or 12); return
+    elseif action=="shake" or action=="impact" or action=="bounce" or action=="spin" then
+        local old=Menu.Rotation
+        local seq={old-4,old+4,old-2,old}
+        for i,r in ipairs(seq) do task.delay((i-1)*.055,function() if Menu.Parent then Menu.Rotation=r end end) end
+        return
+    elseif action=="ghost" then
+        local old=Menu.BackgroundTransparency
+        TweenService:Create(Menu,tw(.22),{BackgroundTransparency=.75}):Play()
+        task.delay(.25,function() if Menu.Parent then TweenService:Create(Menu,tw(.35),{BackgroundTransparency=old}):Play() end end)
+        return
+    elseif action=="ping" or action=="heart" or action=="lightning" then
+        v6Burst(7); v6Toast("FX","Visual ping"); return
+    elseif action=="clear_fx" or action=="clear_visuals" then
+        for _,x in ipairs(FXLayer:GetChildren()) do if x.Name:find("V6") or x.Name=="V6Toast" then x:Destroy() end end
+        return
+    elseif action=="perf" or action=="clean_layers" then
+        V6.Particles=false; V6.Grid=false; v6Toast("ULTRA","Lite profile"); return
+    elseif action=="diagnostics" or action=="state_check" or action=="layout_check" then
+        v6Toast("DIAGNOSTIC",string.format("Tab %d/8 • Card %d/20",CurrentTab,cardIndex)); return
+    elseif action=="preset_memory" then
+        V6.ThemeIndex=V6.ThemeIndex; v6Toast("MEMORY","Preset giữ trong phiên"); return
+    elseif action=="restore_preset" then v6Theme(V6.ThemeIndex); return
+    elseif action=="liquid" then
+        v6Toast("LIQUID","Preview sẵn sàng"); return
+    elseif action=="server_info" then
+        local ok,info=pcall(function() return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId) end)
+        v6Toast("SERVER",ok and info.Name or "Session active"); return
+    elseif action=="player_count" then
+        v6Toast("PLAYERS",tostring(#Players:GetPlayers()).." người"); return
+    elseif action=="place_id" then
+        v6Toast("PLACE ID",tostring(game.PlaceId)); return
+    elseif action=="job_id" then
+        v6Toast("JOB ID",game.JobId~="" and game.JobId or "Studio/Local"); return
+    elseif action=="session_time" then
+        v6Toast("SESSION",string.format("%.0fs",os.clock()-V6.SessionStart)); return
+    elseif action=="local_time" then
+        v6Toast("TIME",os.date("%H:%M:%S")); return
+    elseif action=="network" then
+        v6Toast("NETWORK","UI diagnostics only"); return
+    elseif action=="device" or action=="input" then
+        local touch=UserInputService.TouchEnabled
+        v6Toast("DEVICE",touch and "Touch / Mobile" or "Mouse / PC"); return
+    elseif action=="viewport" then
+        v6Toast("VIEWPORT",string.format("%dx%d",Root.AbsoluteSize.X,Root.AbsoluteSize.Y)); return
+    elseif action=="camera_info" then
+        local cam=workspace.CurrentCamera
+        v6Toast("CAMERA",cam and ("FOV "..math.floor(cam.FieldOfView)) or "N/A"); return
+    elseif action=="place_name" then
+        local ok,info=pcall(function() return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId) end)
+        v6Toast("PLACE",ok and info.Name or "Unknown"); return
+    elseif action=="player_info" then
+        v6Toast("PLAYER",LocalPlayer.Name); return
+    elseif action=="health_info" then
+        local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        v6Toast("HEALTH",h and string.format("%.0f / %.0f",h.Health,h.MaxHealth) or "N/A"); return
+    elseif action=="movement_info" then
+        local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        v6Toast("MOVE",h and h:GetState().Name or "N/A"); return
+    elseif action=="fov_up" then
+        local cam=workspace.CurrentCamera; if cam then cam.FieldOfView=math.clamp(cam.FieldOfView+5,40,120) end; return
+    elseif action=="fov_down" then
+        local cam=workspace.CurrentCamera; if cam then cam.FieldOfView=math.clamp(cam.FieldOfView-5,40,120) end; return
+    elseif action=="reset_camera" then
+        local cam=workspace.CurrentCamera; if cam then cam.FieldOfView=70 end; return
+    elseif action=="stats" then
+        v6Toast("STATS",string.format("FPS UI • %d cards",#FunctionButtons)); return
+    elseif action=="version" then
+        v6Toast("VERSION","ZAKA Pink Panther V6"); return
+    elseif action=="ui_objects" then
+        v6Toast("UI",tostring(#GUI:GetDescendants()).." objects"); return
+    elseif action=="refresh" then
+        applyRailScroll(); refreshFunctionCards(); v6Toast("REFRESH","UI refreshed"); return
+    elseif action=="clear_status" then
+        v6Toast("STATUS","Ready"); return
+    elseif action=="apply" then
+        v6Toast("APPLY","State đã áp dụng"); return
+    elseif action=="outline" or action=="highlight" or action=="focus_ring" then
+        v6Burst(5); return
+    elseif action=="grid" or action=="guide_h" or action=="guide_v" or action=="bounds" or action=="ruler" or action=="tags" or action=="radar" or action=="crosshair" then
+        v6Burst(4); v6Toast("VISUAL","Preview debug an toàn"); return
+    elseif action=="accent_cycle" then
+        v6Theme(V6.ThemeIndex+1); return
+    elseif action=="visual_test" then
+        v6Burst(16); v6Toast("VISUAL TEST","OK"); return
+    elseif action=="smooth" then
+        setAnimation(1.35); return
+    elseif action=="reset_ui" then
+        v6Reset(); return
+    elseif action=="bg_fit" then
+        BG.ScaleType=(BG.ScaleType==Enum.ScaleType.Crop) and Enum.ScaleType.Fit or Enum.ScaleType.Crop; return
+    elseif action=="flower" then
+        for i,p in ipairs(Petals) do
+            TweenService:Create(p,tw(.22,Enum.EasingStyle.Back),{Size=UDim2.fromOffset(72,34),Rotation=p.Rotation+12}):Play()
+            task.delay(.24,function() if p.Parent then TweenService:Create(p,tw(.35,Enum.EasingStyle.Back),{Size=UDim2.fromOffset(62,30)}):Play() end end)
+        end
+        v6Burst(6); return
+    elseif action=="sound" then
+        V6.Sound=not V6.Sound; CONFIG.EnableUIAudio=V6.Sound; v6Toast("UI AUDIO",V6.Sound and "ON" or "OFF"); return
+    elseif action=="preview" then
+        v6Burst(14)
+        if FlowerArea then
+            local old=FlowerArea.Size
+            TweenService:Create(FlowerArea,tw(.3,Enum.EasingStyle.Back),{Size=UDim2.fromScale(.36,.48)}):Play()
+            task.delay(.34,function() if FlowerArea.Parent then TweenService:Create(FlowerArea,tw(.45,Enum.EasingStyle.Back),{Size=old}):Play() end end)
+        end
+        return
+    elseif action=="home" then
+        selectTab(8,false); return
+    end
+    v6Toast("ZAKA","Action ready")
+end
+
+for i,x in ipairs(FunctionButtons) do
+    local b=x.button
+    if b and b:IsA("TextButton") then
+        b.Activated:Connect(function()
+            v6Pulse(b,1.045)
+            local data=CARD_DATA[CurrentTab][i]
+            if data then v6Action(data.action or "toast",CurrentTab,i) end
+        end)
+    end
+end
+
+
+--==============================================================
 -- STARTUP
 --==============================================================
-selectTab(1,true)
+selectTab(8,true)
+SettingsOverlay.Visible=false
 setGlass(CONFIG.GlassTransparency)
 setGlow(CONFIG.GlowStrength)
 if CONFIG.StartWithOrb then
     Orb.Visible=true; OrbRing1.Visible=true; OrbRing2.Visible=true; Menu.Visible=false
+    task.defer(dockOrbToEdge)
 else
     Orb.Visible=false; OrbRing1.Visible=false; OrbRing2.Visible=false
     openMenu()
@@ -1222,7 +1337,7 @@ end
 local function animateFunctionRail()
     for i,x in ipairs(FunctionButtons) do
         local d=(i%2==0 and 1 or -1)
-        local p=functionPos(i,12)
+        local p=functionPos(i,20)
         x.button.Position=UDim2.new(p.X.Scale,p.X.Offset+d*6,p.Y.Scale,p.Y.Offset)
         task.delay(i*.014,function()
             if x.button.Parent then TweenService:Create(x.button,tw(.25,Enum.EasingStyle.Back),{Position=p}):Play() end
@@ -1362,7 +1477,12 @@ local function cleanup()
     if _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4 then _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4=nil end
 end
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.Cleanup=cleanup
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.Version="V4.0 • 100KB+ Real Animated Menu"
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.Version="V6.0 • MAX LIQUID TOUCH • 8 TABS • 160 SAFE FUNCTIONS"
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.ComponentCount=#COMPONENT_GUIDE
 _G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.TabCount=#TAB_DATA
-_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.CardCount=20*12
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.CardCount=8*20
+
+
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.V6=true
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.FunctionsPerTab=20
+_G.ZAKA_PINK_PANTHER_DROP_FLOWER_V4.SafeCombatLocked=true
