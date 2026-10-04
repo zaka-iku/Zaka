@@ -267,7 +267,7 @@ glass(Left,.86)
 
 local Center = frame(Body,"Center",UDim2.fromScale(.50,.91),UDim2.fromScale(.25,.045),C.Pink2,.77,116)
 corner(Center,27)
-stroke(C.White,1,.84)
+stroke(Center,C.White,1,.84)
 glass(Center,.92)
 
 local Right = frame(Body,"FunctionsRail",UDim2.fromScale(.255,.91),UDim2.fromScale(.73,.045),C.Deep,.45,115)
@@ -1044,6 +1044,9 @@ Run.RenderStepped:Connect(function(dt)
     end
 end)
 
+-- ---------- Safe init marker ----------
+-- If this point is reached, the complete visual tree has been built.
+-- No image/asset/Pink Panther object is required.
 -- ---------- Initial state ----------
 selectTab(1)
 setMode(1)
