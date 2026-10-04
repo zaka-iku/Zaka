@@ -1,209 +1,314 @@
--- Delta Executor Full Keyboard & Menu Script for DOORS
+-- Delta Executor: OTG Mouse Lock + Full Virtual Keyboard + Key Visualizer
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- Clean Gui cũ nếu đã chạy trước đó
-if LocalPlayer.PlayerGui:FindFirstChild("FullKeyboardOTG") then
-    LocalPlayer.PlayerGui.FullKeyboardOTG:Destroy()
+-- Xóa GUI cũ nếu tồn tại
+if LocalPlayer.PlayerGui:FindFirstChild("OTGSystemGUI") then
+    LocalPlayer.PlayerGui.OTGSystemGUI:Destroy()
 end
 
--- 1. Tạo ScreenGui chính
+-- 1. TẠO SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FullKeyboardOTG"
+ScreenGui.Name = "OTGSystemGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. Hàm tạo Thông báo (Popup Notification)
-local function showNotification(text)
+-- 2. HÀM THÔNG BÁO POPUP
+local function showNotif(text)
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 220, 0, 40)
-    notif.Position = UDim2.new(0.5, -110, 0.1, 0)
-    notif.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
-    notif.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notif.Size = UDim2.new(0, 220, 0, 35)
+    notif.Position = UDim2.new(0.5, -110, 0.08, 0)
+    notif.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    notif.TextColor3 = Color3.fromRGB(0, 255, 127)
     notif.Text = text
     notif.Font = Enum.Font.SourceSansBold
-    notif.TextSize = 18
+    notif.TextSize = 16
     notif.BackgroundTransparency = 0.2
     notif.Parent = ScreenGui
 
-    -- Bo góc cho thông báo
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = notif
 
-    -- Hiệu ứng ẩn dần
-    task.delay(1.5, function()
-        local tween = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
+    task.delay(1.2, function()
+        local tween = TweenService:Create(notif, TweenInfo.new(0.4), {TextTransparency = 1, BackgroundTransparency = 1})
         tween:Play()
-        tween.Completed:Connect(function()
-            notif:Destroy()
-        end)
+        tween.Completed:Connect(function() notif:Destroy() end)
     end)
 end
 
--- 3. Nút Toggle MENU
+-- 3. BẢNG HIỂN THỊ PHÍM BẮM ĐANG ẤN (KEY VISUALIZER IN SƯƠNG / TRONG SUỐT)
+local VisFrame = Instance.new("Frame")
+VisFrame.Size = UDim2.new(0, 250, 0, 50)
+VisFrame.Position = UDim2.new(0.02, 0, 0.85, 0)
+VisFrame.BackgroundTransparency = 1
+VisFrame.Parent = ScreenGui
+
+local VisLayout = Instance.new("UIListLayout")
+VisLayout.FillDirection = Enum.FillDirection.Horizontal
+VisLayout.SortOrder = Enum.SortOrder.LayoutOrder
+VisLayout.Padding = UDim.new(0, 5)
+VisLayout.Parent = VisFrame
+
+local activeVisKeys = {}
+
+local function showPressedKey(keyName)
+    if activeVisKeys[keyName] then return end
+    
+    local keyLbl = Instance.new("TextLabel")
+    keyLbl.Size = UDim2.new(0, 40, 0, 40)
+    keyLbl.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    keyLbl.BackgroundTransparency = 0.5 -- Trong suốt
+    keyLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    keyLbl.TextTransparency = 0.2
+    keyLbl.Text = keyName
+    keyLbl.Font = Enum.Font.SourceSansBold
+    keyLbl.TextSize = 14
+    keyLbl.Parent = VisFrame
+
+    local kCorner = Instance.new("UICorner")
+    kCorner.CornerRadius = UDim.new(0, 6)
+    kCorner.Parent = keyLbl
+
+    local kStroke = Instance.new("UIStroke")
+    kStroke.Color = Color3.fromRGB(255, 255, 255)
+    kStroke.Transparency = 0.6
+    kStroke.Parent = keyLbl
+
+    activeVisKeys[keyName] = keyLbl
+end
+
+local function hidePressedKey(keyName)
+    if activeVisKeys[keyName] then
+        activeVisKeys[keyName]:Destroy()
+        activeVisKeys[keyName] = nil
+    end
+end
+
+-- 4. NÚT TOGGLE MENU HỆ THỐNG
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 70, 0, 40)
-ToggleBtn.Position = UDim2.new(0.02, 0, 0.05, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ToggleBtn.Size = UDim2.new(0, 80, 0, 35)
+ToggleBtn.Position = UDim2.new(0.02, 0, 0.02, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Text = "MENU"
 ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.TextSize = 16
+ToggleBtn.TextSize = 15
 ToggleBtn.Parent = ScreenGui
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 6)
-toggleCorner.Parent = ToggleBtn
+local tCorner = Instance.new("UICorner")
+tCorner.CornerRadius = UDim.new(0, 6)
+tCorner.Parent = ToggleBtn
 
--- 4. Khung Bàn Phím Chính (Full Keyboard Frame)
-local MainFrame = Instance.new("ScrollingFrame")
-MainFrame.Size = UDim2.new(0, 850, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -425, 0.5, -130)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BackgroundTransparency = 0.15
-MainFrame.CanvasSize = UDim2.new(0, 980, 0, 250)
-MainFrame.ScrollBarThickness = 6
-MainFrame.Visible = true
-MainFrame.Active = true
-MainFrame.Draggable = true -- Cho phép kéo thả vị trí bàn phím
-MainFrame.Parent = ScreenGui
+-- 5. CONTAINER CHÍNH CHIA LÀM 2 PHẦN
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(0, 780, 0, 260)
+MainContainer.Position = UDim2.new(0.5, -390, 0.5, -130)
+MainContainer.BackgroundTransparency = 1
+MainContainer.Visible = true
+MainContainer.Parent = ScreenGui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 10)
-mainCorner.Parent = MainFrame
+-- PHẦN 1: BÀN PHÍM & CHUỘT ẢO (BÊN TRÁI)
+local Part1_Keyboard = Instance.new("ScrollingFrame")
+Part1_Keyboard.Size = UDim2.new(0, 540, 1, 0)
+Part1_Keyboard.Position = UDim2.new(0, 0, 0, 0)
+Part1_Keyboard.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Part1_Keyboard.BackgroundTransparency = 0.2
+Part1_Keyboard.CanvasSize = UDim2.new(0, 750, 0, 240)
+Part1_Keyboard.ScrollBarThickness = 5
+Part1_Keyboard.Parent = MainContainer
 
--- Hàm tạo phím bấm ảo
-local function createKey(text, posX, posY, sizeX, sizeY, keyCode)
+local p1Corner = Instance.new("UICorner")
+p1Corner.CornerRadius = UDim.new(0, 8)
+p1Corner.Parent = Part1_Keyboard
+
+-- PHẦN 2: KHÓA GÓC NHÌN & CÀI ĐẶT CAMERA (BÊN PHẢI)
+local Part2_Camera = Instance.new("Frame")
+Part2_Camera.Size = UDim2.new(0, 230, 1, 0)
+Part2_Camera.Position = UDim2.new(0, 550, 0, 0)
+Part2_Camera.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Part2_Camera.BackgroundTransparency = 0.2
+Part2_Camera.Parent = MainContainer
+
+local p2Corner = Instance.new("UICorner")
+p2Corner.CornerRadius = UDim.new(0, 8)
+p2Corner.Parent = Part2_Camera
+
+local P2Title = Instance.new("TextLabel")
+P2Title.Size = UDim2.new(1, 0, 0, 30)
+P2Title.BackgroundTransparency = 1
+P2Title.Text = "CÀI ĐẶT CHUỘT & CAMERA"
+P2Title.TextColor3 = Color3.fromRGB(255, 200, 0)
+P2Title.Font = Enum.Font.SourceSansBold
+P2Title.TextSize = 14
+P2Title.Parent = Part2_Camera
+
+-- LOGIC TẠO PHÍM BẤM BÀN PHÍM ẢO (PHẦN 1)
+local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     local btn = Instance.new("TextButton")
     btn.Text = text
     btn.Position = UDim2.new(0, posX, 0, posY)
     btn.Size = UDim2.new(0, sizeX, 0, sizeY)
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 12
-    btn.Parent = MainFrame
+    btn.Parent = Part1_Keyboard
 
     local kCorner = Instance.new("UICorner")
     kCorner.CornerRadius = UDim.new(0, 4)
     kCorner.Parent = btn
 
     btn.MouseButton1Down:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+        btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+        showPressedKey(text)
         if keyCode then
             VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+        elseif mouseEnum then
+            VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, true, game, 0)
         end
     end)
 
     btn.MouseButton1Up:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        hidePressedKey(text)
         if keyCode then
             VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+        elseif mouseEnum then
+            VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, false, game, 0)
         end
     end)
 end
 
+-- Nút Chuột Trái / Chuột Phải Ảo
+createKey("L-Click", 5, 5, 60, 30, nil, "L")
+createKey("R-Click", 70, 5, 60, 30, nil, "R")
+
+-- Dải phím WASD / Thao tác chính
+createKey("Esc", 140, 5, 35, 30, Enum.KeyCode.Escape)
+createKey("Tab", 5, 40, 45, 30, Enum.KeyCode.Tab)
+createKey("W", 115, 40, 35, 30, Enum.KeyCode.W)
+createKey("E (Dùng)", 155, 40, 60, 30, Enum.KeyCode.E)
+createKey("A", 75, 75, 35, 30, Enum.KeyCode.A)
+createKey("S", 115, 75, 35, 30, Enum.KeyCode.S)
+createKey("D", 155, 75, 35, 30, Enum.KeyCode.D)
+createKey("Shift", 5, 110, 55, 30, Enum.KeyCode.LeftShift)
+createKey("C (Cúi)", 65, 110, 50, 30, Enum.KeyCode.C)
+createKey("Space (Nhảy)", 120, 110, 100, 30, Enum.KeyCode.Space)
+
+-- Bảng phím Chữ A-Z mở rộng
+local letters = {"Q","R","T","Y","U","I","O","P","F","G","H","J","K","L","Z","X","V","B","N","M"}
+local startX, startY = 230, 5
+for i, l in ipairs(letters) do
+    local row = math.floor((i-1)/5)
+    local col = (i-1)%5
+    createKey(l, startX + col*38, startY + row*35, 35, 30, Enum.KeyCode[l])
+end
+
 -- ==========================================
--- KHỞI TẠO NGUYÊN BÀN PHÍM MÁY TÍNH (104 PHÍM)
+-- LOGIC PHẦN 2: KHÓA GÓC NHÌN CHÍNH GIỮA (CENTER MOUSE LOCK)
 -- ==========================================
+local isMouseLocked = false
+local LockToggleBtn = Instance.new("TextButton")
+LockToggleBtn.Size = UDim2.new(0, 200, 0, 45)
+LockToggleBtn.Position = UDim2.new(0, 15, 0, 40)
+LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+LockToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockToggleBtn.Text = "Khóa Góc Nhìn: TẮT"
+LockToggleBtn.Font = Enum.Font.SourceSansBold
+LockToggleBtn.TextSize = 14
+LockToggleBtn.Parent = Part2_Camera
 
--- Hàng 0: Function Keys (ESC, F1-F12, Print, Scroll, Pause)
-createKey("Esc", 5, 5, 35, 30, Enum.KeyCode.Escape)
-local fKeys = {Enum.KeyCode.F1, Enum.KeyCode.F2, Enum.KeyCode.F3, Enum.KeyCode.F4, Enum.KeyCode.F5, Enum.KeyCode.F6, Enum.KeyCode.F7, Enum.KeyCode.F8, Enum.KeyCode.F9, Enum.KeyCode.F10, Enum.KeyCode.F11, Enum.KeyCode.F12}
-for i, k in ipairs(fKeys) do
-    local offset = (i > 8 and 60) or (i > 4 and 45) or 30
-    createKey("F"..i, 20 + i*35 + offset, 5, 32, 30, k)
-end
-createKey("PrtSc", 520, 5, 35, 30, Enum.KeyCode.Print)
-createKey("ScrLk", 560, 5, 35, 30, Enum.KeyCode.ScrollLock)
-createKey("Pause", 600, 5, 35, 30, Enum.KeyCode.Pause)
+local lCorner = Instance.new("UICorner")
+lCorner.CornerRadius = UDim.new(0, 6)
+lCorner.Parent = LockToggleBtn
 
--- Hàng 1: Number Row (~, 1-0, -, =, Backspace)
-local r1 = {{"`", Enum.KeyCode.Backquote}, {"1", Enum.KeyCode.One}, {"2", Enum.KeyCode.Two}, {"3", Enum.KeyCode.Three}, {"4", Enum.KeyCode.Four}, {"5", Enum.KeyCode.Five}, {"6", Enum.KeyCode.Six}, {"7", Enum.KeyCode.Seven}, {"8", Enum.KeyCode.Eight}, {"9", Enum.KeyCode.Nine}, {"0", Enum.KeyCode.Zero}, {"-", Enum.KeyCode.Minus}, {"=", Enum.KeyCode.Equals}}
-for i, item in ipairs(r1) do
-    createKey(item[1], 5 + (i-1)*35, 40, 32, 32, item[2])
-end
-createKey("Backspace", 460, 40, 65, 32, Enum.KeyCode.Backspace)
-createKey("Ins", 530, 40, 35, 32, Enum.KeyCode.Insert)
-createKey("Home", 570, 40, 35, 32, Enum.KeyCode.Home)
-createKey("PgUp", 610, 40, 35, 32, Enum.KeyCode.PageUp)
+-- Nút giả lập xoay camera bằng phím
+local RotateL = Instance.new("TextButton")
+RotateL.Text = "◄ Xoay Trái"
+RotateL.Size = UDim2.new(0, 95, 0, 35)
+RotateL.Position = UDim2.new(0, 15, 0, 95)
+RotateL.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+RotateL.TextColor3 = Color3.fromRGB(255, 255, 255)
+RotateL.Font = Enum.Font.SourceSansBold
+RotateL.Parent = Part2_Camera
 
--- Hàng 2: QWERTY Row (Tab, Q-P, [, ], \)
-createKey("Tab", 5, 75, 48, 32, Enum.KeyCode.Tab)
-local r2 = {{"Q", Enum.KeyCode.Q}, {"W", Enum.KeyCode.W}, {"E", Enum.KeyCode.E}, {"R", Enum.KeyCode.R}, {"T", Enum.KeyCode.T}, {"Y", Enum.KeyCode.Y}, {"U", Enum.KeyCode.U}, {"I", Enum.KeyCode.I}, {"O", Enum.KeyCode.O}, {"P", Enum.KeyCode.P}, {"[", Enum.KeyCode.LeftBracket}, {"]", Enum.KeyCode.RightBracket}, {"\\", Enum.KeyCode.BackSlash}}
-for i, item in ipairs(r2) do
-    createKey(item[1], 56 + (i-1)*35, 75, 32, 32, item[2])
-end
-createKey("Del", 530, 75, 35, 32, Enum.KeyCode.Delete)
-createKey("End", 570, 75, 35, 32, Enum.KeyCode.End)
-createKey("PgDn", 610, 75, 35, 32, Enum.KeyCode.PageDown)
+local RotateR = Instance.new("TextButton")
+RotateR.Text = "Xoay Phải ►"
+RotateR.Size = UDim2.new(0, 95, 0, 35)
+RotateR.Position = UDim2.new(0, 120, 0, 95)
+RotateR.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+RotateR.TextColor3 = Color3.fromRGB(255, 255, 255)
+RotateR.Font = Enum.Font.SourceSansBold
+RotateR.Parent = Part2_Camera
 
--- Hàng 3: ASDFGH Row (Caps, A-L, ;, ', Enter)
-createKey("Caps", 5, 110, 58, 32, Enum.KeyCode.CapsLock)
-local r3 = {{"A", Enum.KeyCode.A}, {"S", Enum.KeyCode.S}, {"D", Enum.KeyCode.D}, {"F", Enum.KeyCode.F}, {"G", Enum.KeyCode.G}, {"H", Enum.KeyCode.H}, {"J", Enum.KeyCode.J}, {"K", Enum.KeyCode.K}, {"L", Enum.KeyCode.L}, {";", Enum.KeyCode.Semicolon}, {"'", Enum.KeyCode.Quote}}
-for i, item in ipairs(r3) do
-    createKey(item[1], 66 + (i-1)*35, 110, 32, 32, item[2])
-end
-createKey("Enter", 451, 110, 74, 32, Enum.KeyCode.Return)
+local rotL, rotR = false, false
+RotateL.MouseButton1Down:Connect(function() rotL = true end)
+RotateL.MouseButton1Up:Connect(function() rotL = false end)
+RotateR.MouseButton1Down:Connect(function() rotR = true end)
+RotateR.MouseButton1Up:Connect(function() rotR = false end)
 
--- Hàng 4: ZXCVBN Row (Shift, Z-M, ,, ., /, Shift)
-createKey("Shift", 5, 145, 75, 32, Enum.KeyCode.LeftShift)
-local r4 = {{"Z", Enum.KeyCode.Z}, {"X", Enum.KeyCode.X}, {"C", Enum.KeyCode.C}, {"V", Enum.KeyCode.V}, {"B", Enum.KeyCode.B}, {"N", Enum.KeyCode.N}, {"M", Enum.KeyCode.M}, {",", Enum.KeyCode.Comma}, {".", Enum.KeyCode.Period}, {"/", Enum.KeyCode.Slash}}
-for i, item in ipairs(r4) do
-    createKey(item[1], 83 + (i-1)*35, 145, 32, 32, item[2])
-end
-createKey("RShift", 433, 145, 92, 32, Enum.KeyCode.RightShift)
-createKey("▲", 570, 145, 35, 32, Enum.KeyCode.Up)
-
--- Hàng 5: Bottom Row (Ctrl, Win, Alt, Space, Alt, Win, Menu, Ctrl, Arrows)
-createKey("Ctrl", 5, 180, 45, 32, Enum.KeyCode.LeftControl)
-createKey("Win", 53, 180, 40, 32, Enum.KeyCode.LeftSuper)
-createKey("Alt", 96, 180, 40, 32, Enum.KeyCode.LeftAlt)
-createKey("Space Bar", 139, 180, 200, 32, Enum.KeyCode.Space)
-createKey("RAlt", 342, 180, 40, 32, Enum.KeyCode.RightAlt)
-createKey("RWin", 385, 180, 40, 32, Enum.KeyCode.RightSuper)
-createKey("RCtrl", 428, 180, 45, 32, Enum.KeyCode.RightControl)
-createKey("◄", 530, 180, 35, 32, Enum.KeyCode.Left)
-createKey("▼", 570, 180, 35, 32, Enum.KeyCode.Down)
-createKey("►", 610, 180, 35, 32, Enum.KeyCode.Right)
-
--- Cụm Numpad (Cụm phím số bên phải 17 phím)
-local npX = 660
-createKey("Num", npX, 5, 32, 30, Enum.KeyCode.NumLock)
-createKey("/", npX+35, 5, 32, 30, Enum.KeyCode.KeypadDivide)
-createKey("*", npX+70, 5, 32, 30, Enum.KeyCode.KeypadMultiply)
-createKey("-", npX+105, 5, 32, 30, Enum.KeyCode.KeypadMinus)
-
-createKey("7", npX, 40, 32, 32, Enum.KeyCode.KeypadSeven)
-createKey("8", npX+35, 40, 32, 32, Enum.KeyCode.KeypadEight)
-createKey("9", npX+70, 40, 32, 32, Enum.KeyCode.KeypadNine)
-createKey("+", npX+105, 40, 32, 67, Enum.KeyCode.KeypadPlus)
-
-createKey("4", npX, 75, 32, 32, Enum.KeyCode.KeypadFour)
-createKey("5", npX+35, 75, 32, 32, Enum.KeyCode.KeypadFive)
-createKey("6", npX+70, 75, 32, 32, Enum.KeyCode.KeypadSix)
-
-createKey("1", npX, 110, 32, 32, Enum.KeyCode.KeypadOne)
-createKey("2", npX+35, 110, 32, 32, Enum.KeyCode.KeypadTwo)
-createKey("3", npX+70, 110, 32, 32, Enum.KeyCode.KeypadThree)
-createKey("Ent", npX+105, 110, 32, 67, Enum.KeyCode.KeypadEnter)
-
-createKey("0", npX, 145, 67, 32, Enum.KeyCode.KeypadZero)
-createKey(".", npX+70, 145, 32, 32, Enum.KeyCode.KeypadPeriod)
-
--- 5. Logic Nút Toggle Menu + Thông báo "Thành công"
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-    if MainFrame.Visible then
-        showNotification("Bật Bàn Phím Thành Công!")
-    else
-        showNotification("Ẩn Bàn Phím Thành Công!")
+-- Vòng lặp khóa camera vào giữa màn hình khi bật Lock
+RunService.RenderStepped:Connect(function()
+    if isMouseLocked then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+    end
+    if rotL then
+        Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.rad(2.5), 0)
+    elseif rotR then
+        Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.rad(-2.5), 0)
     end
 end)
 
--- Thông báo kích hoạt ban đầu
-showNotification("Tải Bàn Phím OTG Thành Công!")
+LockToggleBtn.MouseButton1Click:Connect(function()
+    isMouseLocked = not isMouseLocked
+    if isMouseLocked then
+        LockToggleBtn.Text = "Khóa Góc Nhìn: BẬT"
+        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        showNotif("Đã Bật Khóa Góc Nhìn PC!")
+    else
+        LockToggleBtn.Text = "Khóa Góc Nhìn: TẮT"
+        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        showNotif("Đã Tắt Khóa Góc Nhìn!")
+    end
+end)
+
+-- Bắt sự kiện phím vật lý để hiển thị Key Visualizer
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        showPressedKey(input.KeyCode.Name)
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        showPressedKey("L-Click")
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        showPressedKey("R-Click")
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        hidePressedKey(input.KeyCode.Name)
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        hidePressedKey("L-Click")
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        hidePressedKey("R-Click")
+    end
+end)
+
+-- NÚT TOGGLE ẨN/HIỆN MENU CHÍNH
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainContainer.Visible = not MainContainer.Visible
+    if MainContainer.Visible then
+        showNotif("Mở Menu Thành Công!")
+    else
+        showNotif("Ẩn Menu Thành Công!")
+    end
+end)
+
+showNotif("Khởi Tạo OTG Menu Thành Công!")
