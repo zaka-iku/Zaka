@@ -1,4 +1,4 @@
--- Delta Executor: Fixed CameraScriptable 360 Lock for DOORS
+-- Delta Executor: Exact DOORS Native Center Crosshair + Smooth OTG Engine
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -8,21 +8,21 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Clean GUI cũ
-if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsFinalFixGUI") then
-    LocalPlayer.PlayerGui.OTGDoorsFinalFixGUI:Destroy()
+if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsNativeGUI") then
+    LocalPlayer.PlayerGui.OTGDoorsNativeGUI:Destroy()
 end
 
--- 1. SCREENGUI CHÍNH
+-- 1. SCREENGUI CHÍNH (IgnoreGuiInset = true để chuẩn tâm màn hình gốc)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsFinalFixGUI"
+ScreenGui.Name = "OTGDoorsNativeGUI"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
+ScreenGui.IgnoreGuiInset = true -- Căn chuẩn tâm gốc Roblox/DOORS không bị lệch bởi dải thông báo trên
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. TÂM NGẮM CHUẨN DOORS
+-- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS (EXACT NATIVE CROSSHAIR)
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 4, 0, 4)
-NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
+NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5) -- Neo đúng trung tâm 50% - 50%
 NativeCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 NativeCenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NativeCenterDot.BackgroundTransparency = 0
@@ -42,8 +42,8 @@ dotStroke.Parent = NativeCenterDot
 -- 3. HÀM POPUP THÔNG BÁO
 local function showNotif(text)
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 250, 0, 35)
-    notif.Position = UDim2.new(0.5, -125, 0.08, 0)
+    notif.Size = UDim2.new(0, 240, 0, 35)
+    notif.Position = UDim2.new(0.5, -120, 0.08, 0)
     notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     notif.BackgroundTransparency = 0.2
     notif.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -63,7 +63,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN CẦU VỒNG RGB)
+-- 4. BẢNG KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -187,10 +187,10 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 28)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "CAMERA CONTROL ENGINES"
+P2Title.Text = "DOORS LOCK ENGINES"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
-P2Title.TextSize = 12
+P2Title.TextSize = 13
 P2Title.Parent = Part2
 
 local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
@@ -251,83 +251,68 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- THUẬT TOÁN CAMERA OVERRIDE XOAY 360 TỰ DO
+-- BỘ CHUYỂN ĐỔI LOCK ENGINES (TỐI ƯU XOAY 360 LÀM MƯỢT CỰC ĐẠI)
 -- ==========================================
-local isLockActive = false
-local sensitivity = 0.35
-local yaw, pitch = 0, 0
+local currentLockEngine = 2 -- Mặc định dùng Engine 2 (Ultra Smooth)
+local sensitivity = 0.28 -- Độ nhạy mượt chuẩn
+local targetYaw, targetPitch = 0, 0
+local currentYaw, currentPitch = 0, 0
 
 local function resetAngle()
     local _, y, _ = Camera.CFrame:ToOrientation()
-    yaw = math.deg(y)
-    pitch = 0
+    targetYaw = math.deg(y)
+    currentYaw = targetYaw
+    targetPitch = 0
+    currentPitch = 0
+end
+resetAngle()
+
+local function createLockOptionBtn(text, engineId, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 225, 0, 36)
+    btn.Position = UDim2.new(0, 15, 0, posY)
+    btn.BackgroundColor3 = (engineId == currentLockEngine and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 40, 40))
+    btn.BackgroundTransparency = 0.3
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = Part2
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        if currentLockEngine == engineId then
+            currentLockEngine = 0
+            btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            showNotif("Engine Disabled")
+        else
+            currentLockEngine = engineId
+            for _, child in pairs(Part2:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+                end
+            end
+            btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+            resetAngle()
+            showNotif("Activated: " .. text)
+        end
+    end)
 end
 
-local LockToggleBtn = Instance.new("TextButton")
-LockToggleBtn.Size = UDim2.new(0, 225, 0, 45)
-LockToggleBtn.Position = UDim2.new(0, 15, 0, 40)
-LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-LockToggleBtn.BackgroundTransparency = 0.3
-LockToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockToggleBtn.Text = "Khóa Chuột OTG 360°: TẮT"
-LockToggleBtn.Font = Enum.Font.SourceSansBold
-LockToggleBtn.TextSize = 13
-LockToggleBtn.Parent = Part2
+createLockOptionBtn("Engine 1: LockCenter Native", 1, 35)
+createLockOptionBtn("Engine 2: Ultra Smooth 360 (Best)", 2, 80)
+createLockOptionBtn("Engine 3: Touch Pan Swipe", 3, 125)
+createLockOptionBtn("Engine 4: Hard Position Freeze", 4, 170)
 
-local lCorner = Instance.new("UICorner")
-lCorner.CornerRadius = UDim.new(0, 6)
-lCorner.Parent = LockToggleBtn
+local isRightMouseDown = false
 
-LockToggleBtn.MouseButton1Click:Connect(function()
-    isLockActive = not isLockActive
-    if isLockActive then
-        LockToggleBtn.Text = "Khóa Chuột OTG 360°: BẬT"
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-        
-        -- Chuyển camera sang dạng Scriptable để ngắt hẳn sự can thiệp từ game DOORS
-        Camera.CameraType = Enum.CameraType.Scriptable
-        resetAngle()
-        showNotif("Đã Bật Khóa Chuột 360°!")
-    else
-        LockToggleBtn.Text = "Khóa Chuột OTG 360°: TẮT"
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        
-        -- Trả lại camera mặc định của game
-        Camera.CameraType = Enum.CameraType.Custom
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        showNotif("Đã Tắt Khóa Chuột!")
-    end
-end)
-
--- Bắt sự kiện chuột di chuyển để tính góc quay
-UserInputService.InputChanged:Connect(function(input, gpe)
-    if isLockActive and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Delta
-        yaw = yaw - (delta.X * sensitivity)
-        pitch = math.clamp(pitch - (delta.Y * sensitivity), -85, 85)
-    end
-end)
-
--- RenderStepped ép CFrame liên tục theo vị trí đầu nhân vật
-RunService.RenderStepped:Connect(function()
-    if isLockActive then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-        
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("Head") then
-            local headPos = character.Head.Position
-            
-            -- Cập nhật CFrame tự do không bị DOORS đè
-            Camera.CFrame = CFrame.new(headPos) 
-                * CFrame.Angles(0, math.rad(yaw), 0) 
-                * CFrame.Angles(math.rad(pitch), 0, 0)
-        end
-    end
-end)
-
--- Lắng nghe bấm phím
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseDown = true
         showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         showPressedKey("[L-Mouse]")
@@ -338,11 +323,56 @@ end)
 
 UserInputService.InputEnded:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseDown = false
         hidePressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         hidePressedKey("[L-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         hidePressedKey(input.KeyCode.Name)
+    end
+end)
+
+-- BẮT ĐỘ LỆCH CHUỘT LÀM MƯỢT
+UserInputService.InputChanged:Connect(function(input, gpe)
+    if (currentLockEngine == 2 or isRightMouseDown) and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Delta
+        targetYaw = targetYaw - (delta.X * sensitivity)
+        targetPitch = math.clamp(targetPitch - (delta.Y * sensitivity), -88, 88)
+    end
+end)
+
+-- VÒNG LẶP RENDER MƯỢT TỪNG FRAME
+RunService.RenderStepped:Connect(function(dt)
+    if isRightMouseDown or currentLockEngine > 0 then
+        if currentLockEngine == 1 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        elseif currentLockEngine == 2 or isRightMouseDown then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+            
+            -- Thuật toán LERP làm mượt chuyển động chuột không bị giật khựng
+            local smoothFactor = math.clamp(dt * 25, 0, 1)
+            currentYaw = currentYaw + (targetYaw - currentYaw) * smoothFactor
+            currentPitch = currentPitch + (targetPitch - currentPitch) * smoothFactor
+            
+            local camPos = Camera.CFrame.Position
+            Camera.CFrame = CFrame.new(camPos) 
+                * CFrame.Angles(0, math.rad(currentYaw), 0) 
+                * CFrame.Angles(math.rad(currentPitch), 0, 0)
+        elseif currentLockEngine == 3 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+            local delta = UserInputService:GetMouseDelta()
+            if delta.Magnitude > 0 then
+                VirtualInputManager:SendPanGestureEvent(
+                    Vector2.new(Camera.ViewportSize.X * 0.75, Camera.ViewportSize.Y * 0.5),
+                    delta * sensitivity,
+                    0,
+                    Enum.UserInputState.Change,
+                    game
+                )
+            end
+        elseif currentLockEngine == 4 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        end
     end
 end)
 
@@ -355,4 +385,4 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-showNotif("DOORS Fixed 360 Lock Ready!")
+showNotif("DOORS Smooth 360 Fixed!")
