@@ -1,4 +1,4 @@
--- Delta Executor: Fix OTG Mouse Lock FPS Doors + Rainbow Transparent Overlay
+-- Delta Executor: Ultimate OTG Mouse Lock + DOORS Center Dot + RGB Border Overlay
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -8,24 +8,43 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Clean GUI cũ
-if LocalPlayer.PlayerGui:FindFirstChild("OTGFpsRainbowGUI") then
-    LocalPlayer.PlayerGui.OTGFpsRainbowGUI:Destroy()
+if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsUltimateGUI") then
+    LocalPlayer.PlayerGui.OTGDoorsUltimateGUI:Destroy()
 end
 
--- 1. TẠO SCREENGUI CHÍNH
+-- 1. SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGFpsRainbowGUI"
+ScreenGui.Name = "OTGDoorsUltimateGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. HÀM POPUP THÔNG BÁO
+-- 2. TÂM NGẮM CHẤM TRÒN TRẮNG CHÍNH GIỮA MÀN HÌNH (CENTER CROSSHAIR)
+local CenterDot = Instance.new("Frame")
+CenterDot.Size = UDim2.new(0, 5, 0, 5)
+CenterDot.Position = UDim2.new(0.5, -2, 0.5, -2)
+CenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CenterDot.BackgroundTransparency = 0 -- Trắng nguyên chất
+CenterDot.Visible = true
+CenterDot.Parent = ScreenGui
+
+local dotCorner = Instance.new("UICorner")
+dotCorner.CornerRadius = UDim.new(1, 0)
+dotCorner.Parent = CenterDot
+
+local dotStroke = Instance.new("UIStroke")
+dotStroke.Color = Color3.fromRGB(0, 0, 0)
+dotStroke.Transparency = 0.5
+dotStroke.Thickness = 1
+dotStroke.Parent = CenterDot
+
+-- 3. HÀM POPUP THÔNG BÁO (NOTIFICATION)
 local function showNotif(text)
     local notif = Instance.new("TextLabel")
     notif.Size = UDim2.new(0, 240, 0, 35)
     notif.Position = UDim2.new(0.5, -120, 0.08, 0)
     notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     notif.BackgroundTransparency = 0.2
-    notif.TextColor3 = Color3.fromRGB(0, 255, 150)
+    notif.TextColor3 = Color3.fromRGB(255, 255, 255)
     notif.Text = text
     notif.Font = Enum.Font.SourceSansBold
     notif.TextSize = 15
@@ -42,9 +61,9 @@ local function showNotif(text)
     end)
 end
 
--- 3. KEY VISUALIZER (TRONG SUỐT 100% + VIỀN & CHỮ CẦU VỒNG RGB)
+-- 4. BẢNG KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
 local VisFrame = Instance.new("Frame")
-VisFrame.Size = UDim2.new(0, 400, 0, 60)
+VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
 VisFrame.BackgroundTransparency = 1
 VisFrame.Parent = ScreenGui
@@ -52,24 +71,21 @@ VisFrame.Parent = ScreenGui
 local VisLayout = Instance.new("UIListLayout")
 VisLayout.FillDirection = Enum.FillDirection.Horizontal
 VisLayout.SortOrder = Enum.SortOrder.LayoutOrder
-VisLayout.Padding = UDim.new(0, 8)
+VisLayout.Padding = UDim.new(0, 10)
 VisLayout.Parent = VisFrame
 
 local activeVisKeys = {}
-local rainbowObjects = {}
+local rainbowStrokes = {}
 
--- Vòng lặp đổi màu Cầu Vồng (RGB) cho các phím đang ấn
+-- Loop hiệu ứng Cầu vồng (RGB) tỏa sáng ở đường viền
 local hue = 0
 RunService.RenderStepped:Connect(function(delta)
-    hue = (hue + delta * 0.6) % 1
+    hue = (hue + delta * 0.8) % 1
     local rainbowColor = Color3.fromHSV(hue, 1, 1)
     
-    for _, item in pairs(rainbowObjects) do
-        if item.Stroke then
-            item.Stroke.Color = rainbowColor
-        end
-        if item.Label then
-            item.Label.TextColor3 = rainbowColor
+    for _, stroke in pairs(rainbowStrokes) do
+        if stroke then
+            stroke.Color = rainbowColor
         end
     end
 end)
@@ -78,11 +94,10 @@ local function showPressedKey(keyName)
     if activeVisKeys[keyName] then return end
     
     local keyLbl = Instance.new("TextLabel")
-    keyLbl.Size = UDim2.new(0, 48, 0, 48)
-    
-    -- TRONG SUỐT 100% NỀN
-    keyLbl.BackgroundTransparency = 1
+    keyLbl.Size = UDim2.new(0, 50, 0, 50)
+    keyLbl.BackgroundTransparency = 1 -- Trong suốt 100%
     keyLbl.Text = keyName
+    keyLbl.TextColor3 = Color3.fromRGB(255, 255, 255) -- Chữ trắng gốc
     keyLbl.Font = Enum.Font.SourceSansBold
     keyLbl.TextSize = 16
     keyLbl.Parent = VisFrame
@@ -91,22 +106,30 @@ local function showPressedKey(keyName)
     kCorner.CornerRadius = UDim.new(0, 8)
     kCorner.Parent = keyLbl
 
-    -- VIỀN ĐẬM CẦU VỒNG (RGB STROKE)
-    local kStroke = Instance.new("UIStroke")
-    kStroke.Thickness = 3.5 -- Viền sáng đậm
-    kStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    kStroke.Parent = keyLbl
+    -- Viền chữ trắng gốc
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Color = Color3.fromRGB(255, 255, 255)
+    textStroke.Transparency = 0.2
+    textStroke.Thickness = 1.2
+    textStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+    textStroke.Parent = keyLbl
+
+    -- Viền ngoài Cầu Vồng phát sáng xung quanh vùng trắng
+    local outerRainbowStroke = Instance.new("UIStroke")
+    outerRainbowStroke.Thickness = 3.5
+    outerRainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    outerRainbowStroke.Parent = keyLbl
 
     activeVisKeys[keyName] = keyLbl
-    table.insert(rainbowObjects, {Label = keyLbl, Stroke = kStroke})
+    table.insert(rainbowStrokes, outerRainbowStroke)
 end
 
 local function hidePressedKey(keyName)
     if activeVisKeys[keyName] then
         local target = activeVisKeys[keyName]
-        for i, item in ipairs(rainbowObjects) do
-            if item.Label == target then
-                table.remove(rainbowObjects, i)
+        for i, stroke in ipairs(rainbowStrokes) do
+            if stroke.Parent == target then
+                table.remove(rainbowStrokes, i)
                 break
             end
         end
@@ -115,7 +138,7 @@ local function hidePressedKey(keyName)
     end
 end
 
--- 4. NÚT TOGGLE MENU
+-- 5. NÚT TOGGLE MENU
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 80, 0, 35)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.02, 0)
@@ -131,20 +154,20 @@ local tCorner = Instance.new("UICorner")
 tCorner.CornerRadius = UDim.new(0, 6)
 tCorner.Parent = ToggleBtn
 
--- 5. CONTAINER MENU CHÍNH
+-- 6. MENU CONTAINER CHÍNH
 local MainContainer = Instance.new("Frame")
-MainContainer.Size = UDim2.new(0, 760, 0, 250)
-MainContainer.Position = UDim2.new(0.5, -380, 0.5, -125)
+MainContainer.Size = UDim2.new(0, 780, 0, 260)
+MainContainer.Position = UDim2.new(0.5, -390, 0.5, -130)
 MainContainer.BackgroundTransparency = 1
 MainContainer.Visible = true
 MainContainer.Parent = ScreenGui
 
--- PHẦN 1: BÀN PHÍMẢO (BÊN TRÁI)
+-- PHẦN 1: BÀN PHÍM ẢO
 local Part1 = Instance.new("ScrollingFrame")
-Part1.Size = UDim2.new(0, 520, 1, 0)
+Part1.Size = UDim2.new(0, 510, 1, 0)
 Part1.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Part1.BackgroundTransparency = 0.3
-Part1.CanvasSize = UDim2.new(0, 700, 0, 230)
+Part1.CanvasSize = UDim2.new(0, 680, 0, 230)
 Part1.ScrollBarThickness = 4
 Part1.Parent = MainContainer
 
@@ -152,10 +175,10 @@ local p1Corner = Instance.new("UICorner")
 p1Corner.CornerRadius = UDim.new(0, 8)
 p1Corner.Parent = Part1
 
--- PHẦN 2: CHUỘT & KHÓA FPS DOORS (BÊN PHẢI)
+-- PHẦN 2: CÁC NÚT KHÓA CHUỘT
 local Part2 = Instance.new("Frame")
-Part2.Size = UDim2.new(0, 225, 1, 0)
-Part2.Position = UDim2.new(0, 535, 0, 0)
+Part2.Size = UDim2.new(0, 255, 1, 0)
+Part2.Position = UDim2.new(0, 525, 0, 0)
 Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Part2.BackgroundTransparency = 0.3
 Part2.Parent = MainContainer
@@ -165,15 +188,15 @@ p2Corner.CornerRadius = UDim.new(0, 8)
 p2Corner.Parent = Part2
 
 local P2Title = Instance.new("TextLabel")
-P2Title.Size = UDim2.new(1, 0, 0, 30)
+P2Title.Size = UDim2.new(1, 0, 0, 28)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "KHÓA CHUỘT OTG (DOORS FPS)"
+P2Title.Text = "MOUSE LOCK ENGINES"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
-P2Title.TextSize = 12
+P2Title.TextSize = 13
 P2Title.Parent = Part2
 
--- TẠO CÁC NÚT PHÍM ẢO TRONG MENU
+-- HÀM TẠO PHÍM BẤM ẢO
 local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     local btn = Instance.new("TextButton")
     btn.Text = text
@@ -211,58 +234,86 @@ local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     end)
 end
 
--- NÚT PHÍM MẪU
-createKey("Chuột Trái", 5, 5, 70, 30, nil, "L")
-createKey("Chuột Phải", 80, 5, 70, 30, nil, "R")
-createKey("Esc", 155, 5, 35, 30, Enum.KeyCode.Escape)
+-- KHÔNG DÙNG TIẾNG VIỆT -> BIỂU TƯỢNG HÌNH CHUỘT
+createKey("[L-Mouse]", 5, 5, 75, 30, nil, "L")
+createKey("[R-Mouse]", 85, 5, 75, 30, nil, "R")
+createKey("Esc", 165, 5, 35, 30, Enum.KeyCode.Escape)
 createKey("Tab", 5, 40, 45, 30, Enum.KeyCode.Tab)
 createKey("W", 105, 40, 35, 30, Enum.KeyCode.W)
-createKey("E (Nhặt/Mở)", 145, 40, 85, 30, Enum.KeyCode.E)
+createKey("E", 145, 40, 45, 30, Enum.KeyCode.E)
 createKey("A", 65, 75, 35, 30, Enum.KeyCode.A)
 createKey("S", 105, 75, 35, 30, Enum.KeyCode.S)
 createKey("D", 145, 75, 35, 30, Enum.KeyCode.D)
 createKey("Shift", 5, 110, 55, 30, Enum.KeyCode.LeftShift)
-createKey("C (Cúi)", 65, 110, 50, 30, Enum.KeyCode.C)
-createKey("Space", 120, 110, 80, 30, Enum.KeyCode.Space)
+createKey("C", 65, 110, 45, 30, Enum.KeyCode.C)
+createKey("Space", 115, 110, 75, 30, Enum.KeyCode.Space)
 
 local letters = {"Q","R","T","Y","U","I","O","P","F","G","H","J","K","L","Z","X","V","B","N","M"}
 for i, l in ipairs(letters) do
     local row = math.floor((i-1)/5)
     local col = (i-1)%5
-    createKey(l, 240 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
+    createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
 end
 
 -- ==========================================
--- CƠ CHẾ XOAY CAMERA BẰNG CHUỘT PHẢI / MOUSE LOCK DOORS FPS
+-- BỘ 4 CHẾ ĐỘ KHÓA CHUỘT THAY PHIÊN NHAU (MULTI-ENGINE LOCK)
 -- ==========================================
-local isOTGLocked = false
-local isRightMouseDown = false
+local currentLockEngine = 0 -- 0: OFF, 1: LockCenter, 2: CFrame Mouse Delta, 3: Touch Viewport Emulation, 4: Absolute Lock
 local lastMousePos = Vector2.new(0, 0)
 local sensitivity = 0.35
 
-local LockToggleBtn = Instance.new("TextButton")
-LockToggleBtn.Size = UDim2.new(0, 195, 0, 45)
-LockToggleBtn.Position = UDim2.new(0, 15, 0, 40)
-LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-LockToggleBtn.BackgroundTransparency = 0.3
-LockToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockToggleBtn.Text = "Khóa Chuột OTG FPS: TẮT"
-LockToggleBtn.Font = Enum.Font.SourceSansBold
-LockToggleBtn.TextSize = 13
-LockToggleBtn.Parent = Part2
+local function createLockOptionBtn(text, engineId, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 225, 0, 36)
+    btn.Position = UDim2.new(0, 15, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    btn.BackgroundTransparency = 0.3
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = Part2
 
-local lCorner = Instance.new("UICorner")
-lCorner.CornerRadius = UDim.new(0, 6)
-lCorner.Parent = LockToggleBtn
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
 
--- Nhận diện rê chuột OTG khi bấm giữ Chuột Phải hoặc Bật Lock
+    btn.MouseButton1Click:Connect(function()
+        if currentLockEngine == engineId then
+            currentLockEngine = 0
+            btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            showNotif("Lock Engine Disabled")
+        else
+            currentLockEngine = engineId
+            -- Update UI sắc đỏ/xanh cho tất cả nút
+            for _, child in pairs(Part2:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+                end
+            end
+            btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+            lastMousePos = UserInputService:GetMouseLocation()
+            showNotif("Activated: " .. text)
+        end
+    end)
+end
+
+createLockOptionBtn("Engine 1: LockCenter (Classic PC)", 1, 35)
+createLockOptionBtn("Engine 2: CFrame Delta (DOORS FPS Fix)", 2, 80)
+createLockOptionBtn("Engine 3: Touch Viewport Emulation", 3, 125)
+createLockOptionBtn("Engine 4: Absolute Freeze Lock", 4, 170)
+
+-- SỰ KIỆN BẮT MOUSE / KEYBOARD
+local isRightMouseDown = false
+
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         isRightMouseDown = true
         lastMousePos = UserInputService:GetMouseLocation()
-        showPressedKey("Chuột Phải")
+        showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-        showPressedKey("Chuột Trái")
+        showPressedKey("[L-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         showPressedKey(input.KeyCode.Name)
     end
@@ -271,48 +322,45 @@ end)
 UserInputService.InputEnded:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         isRightMouseDown = false
-        hidePressedKey("Chuột Phải")
+        hidePressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-        hidePressedKey("Chuột Trái")
+        hidePressedKey("[L-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         hidePressedKey(input.KeyCode.Name)
     end
 end)
 
--- Thuật toán ép CFrame xoay Camera trực tiếp bằng Delta chuột OTG
+-- VÒNG LẶP XỬ LÝ ĐA CHẾ ĐỘ KHÓA CHUỘT
 RunService.RenderStepped:Connect(function()
-    if isOTGLocked or isRightMouseDown then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-        local currentPos = UserInputService:GetMouseLocation()
-        local delta = currentPos - lastMousePos
-        lastMousePos = currentPos
+    -- Luôn ép con trỏ ngoài đứng im 1 chỗ khi nhấp chuột phải hoặc bật Engine
+    if isRightMouseDown or currentLockEngine > 0 then
+        if currentLockEngine == 1 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        elseif currentLockEngine == 2 or isRightMouseDown then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+            local currentPos = UserInputService:GetMouseLocation()
+            local delta = currentPos - lastMousePos
+            lastMousePos = currentPos
 
-        if delta.Magnitude > 0 then
-            local xAngle = math.rad(-delta.X * sensitivity)
-            local yAngle = math.rad(-delta.Y * sensitivity)
-            
-            local currentCFrame = Camera.CFrame
-            local newCFrame = CFrame.new(currentCFrame.Position) 
-                * CFrame.Angles(0, xAngle, 0) 
-                * currentCFrame:ToWorldSpace(CFrame.Angles(yAngle, 0, 0)).Rotation
-                
-            Camera.CFrame = newCFrame
+            if delta.Magnitude > 0 then
+                local xAngle = math.rad(-delta.X * sensitivity)
+                local yAngle = math.rad(-delta.Y * sensitivity)
+                local curCFrame = Camera.CFrame
+                Camera.CFrame = CFrame.new(curCFrame.Position) 
+                    * CFrame.Angles(0, xAngle, 0) 
+                    * curCFrame:ToWorldSpace(CFrame.Angles(yAngle, 0, 0)).Rotation
+            end
+        elseif currentLockEngine == 3 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+            local delta = UserInputService:GetMouseDelta()
+            if delta.Magnitude > 0 then
+                Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(-delta.Y * sensitivity), math.rad(-delta.X * sensitivity), 0)
+            end
+        elseif currentLockEngine == 4 then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+            local mousePos = UserInputService:GetMouseLocation()
+            VirtualInputManager:SendMouseMoveEvent(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2, game)
         end
-    end
-end)
-
-LockToggleBtn.MouseButton1Click:Connect(function()
-    isOTGLocked = not isOTGLocked
-    if isOTGLocked then
-        LockToggleBtn.Text = "Khóa Chuột OTG FPS: BẬT"
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-        lastMousePos = UserInputService:GetMouseLocation()
-        showNotif("Đã Khóa Chuột FPS (Xoay 360° DOORS)!")
-    else
-        LockToggleBtn.Text = "Khóa Chuột OTG FPS: TẮT"
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        showNotif("Đã Tắt Khóa Chuột!")
     end
 end)
 
@@ -320,10 +368,10 @@ end)
 ToggleBtn.MouseButton1Click:Connect(function()
     MainContainer.Visible = not MainContainer.Visible
     if MainContainer.Visible then
-        showNotif("Mở Menu Thành Công!")
+        showNotif("Menu Opened")
     else
-        showNotif("Ẩn Menu Thành Công!")
+        showNotif("Menu Hidden")
     end
 end)
 
-showNotif("Cập Nhật OTG FPS Rainbow Thành Công!")
+showNotif("DOORS OTG Multi-Lock Ready")
