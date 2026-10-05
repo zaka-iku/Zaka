@@ -1,4 +1,4 @@
--- Delta Executor: Exact DOORS Native Center Crosshair + Smooth OTG Engine
+-- Delta Executor: Exact DOORS Native Center Crosshair + Virtual Touch Camera Engine
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -251,21 +251,11 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- BỘ CHUYỂN ĐỔI LOCK ENGINES (TỐI ƯU XOAY 360 LÀM MƯỢT CỰC ĐẠI)
+-- BỘ CHUYỂN ĐỔI LOCK ENGINES (CÓ CHẾ ĐỘ MÔ PHỎNG TOUCH SWIPE)
 -- ==========================================
-local currentLockEngine = 2 -- Mặc định dùng Engine 2 (Ultra Smooth)
-local sensitivity = 0.28 -- Độ nhạy mượt chuẩn
-local targetYaw, targetPitch = 0, 0
-local currentYaw, currentPitch = 0, 0
-
-local function resetAngle()
-    local _, y, _ = Camera.CFrame:ToOrientation()
-    targetYaw = math.deg(y)
-    currentYaw = targetYaw
-    targetPitch = 0
-    currentPitch = 0
-end
-resetAngle()
+local currentLockEngine = 2 -- Mặc định dùng Engine 2 (CFrame Delta)
+local lastMousePos = Vector2.new(0, 0)
+local sensitivity = 0.35
 
 local function createLockOptionBtn(text, engineId, posY)
     local btn = Instance.new("TextButton")
@@ -297,15 +287,15 @@ local function createLockOptionBtn(text, engineId, posY)
                 end
             end
             btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-            resetAngle()
+            lastMousePos = UserInputService:GetMouseLocation()
             showNotif("Activated: " .. text)
         end
     end)
 end
 
 createLockOptionBtn("Engine 1: LockCenter Native", 1, 35)
-createLockOptionBtn("Engine 2: Ultra Smooth 360 (Best)", 2, 80)
-createLockOptionBtn("Engine 3: Touch Pan Swipe", 3, 125)
+createLockOptionBtn("Engine 2: CFrame Angle Fix (FPS)", 2, 80)
+createLockOptionBtn("Engine 3: Virtual Touch Swipe", 3, 125)
 createLockOptionBtn("Engine 4: Hard Position Freeze", 4, 170)
 
 local isRightMouseDown = false
@@ -313,6 +303,7 @@ local isRightMouseDown = false
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         isRightMouseDown = true
+        lastMousePos = UserInputService:GetMouseLocation()
         showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         showPressedKey("[L-Mouse]")
@@ -332,35 +323,32 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
--- BẮT ĐỘ LỆCH CHUỘT LÀM MƯỢT
-UserInputService.InputChanged:Connect(function(input, gpe)
-    if (currentLockEngine == 2 or isRightMouseDown) and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Delta
-        targetYaw = targetYaw - (delta.X * sensitivity)
-        targetPitch = math.clamp(targetPitch - (delta.Y * sensitivity), -88, 88)
-    end
-end)
-
--- VÒNG LẶP RENDER MƯỢT TỪNG FRAME
-RunService.RenderStepped:Connect(function(dt)
+-- VÒNG LẶP KHÓA MẠNH MẼ KHÔNG LỆCH TÂM
+RunService.RenderStepped:Connect(function()
     if isRightMouseDown or currentLockEngine > 0 then
         if currentLockEngine == 1 then
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         elseif currentLockEngine == 2 or isRightMouseDown then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-            
-            -- Thuật toán LERP làm mượt chuyển động chuột không bị giật khựng
-            local smoothFactor = math.clamp(dt * 25, 0, 1)
-            currentYaw = currentYaw + (targetYaw - currentYaw) * smoothFactor
-            currentPitch = currentPitch + (targetPitch - currentPitch) * smoothFactor
-            
-            local camPos = Camera.CFrame.Position
-            Camera.CFrame = CFrame.new(camPos) 
-                * CFrame.Angles(0, math.rad(currentYaw), 0) 
-                * CFrame.Angles(math.rad(currentPitch), 0, 0)
-        elseif currentLockEngine == 3 then
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            local delta = UserInputService:GetMouseDelta()
+            local currentPos = UserInputService:GetMouseLocation()
+            local delta = currentPos - lastMousePos
+            lastMousePos = currentPos
+
+            if delta.Magnitude > 0 then
+                local xAngle = math.rad(-delta.X * sensitivity)
+                local yAngle = math.rad(-delta.Y * sensitivity)
+                local curCFrame = Camera.CFrame
+                Camera.CFrame = CFrame.new(curCFrame.Position) 
+                    * CFrame.Angles(0, xAngle, 0) 
+                    * curCFrame:ToWorldSpace(CFrame.Angles(yAngle, 0, 0)).Rotation
+            end
+        elseif currentLockEngine == 3 then
+            -- Giả lập vuốt ngón tay nửa phải màn hình
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+            local currentPos = UserInputService:GetMouseLocation()
+            local delta = currentPos - lastMousePos
+            lastMousePos = currentPos
+            
             if delta.Magnitude > 0 then
                 VirtualInputManager:SendPanGestureEvent(
                     Vector2.new(Camera.ViewportSize.X * 0.75, Camera.ViewportSize.Y * 0.5),
@@ -385,4 +373,4 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-showNotif("DOORS Smooth 360 Fixed!")
+showNotif("DOORS Native Center Fixed")
