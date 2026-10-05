@@ -1,4 +1,4 @@
--- Delta Executor: Unlimited 360 Camera Rotation + Native Center Dot for DOORS
+-- Delta Executor: Fixed CameraScriptable 360 Lock for DOORS
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -8,15 +8,15 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Clean GUI cũ
-if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsUnlimitedGUI") then
-    LocalPlayer.PlayerGui.OTGDoorsUnlimitedGUI:Destroy()
+if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsFinalFixGUI") then
+    LocalPlayer.PlayerGui.OTGDoorsFinalFixGUI:Destroy()
 end
 
 -- 1. SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsUnlimitedGUI"
+ScreenGui.Name = "OTGDoorsFinalFixGUI"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true -- Tâm gốc chuẩn 100%
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 2. TÂM NGẮM CHUẨN DOORS
@@ -63,7 +63,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
+-- 4. KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN CẦU VỒNG RGB)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -187,7 +187,7 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 28)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "UNLIMITED 360 MOUSE LOCK"
+P2Title.Text = "CAMERA CONTROL ENGINES"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 12
@@ -251,80 +251,83 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- THUẬT TOÁN XOAY CAMERA VÔ HẠN 360° MỌI HƯỚNG
+-- THUẬT TOÁN CAMERA OVERRIDE XOAY 360 TỰ DO
 -- ==========================================
-local currentLockEngine = 1 -- Mặc định bật Engine Unlimited 360
+local isLockActive = false
 local sensitivity = 0.35
 local yaw, pitch = 0, 0
 
-local function initializeAngle()
+local function resetAngle()
     local _, y, _ = Camera.CFrame:ToOrientation()
     yaw = math.deg(y)
     pitch = 0
 end
-initializeAngle()
 
-local function createLockOptionBtn(text, engineId, posY)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 225, 0, 36)
-    btn.Position = UDim2.new(0, 15, 0, posY)
-    btn.BackgroundColor3 = (engineId == currentLockEngine and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 40, 40))
-    btn.BackgroundTransparency = 0.3
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = text
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 12
-    btn.Parent = Part2
+local LockToggleBtn = Instance.new("TextButton")
+LockToggleBtn.Size = UDim2.new(0, 225, 0, 45)
+LockToggleBtn.Position = UDim2.new(0, 15, 0, 40)
+LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+LockToggleBtn.BackgroundTransparency = 0.3
+LockToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockToggleBtn.Text = "Khóa Chuột OTG 360°: TẮT"
+LockToggleBtn.Font = Enum.Font.SourceSansBold
+LockToggleBtn.TextSize = 13
+LockToggleBtn.Parent = Part2
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
+local lCorner = Instance.new("UICorner")
+lCorner.CornerRadius = UDim.new(0, 6)
+lCorner.Parent = LockToggleBtn
 
-    btn.MouseButton1Click:Connect(function()
-        if currentLockEngine == engineId then
-            currentLockEngine = 0
-            btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-            showNotif("Engine Disabled")
-        else
-            currentLockEngine = engineId
-            for _, child in pairs(Part2:GetChildren()) do
-                if child:IsA("TextButton") then
-                    child.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-                end
-            end
-            btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-            initializeAngle()
-            showNotif("Activated: " .. text)
-        end
-    end)
-end
-
-createLockOptionBtn("Engine 1: Unlimited 360 Mouse", 1, 35)
-createLockOptionBtn("Engine 2: CFrame Angle Pitch/Yaw", 2, 80)
-createLockOptionBtn("Engine 3: Virtual Touch Emulation", 3, 125)
-createLockOptionBtn("Engine 4: Lock Center Force", 4, 170)
-
--- XỬ LÝ DI CHUYỂN CHUỘT XOAY VÔ HẠN MỌI HƯỚNG
-UserInputService.InputChanged:Connect(function(input, gpe)
-    if currentLockEngine > 0 and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Delta
+LockToggleBtn.MouseButton1Click:Connect(function()
+    isLockActive = not isLockActive
+    if isLockActive then
+        LockToggleBtn.Text = "Khóa Chuột OTG 360°: BẬT"
+        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
         
-        -- Tính toán góc ngước lên/xuống và xoay trái/phải không giới hạn
-        yaw = yaw - (delta.X * sensitivity)
-        pitch = math.clamp(pitch - (delta.Y * sensitivity), -89, 89) -- Góc nhìn ngước/cúi chuẩn FPS
-
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
-            * CFrame.Angles(0, math.rad(yaw), 0) 
-            * CFrame.Angles(math.rad(pitch), 0, 0)
+        -- Chuyển camera sang dạng Scriptable để ngắt hẳn sự can thiệp từ game DOORS
+        Camera.CameraType = Enum.CameraType.Scriptable
+        resetAngle()
+        showNotif("Đã Bật Khóa Chuột 360°!")
+    else
+        LockToggleBtn.Text = "Khóa Chuột OTG 360°: TẮT"
+        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+        
+        -- Trả lại camera mặc định của game
+        Camera.CameraType = Enum.CameraType.Custom
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        showNotif("Đã Tắt Khóa Chuột!")
     end
 end)
 
-local isRightMouseDown = false
+-- Bắt sự kiện chuột di chuyển để tính góc quay
+UserInputService.InputChanged:Connect(function(input, gpe)
+    if isLockActive and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Delta
+        yaw = yaw - (delta.X * sensitivity)
+        pitch = math.clamp(pitch - (delta.Y * sensitivity), -85, 85)
+    end
+end)
 
+-- RenderStepped ép CFrame liên tục theo vị trí đầu nhân vật
+RunService.RenderStepped:Connect(function()
+    if isLockActive then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Head") then
+            local headPos = character.Head.Position
+            
+            -- Cập nhật CFrame tự do không bị DOORS đè
+            Camera.CFrame = CFrame.new(headPos) 
+                * CFrame.Angles(0, math.rad(yaw), 0) 
+                * CFrame.Angles(math.rad(pitch), 0, 0)
+        end
+    end
+end)
+
+-- Lắng nghe bấm phím
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        isRightMouseDown = true
         showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         showPressedKey("[L-Mouse]")
@@ -335,19 +338,11 @@ end)
 
 UserInputService.InputEnded:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        isRightMouseDown = false
         hidePressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         hidePressedKey("[L-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         hidePressedKey(input.KeyCode.Name)
-    end
-end)
-
--- ÉP CHUỘT NGOÀI KHÓA VÀO TÂM ĐỂ TRÁNH DÍNH VIỀN MÀN HÌNH ANDROID
-RunService.RenderStepped:Connect(function()
-    if currentLockEngine > 0 or isRightMouseDown then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     end
 end)
 
@@ -360,4 +355,4 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-showNotif("Unlimited 360 Lock Ready!")
+showNotif("DOORS Fixed 360 Lock Ready!")
