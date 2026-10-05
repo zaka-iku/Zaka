@@ -1,4 +1,4 @@
--- Delta Executor: Exact DOORS Native Center Crosshair + Virtual Touch Camera Engine
+-- Delta Executor: Unlimited 360 Camera Rotation + Native Center Dot for DOORS
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -8,21 +8,21 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Clean GUI cũ
-if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsNativeGUI") then
-    LocalPlayer.PlayerGui.OTGDoorsNativeGUI:Destroy()
+if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsUnlimitedGUI") then
+    LocalPlayer.PlayerGui.OTGDoorsUnlimitedGUI:Destroy()
 end
 
--- 1. SCREENGUI CHÍNH (IgnoreGuiInset = true để chuẩn tâm màn hình gốc)
+-- 1. SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsNativeGUI"
+ScreenGui.Name = "OTGDoorsUnlimitedGUI"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true -- Căn chuẩn tâm gốc Roblox/DOORS không bị lệch bởi dải thông báo trên
+ScreenGui.IgnoreGuiInset = true -- Tâm gốc chuẩn 100%
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS (EXACT NATIVE CROSSHAIR)
+-- 2. TÂM NGẮM CHUẨN DOORS
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 4, 0, 4)
-NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5) -- Neo đúng trung tâm 50% - 50%
+NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
 NativeCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 NativeCenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NativeCenterDot.BackgroundTransparency = 0
@@ -42,8 +42,8 @@ dotStroke.Parent = NativeCenterDot
 -- 3. HÀM POPUP THÔNG BÁO
 local function showNotif(text)
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 240, 0, 35)
-    notif.Position = UDim2.new(0.5, -120, 0.08, 0)
+    notif.Size = UDim2.new(0, 250, 0, 35)
+    notif.Position = UDim2.new(0.5, -125, 0.08, 0)
     notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     notif.BackgroundTransparency = 0.2
     notif.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -63,7 +63,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. BẢNG KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
+-- 4. KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -187,10 +187,10 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 28)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS LOCK ENGINES"
+P2Title.Text = "UNLIMITED 360 MOUSE LOCK"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
-P2Title.TextSize = 13
+P2Title.TextSize = 12
 P2Title.Parent = Part2
 
 local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
@@ -251,11 +251,18 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- BỘ CHUYỂN ĐỔI LOCK ENGINES (CÓ CHẾ ĐỘ MÔ PHỎNG TOUCH SWIPE)
+-- THUẬT TOÁN XOAY CAMERA VÔ HẠN 360° MỌI HƯỚNG
 -- ==========================================
-local currentLockEngine = 2 -- Mặc định dùng Engine 2 (CFrame Delta)
-local lastMousePos = Vector2.new(0, 0)
+local currentLockEngine = 1 -- Mặc định bật Engine Unlimited 360
 local sensitivity = 0.35
+local yaw, pitch = 0, 0
+
+local function initializeAngle()
+    local _, y, _ = Camera.CFrame:ToOrientation()
+    yaw = math.deg(y)
+    pitch = 0
+end
+initializeAngle()
 
 local function createLockOptionBtn(text, engineId, posY)
     local btn = Instance.new("TextButton")
@@ -287,23 +294,37 @@ local function createLockOptionBtn(text, engineId, posY)
                 end
             end
             btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-            lastMousePos = UserInputService:GetMouseLocation()
+            initializeAngle()
             showNotif("Activated: " .. text)
         end
     end)
 end
 
-createLockOptionBtn("Engine 1: LockCenter Native", 1, 35)
-createLockOptionBtn("Engine 2: CFrame Angle Fix (FPS)", 2, 80)
-createLockOptionBtn("Engine 3: Virtual Touch Swipe", 3, 125)
-createLockOptionBtn("Engine 4: Hard Position Freeze", 4, 170)
+createLockOptionBtn("Engine 1: Unlimited 360 Mouse", 1, 35)
+createLockOptionBtn("Engine 2: CFrame Angle Pitch/Yaw", 2, 80)
+createLockOptionBtn("Engine 3: Virtual Touch Emulation", 3, 125)
+createLockOptionBtn("Engine 4: Lock Center Force", 4, 170)
+
+-- XỬ LÝ DI CHUYỂN CHUỘT XOAY VÔ HẠN MỌI HƯỚNG
+UserInputService.InputChanged:Connect(function(input, gpe)
+    if currentLockEngine > 0 and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Delta
+        
+        -- Tính toán góc ngước lên/xuống và xoay trái/phải không giới hạn
+        yaw = yaw - (delta.X * sensitivity)
+        pitch = math.clamp(pitch - (delta.Y * sensitivity), -89, 89) -- Góc nhìn ngước/cúi chuẩn FPS
+
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
+            * CFrame.Angles(0, math.rad(yaw), 0) 
+            * CFrame.Angles(math.rad(pitch), 0, 0)
+    end
+end)
 
 local isRightMouseDown = false
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         isRightMouseDown = true
-        lastMousePos = UserInputService:GetMouseLocation()
         showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         showPressedKey("[L-Mouse]")
@@ -323,44 +344,10 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
--- VÒNG LẶP KHÓA MẠNH MẼ KHÔNG LỆCH TÂM
+-- ÉP CHUỘT NGOÀI KHÓA VÀO TÂM ĐỂ TRÁNH DÍNH VIỀN MÀN HÌNH ANDROID
 RunService.RenderStepped:Connect(function()
-    if isRightMouseDown or currentLockEngine > 0 then
-        if currentLockEngine == 1 then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-        elseif currentLockEngine == 2 or isRightMouseDown then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            local currentPos = UserInputService:GetMouseLocation()
-            local delta = currentPos - lastMousePos
-            lastMousePos = currentPos
-
-            if delta.Magnitude > 0 then
-                local xAngle = math.rad(-delta.X * sensitivity)
-                local yAngle = math.rad(-delta.Y * sensitivity)
-                local curCFrame = Camera.CFrame
-                Camera.CFrame = CFrame.new(curCFrame.Position) 
-                    * CFrame.Angles(0, xAngle, 0) 
-                    * curCFrame:ToWorldSpace(CFrame.Angles(yAngle, 0, 0)).Rotation
-            end
-        elseif currentLockEngine == 3 then
-            -- Giả lập vuốt ngón tay nửa phải màn hình
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            local currentPos = UserInputService:GetMouseLocation()
-            local delta = currentPos - lastMousePos
-            lastMousePos = currentPos
-            
-            if delta.Magnitude > 0 then
-                VirtualInputManager:SendPanGestureEvent(
-                    Vector2.new(Camera.ViewportSize.X * 0.75, Camera.ViewportSize.Y * 0.5),
-                    delta * sensitivity,
-                    0,
-                    Enum.UserInputState.Change,
-                    game
-                )
-            end
-        elseif currentLockEngine == 4 then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-        end
+    if currentLockEngine > 0 or isRightMouseDown then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     end
 end)
 
@@ -373,4 +360,4 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-showNotif("DOORS Native Center Fixed")
+showNotif("Unlimited 360 Lock Ready!")
