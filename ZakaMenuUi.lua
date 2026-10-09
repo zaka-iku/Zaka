@@ -1,4 +1,4 @@
--- Delta Executor: Exact DOORS Native Center Crosshair + CoreGui Protected Menu
+-- Delta Executor: Exact DOORS Native Center Crosshair + Dynamic 1st/3rd Person Engine
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -9,7 +9,7 @@ local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. TỰ ĐỘNG CHỌN NƠI LƯU GUI BẢO VỆ KHÔNG BỊ XÓA (CoreGui hoặc PlayerGui)
+-- 1. BẢO VỆ GUI KHÔNG BỊ MẤT KHI RESPAWN
 local CoreGui = game:GetService("CoreGui")
 local TargetParent = CoreGui
 pcall(function()
@@ -32,7 +32,7 @@ ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 999999
 ScreenGui.Parent = TargetParent
 
--- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS
+-- 2. TÂM NGẮM NATIVE
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 4, 0, 4)
 NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -76,7 +76,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. BẢNG KEY VISUALIZER (CẬP NHẬT RGB)
+-- 4. BẢNG KEY VISUALIZER (RAINBOW)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -150,7 +150,7 @@ local function hidePressedKey(keyName)
     end
 end
 
--- 5. NÚT TOGGLE MENU MÀU NỔI BẬT NỐT TRÊN GÓC MÀN HÌNH
+-- 5. NÚT TOGGLE MENU (P)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 100, 0, 40)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.1, 0)
@@ -166,7 +166,7 @@ local tCorner = Instance.new("UICorner")
 tCorner.CornerRadius = UDim.new(0, 8)
 tCorner.Parent = ToggleBtn
 
--- 6. MENU CONTAINER CHÍNH
+-- 6. MENU CONTAINER
 local MainContainer = Instance.new("Frame")
 MainContainer.Size = UDim2.new(0, 780, 0, 260)
 MainContainer.Position = UDim2.new(0.5, -390, 0.5, -130)
@@ -206,7 +206,7 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 40)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "SMART PC LOCK ENGINE"
+P2Title.Text = "DYNAMIC LOCK ENGINE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -270,7 +270,7 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- NÚT BẬT TẮT KHÓA CHUỘT DẠNG CÔNG TẮC CỰC NHẠY
+-- ENGINE TỰ ĐỘNG CHUYỂN ĐỔI GÓC NHÌN 1 / 3
 -- ==========================================
 local isPCLockActive = true
 local isMenuOpen = true
@@ -284,7 +284,7 @@ LockBtn.Size = UDim2.new(0, 210, 0, 55)
 LockBtn.Position = UDim2.new(0, 15, 0, 90)
 LockBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
 LockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockBtn.Text = "TRUE PC LOCK: ON"
+LockBtn.Text = "DYNAMIC LOCK: ON"
 LockBtn.Font = Enum.Font.SourceSansBold
 LockBtn.TextSize = 14
 LockBtn.Parent = Part2
@@ -303,10 +303,8 @@ local function toggleMenu()
     end
 end
 
--- Bấm nút MENU màu xanh trên góc màn hình
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 
--- Bấm phím P trên bàn phím
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then
         toggleMenu()
@@ -317,8 +315,8 @@ LockBtn.MouseButton1Click:Connect(function()
     isPCLockActive = not isPCLockActive
     if isPCLockActive then
         LockBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-        LockBtn.Text = "TRUE PC LOCK: ON"
-        showNotif("Khóa Chuột PC: ĐÃ BẬT")
+        LockBtn.Text = "DYNAMIC LOCK: ON"
+        showNotif("Khóa Chuột Dynamic: ĐÃ BẬT")
         
         local rx, ry, _ = Camera.CFrame:ToOrientation()
         pitch = rx
@@ -326,8 +324,8 @@ LockBtn.MouseButton1Click:Connect(function()
         lastMousePos = UserInputService:GetMouseLocation()
     else
         LockBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        LockBtn.Text = "TRUE PC LOCK: OFF"
-        showNotif("Khóa Chuột PC: ĐÃ TẮT")
+        LockBtn.Text = "DYNAMIC LOCK: OFF"
+        showNotif("Khóa Chuột Dynamic: ĐÃ TẮT")
     end
 end)
 
@@ -351,10 +349,11 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
--- VÒNG LẶP XỬ LÝ
+-- VÒNG LẶP XỬ LÝ CHUẨN XÁC THEO GÓC NHÌN (1ST / 3RD PERSON)
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
 
+    -- Mở chuột khi vào Menu
     if isRobloxMenuOpen or isMenuOpen then
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
@@ -366,20 +365,39 @@ RunService.RenderStepped:Connect(function()
 
     if isPCLockActive then
         UserInputService.MouseIconEnabled = false
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-        Camera.CameraType = Enum.CameraType.Scriptable
 
-        local currentPos = UserInputService:GetMouseLocation()
-        local delta = currentPos - lastMousePos
-        lastMousePos = currentPos
+        -- KIỂM TRA ĐANG Ở GÓC NHÌN THỨ 1 HAY THỨ 3
+        local isFirstPerson = false
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+            local dist = (Camera.CFrame.Position - LocalPlayer.Character.Head.Position).Magnitude
+            if dist < 2 then
+                isFirstPerson = true
+            end
+        end
 
-        if delta.Magnitude > 0 then
-            yaw = (yaw - (delta.X * sensitivity)) % (math.pi * 2)
-            pitch = math.clamp(pitch - (delta.Y * sensitivity), math.rad(-80), math.rad(80))
+        if isFirstPerson then
+            -- GÓC NHÌN THỨ 1: Dùng Custom Camera để Roblox tự xoay góc nhìn nhân vật theo chuột
+            if Camera.CameraType == Enum.CameraType.Scriptable then
+                Camera.CameraType = Enum.CameraType.Custom
+            end
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        else
+            -- GÓC NHÌN THỨ 3: Dùng Scriptable CFrame để xoay 360 độ quanh nhân vật
+            Camera.CameraType = Enum.CameraType.Scriptable
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
 
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
-                * CFrame.Angles(0, yaw, 0) 
-                * CFrame.Angles(pitch, 0, 0)
+            local currentPos = UserInputService:GetMouseLocation()
+            local delta = currentPos - lastMousePos
+            lastMousePos = currentPos
+
+            if delta.Magnitude > 0 then
+                yaw = (yaw - (delta.X * sensitivity)) % (math.pi * 2)
+                pitch = math.clamp(pitch - (delta.Y * sensitivity), math.rad(-80), math.rad(80))
+
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
+                    * CFrame.Angles(0, yaw, 0) 
+                    * CFrame.Angles(pitch, 0, 0)
+            end
         end
     else
         UserInputService.MouseIconEnabled = true
@@ -390,4 +408,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-showNotif("DOORS OTG Loaded Successfully!")
+showNotif("Dynamic 1st/3rd Engine Ready!")
