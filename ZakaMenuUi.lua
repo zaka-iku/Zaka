@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DELTA EXECUTOR: DOORS ULTIMATE VIP HUB (3D HITBOX ESP + BYPASS SPEED)
+-- DOORS OTG ULTIMATE VIP V3 - FIXED ESP, TRACERS & BYPASS SPEED
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -15,32 +15,28 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ------------------------------------------------------------------------------
--- 1. BẢO VỆ GUI KHÔNG BỊ XÓA (COREGUI PROTECTOR)
--- ------------------------------------------------------------------------------
+-- 1. BẢO VỆ GUI KHÔNG BỊ XÓA
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPGUI") then
-        TargetParent.OTGDoorsVIPGUI:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV3") then
+        TargetParent.OTGDoorsVIPV3:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPGUI") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV3") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPGUI") then
-        TargetParent.OTGDoorsVIPGUI:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV3") then
+        TargetParent.OTGDoorsVIPV3:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPGUI"
+ScreenGui.Name = "OTGDoorsVIPV3"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
 ScreenGui.Parent = TargetParent
 
--- ------------------------------------------------------------------------------
--- 2. TÂM NGẮM CHUẨN CROSSHAIR
--- ------------------------------------------------------------------------------
+-- 2. TÂM NGẮM CROSSHAIR
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 5, 0, 5)
 NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -58,67 +54,20 @@ dotStroke.Color = Color3.fromRGB(0, 0, 0)
 dotStroke.Thickness = 1.2
 dotStroke.Parent = NativeCenterDot
 
--- ------------------------------------------------------------------------------
--- 3. HỆ THỐNG THÔNG BÁO CẢNH BÁO CỬA & QUÁI
--- ------------------------------------------------------------------------------
+-- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT (NỀN ĐEN, CHỮ TRẮNG, VIỀN CẦU VỒNG)
 local NotifContainer = Instance.new("Frame")
-NotifContainer.Size = UDim2.new(0, 300, 0, 200)
-NotifContainer.Position = UDim2.new(0.5, -150, 0.05, 0)
+NotifContainer.Size = UDim2.new(0, 320, 0, 200)
+NotifContainer.Position = UDim2.new(0.5, -160, 0.05, 0)
 NotifContainer.BackgroundTransparency = 1
 NotifContainer.Parent = ScreenGui
 
 local NotifLayout = Instance.new("UIListLayout")
 NotifLayout.SortOrder = Enum.SortOrder.LayoutOrder
-NotifLayout.Padding = UDim.new(0, 5)
+NotifLayout.Padding = UDim.new(0, 6)
 NotifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 NotifLayout.Parent = NotifContainer
 
-local function showNotif(text, isWarning)
-    local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 280, 0, 35)
-    notif.BackgroundColor3 = isWarning and Color3.fromRGB(180, 20, 20) or Color3.fromRGB(15, 15, 15)
-    notif.BackgroundTransparency = 0.2
-    notif.TextColor3 = Color3.fromRGB(255, 255, 255)
-    notif.Text = text
-    notif.Font = Enum.Font.SourceSansBold
-    notif.TextSize = 14
-    notif.ZIndex = 20
-    notif.Parent = NotifContainer
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = notif
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = isWarning and Color3.fromRGB(255, 255, 0) or Color3.fromRGB(0, 150, 255)
-    stroke.Thickness = 1.5
-    stroke.Parent = notif
-
-    task.delay(2.5, function()
-        local tween = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
-        tween:Play()
-        tween.Completed:Connect(function() notif:Destroy() end)
-    end)
-end
-
--- ------------------------------------------------------------------------------
--- 4. BẢNG KEY VISUALIZER (RGB STROKE)
--- ------------------------------------------------------------------------------
-local VisFrame = Instance.new("Frame")
-VisFrame.Size = UDim2.new(0, 450, 0, 60)
-VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
-VisFrame.BackgroundTransparency = 1
-VisFrame.Parent = ScreenGui
-
-local VisLayout = Instance.new("UIListLayout")
-VisLayout.FillDirection = Enum.FillDirection.Horizontal
-VisLayout.SortOrder = Enum.SortOrder.LayoutOrder
-VisLayout.Padding = UDim.new(0, 8)
-VisLayout.Parent = VisFrame
-
-local activeVisKeys = {}
 local rainbowStrokes = {}
-
 local hue = 0
 RunService.RenderStepped:Connect(function(delta)
     hue = (hue + delta * 0.8) % 1
@@ -128,47 +77,36 @@ RunService.RenderStepped:Connect(function(delta)
     end
 end)
 
-local function showPressedKey(keyName)
-    if activeVisKeys[keyName] then return end
-    local keyLbl = Instance.new("TextLabel")
-    keyLbl.Size = UDim2.new(0, 45, 0, 45)
-    keyLbl.BackgroundTransparency = 1
-    keyLbl.Text = keyName
-    keyLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    keyLbl.Font = Enum.Font.SourceSansBold
-    keyLbl.TextSize = 15
-    keyLbl.Parent = VisFrame
+local function showMonsterAlert(text)
+    local notif = Instance.new("TextLabel")
+    notif.Size = UDim2.new(0, 300, 0, 40)
+    notif.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    notif.BackgroundTransparency = 0.15
+    notif.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notif.Text = text
+    notif.Font = Enum.Font.SourceSansBold
+    notif.TextSize = 14
+    notif.ZIndex = 25
+    notif.Parent = NotifContainer
 
-    local kCorner = Instance.new("UICorner")
-    kCorner.CornerRadius = UDim.new(0, 6)
-    kCorner.Parent = keyLbl
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = notif
 
-    local outerRainbowStroke = Instance.new("UIStroke")
-    outerRainbowStroke.Thickness = 3
-    outerRainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    outerRainbowStroke.Parent = keyLbl
+    local rainbowStroke = Instance.new("UIStroke")
+    rainbowStroke.Thickness = 2.5
+    rainbowStroke.Parent = notif
+    rainbowStrokes[rainbowStroke] = true
 
-    activeVisKeys[keyName] = keyLbl
-    rainbowStrokes[outerRainbowStroke] = true
+    task.delay(3, function()
+        rainbowStrokes[rainbowStroke] = nil
+        local tween = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
+        tween:Play()
+        tween.Completed:Connect(function() notif:Destroy() end)
+    end)
 end
 
-local function hidePressedKey(keyName)
-    if activeVisKeys[keyName] then
-        local target = activeVisKeys[keyName]
-        for stroke, _ in pairs(rainbowStrokes) do
-            if stroke.Parent == target then
-                rainbowStrokes[stroke] = nil
-                break
-            end
-        end
-        target:Destroy()
-        activeVisKeys[keyName] = nil
-    end
-end
-
--- ------------------------------------------------------------------------------
--- 5. NÚT MENU (TOGGLE BUTTON)
--- ------------------------------------------------------------------------------
+-- 4. NÚT TOGGLE MENU (P)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 100, 0, 38)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.08, 0)
@@ -185,14 +123,12 @@ local tCorner = Instance.new("UICorner")
 tCorner.CornerRadius = UDim.new(0, 8)
 tCorner.Parent = ToggleBtn
 
--- ------------------------------------------------------------------------------
--- 6. GIAO DIỆN CHÍNH MENU IN-SUỐT (GLASSMORPHISM)
--- ------------------------------------------------------------------------------
+-- 5. GIAO DIỆN MENU TRONG SUỐT (GLASSMORPHISM)
 local MainContainer = Instance.new("Frame")
-MainContainer.Size = UDim2.new(0, 780, 0, 280)
-MainContainer.Position = UDim2.new(0.5, -390, 0.5, -140)
+MainContainer.Size = UDim2.new(0, 780, 0, 300)
+MainContainer.Position = UDim2.new(0.5, -390, 0.5, -150)
 MainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MainContainer.BackgroundTransparency = 0.45 -- Trong suốt mượt mà
+MainContainer.BackgroundTransparency = 0.35 -- Trong suốt mượt
 MainContainer.Visible = true
 MainContainer.ZIndex = 30
 MainContainer.Parent = ScreenGui
@@ -225,7 +161,7 @@ Part2.Size = UDim2.new(0, 280, 1, -20)
 Part2.Position = UDim2.new(0, 490, 0, 10)
 Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 420)
+Part2.CanvasSize = UDim2.new(0, 0, 0, 480)
 Part2.ScrollBarThickness = 4
 Part2.Parent = MainContainer
 
@@ -236,11 +172,27 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 35)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP MENU ENGINE"
+P2Title.Text = "DOORS VIP V3 ENGINE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
 P2Title.Parent = Part2
+
+-- BẢNG HIỆN MẬT MÃ PHÒNG 50 (FIGURE)
+local CodeDisplay = Instance.new("TextLabel")
+CodeDisplay.Size = UDim2.new(0, 250, 0, 45)
+CodeDisplay.Position = UDim2.new(0, 15, 0, 40)
+CodeDisplay.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+CodeDisplay.BackgroundTransparency = 0.2
+CodeDisplay.TextColor3 = Color3.fromRGB(0, 255, 150)
+CodeDisplay.Text = "Mật mã Door 50: [ Đang tìm sách... ]"
+CodeDisplay.Font = Enum.Font.SourceSansBold
+CodeDisplay.TextSize = 12
+CodeDisplay.Parent = Part2
+
+local codeCorner = Instance.new("UICorner")
+codeCorner.CornerRadius = UDim.new(0, 6)
+codeCorner.Parent = CodeDisplay
 
 local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     local btn = Instance.new("TextButton")
@@ -260,14 +212,12 @@ local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
 
     btn.MouseButton1Down:Connect(function()
         btn.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
-        showPressedKey(text)
         if keyCode then VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
         elseif mouseEnum then VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, true, game, 0) end
     end)
 
     btn.MouseButton1Up:Connect(function()
         btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        hidePressedKey(text)
         if keyCode then VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
         elseif mouseEnum then VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, false, game, 0) end
     end)
@@ -293,26 +243,25 @@ for i, l in ipairs(letters) do
     createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
 end
 
--- ==========================================
--- BẢNG CÔNG TẮC & TÙY CHỈNH CHỨC NĂNG
--- ==========================================
+-- 6. CÔNG TẮC & TÙY CHỈNH
 local toggles = {
     Lock = true,
-    ESPDoors = true,      -- Cửa đúng (Màu Hồng)
-    ESPItems = true,      -- Item quan trọng + Đồ trong tủ (Xanh Nước Biển)
-    ESPEntities = true,   -- Quái vật (Đỏ Rực Hitbox)
-    FullBright = false,   -- Nhìn đêm
-    SpeedHack = false,    -- Tăng tốc
-    FOVHack = false       -- Góc nhìn rộng
+    ESPDoors = true,      -- Cửa đúng (Hồng)
+    ESPItems = true,      -- Item chính hãng & Sách Door 50 (Xanh nước biển)
+    ESPEntities = true,   -- Quái (Hitbox Đỏ)
+    Tracers = true,       -- Tia trắng dẫn hướng
+    FullBright = false,
+    SpeedHack = false,
+    FOVHack = false
 }
 
 local walkSpeedValue = 22
-local fovValue = 100
+local fovValue = 90
 
 local function createToggleBtn(title, posY, keyName)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 250, 0, 38)
-    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.Position = UDim2.new(0, 15, 0, posY)
     btn.BackgroundColor3 = toggles[keyName] and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 40, 40)
     btn.BackgroundTransparency = 0.2
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -329,73 +278,67 @@ local function createToggleBtn(title, posY, keyName)
         toggles[keyName] = not toggles[keyName]
         btn.BackgroundColor3 = toggles[keyName] and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 40, 40)
         btn.Text = title .. ": " .. (toggles[keyName] and "ON" or "OFF")
-        showNotif(title .. ": " .. (toggles[keyName] and "BẬT" or "TẮT"), false)
     end)
 end
 
-createToggleBtn("1. Smart PC Lock 360°", 40, "Lock")
-createToggleBtn("2. ESP Correct Door (Hồng)", 85, "ESPDoors")
-createToggleBtn("3. ESP Key/Item/In-Locker (Cyan)", 130, "ESPItems")
-createToggleBtn("4. ESP Monsters Hitbox (Đỏ Rực)", 175, "ESPEntities")
-createToggleBtn("5. FullBright (Sáng Màn Hình)", 220, "FullBright")
-createToggleBtn("6. SpeedHack (Bypass Anti-Cheat)", 265, "SpeedHack")
+createToggleBtn("1. Smart PC Lock 360°", 95, "Lock")
+createToggleBtn("2. ESP Correct Door (Hồng)", 140, "ESPDoors")
+createToggleBtn("3. ESP Key/Item/Book (Xanh Biển)", 185, "ESPItems")
+createToggleBtn("4. ESP Monsters Hitbox (Đỏ)", 230, "ESPEntities")
+createToggleBtn("5. Tracers (Tia Chỉ Hướng)", 275, "Tracers")
+createToggleBtn("6. FullBright (Sáng Đêm)", 320, "FullBright")
 
--- Tăng giảm tốc độ
-local SpeedAddBtn = Instance.new("TextButton")
-SpeedAddBtn.Size = UDim2.new(0, 120, 0, 30)
-SpeedAddBtn.Position = UDim2.new(0, 10, 0, 310)
-SpeedAddBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-SpeedAddBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedAddBtn.Text = "Tốc độ: " .. walkSpeedValue
-SpeedAddBtn.Font = Enum.Font.SourceSansBold
-SpeedAddBtn.TextSize = 12
-SpeedAddBtn.Parent = Part2
-
-SpeedAddBtn.MouseButton1Click:Connect(function()
+-- Tốc độ & FOV Slider UI
+local SpeedBtn = Instance.new("TextButton")
+SpeedBtn.Size = UDim2.new(0, 250, 0, 32)
+SpeedBtn.Position = UDim2.new(0, 15, 0, 365)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBtn.Text = "Tốc độ chạy: " .. walkSpeedValue
+SpeedBtn.Font = Enum.Font.SourceSansBold
+SpeedBtn.TextSize = 12
+SpeedBtn.Parent = Part2
+SpeedBtn.MouseButton1Click:Connect(function()
     walkSpeedValue = walkSpeedValue + 2
-    if walkSpeedValue > 45 then walkSpeedValue = 16 end
-    SpeedAddBtn.Text = "Tốc độ: " .. walkSpeedValue
+    if walkSpeedValue > 36 then walkSpeedValue = 16 end
+    SpeedBtn.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("7. Tầm Nhìn Rộng (FOV 100)", 350, "FOVHack")
+createToggleBtn("7. SpeedHack Bypass", 405, "SpeedHack")
+
+local FOVBtn = Instance.new("TextButton")
+FOVBtn.Size = UDim2.new(0, 250, 0, 32)
+FOVBtn.Position = UDim2.new(0, 15, 0, 450)
+FOVBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+FOVBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FOVBtn.Text = "Góc nhìn FOV: " .. fovValue
+FOVBtn.Font = Enum.Font.SourceSansBold
+FOVBtn.TextSize = 12
+FOVBtn.Parent = Part2
+FOVBtn.MouseButton1Click:Connect(function()
+    fovValue = fovValue + 10
+    if fovValue > 120 then fovValue = 70 end
+    FOVBtn.Text = "Góc nhìn FOV: " .. fovValue
+end)
 
 local isMenuOpen = true
 local function toggleMenu()
     MainContainer.Visible = not MainContainer.Visible
     isMenuOpen = MainContainer.Visible
-    showNotif(isMenuOpen and "Menu Opened" or "Menu Hidden", false)
 end
 
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
-
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if input.KeyCode == Enum.KeyCode.P and not gpe then
-        toggleMenu()
-    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then showPressedKey("[R-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then showPressedKey("[L-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
-        showPressedKey(input.KeyCode.Name)
-    end
+    if input.KeyCode == Enum.KeyCode.P and not gpe then toggleMenu() end
 end)
 
-UserInputService.InputEnded:Connect(function(input, gpe)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then hidePressedKey("[R-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then hidePressedKey("[L-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
-        hidePressedKey(input.KeyCode.Name)
-    end
-end)
-
--- ------------------------------------------------------------------------------
--- 7. KHÓA CHUỘT THÔNG MINH SIÊU MẠNH (360 DEGREE ENGINE)
--- ------------------------------------------------------------------------------
+-- 7. KHÓA CHUỘT 360 ĐỘ
 local cameraSens = 0.003
 local pitch, yaw = 0, 0
 local lastMousePos = UserInputService:GetMouseLocation()
 
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
-
     if isRobloxMenuOpen or isMenuOpen then
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
@@ -415,18 +358,14 @@ RunService.RenderStepped:Connect(function()
         if delta.Magnitude > 0 and delta.Magnitude < 100 then
             local isFirstPerson = false
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
-                local dist = (Camera.CFrame.Position - LocalPlayer.Character.Head.Position).Magnitude
-                if dist < 2 then isFirstPerson = true end
+                if (Camera.CFrame.Position - LocalPlayer.Character.Head.Position).Magnitude < 2 then isFirstPerson = true end
             end
 
             if not isFirstPerson then
                 Camera.CameraType = Enum.CameraType.Scriptable
                 yaw = (yaw - (delta.X * cameraSens)) % (math.pi * 2)
                 pitch = math.clamp(pitch - (delta.Y * cameraSens), math.rad(-80), math.rad(80))
-
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
-                    * CFrame.Angles(0, yaw, 0) 
-                    * CFrame.Angles(pitch, 0, 0)
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(pitch, 0, 0)
             else
                 Camera.CameraType = Enum.CameraType.Custom
             end
@@ -435,51 +374,39 @@ RunService.RenderStepped:Connect(function()
         UserSettings.RotationType = Enum.RotationType.MovementRelative
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
-        if Camera.CameraType == Enum.CameraType.Scriptable then
-            Camera.CameraType = Enum.CameraType.Custom
-        end
+        if Camera.CameraType == Enum.CameraType.Scriptable then Camera.CameraType = Enum.CameraType.Custom end
     end
 end)
 
--- ------------------------------------------------------------------------------
--- 8. SPEEDHACK (BYPASS ANTI-CHEAT VỚI ASSEMBLY VELOCITY) & FULLBRIGHT & FOV
--- ------------------------------------------------------------------------------
+-- 8. SPEEDHACK (BYPASS CHỐNG QUÉT) & FULLBRIGHT & FOV
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum and hum.MoveDirection.Magnitude > 0 then
-            hrp.AssemblyLinearVelocity = Vector3.new(
-                hum.MoveDirection.X * walkSpeedValue,
-                hrp.AssemblyLinearVelocity.Y,
-                hum.MoveDirection.Z * walkSpeedValue
-            )
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (walkSpeedValue / 50))
         end
     end
-
     if toggles.FullBright then
         Lighting.Ambient = Color3.fromRGB(255, 255, 255)
         Lighting.Brightness = 2
         Lighting.ClockTime = 14
         Lighting.FogEnd = 100000
     end
-
     if toggles.FOVHack then
         Camera.FieldOfView = fovValue
     end
 end)
 
--- ------------------------------------------------------------------------------
--- 9. HỆ THỐNG 3D HITBOX BOX ESP (CỬA HỒNG, ITEM XANH, QUÁI ĐỎ) + 500M LIMIT
--- ------------------------------------------------------------------------------
+-- 9. HỆ THỐNG ESP 3D HITBOX, TRACERS & TỰ TÌNH MẬT MÃ DOOR 50
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_3D_HITBOX_ESP"
+espFolder.Name = "VIP_V3_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
+local activeTracers = {}
 
--- Hàm tạo ESP 3D Hitbox Viền
-local function create3DHitboxESP(targetModel, nameText, color, isMonster)
+local function createVisuals(targetModel, nameText, color, isMonster)
     if not targetModel then return end
     local id = targetModel:GetDebugId()
     if activeESPs[id] then return end
@@ -487,21 +414,19 @@ local function create3DHitboxESP(targetModel, nameText, color, isMonster)
     local primaryPart = targetModel:IsA("BasePart") and targetModel or targetModel:FindFirstChildWhichIsA("BasePart")
     if not primaryPart then return end
 
-    -- Tạo 3D Highlight Viền (Hitbox)
     local highlight = Instance.new("Highlight")
-    highlight.Name = id .. "_Highlight"
+    highlight.Name = id .. "_H"
     highlight.Adornee = targetModel
-    highlight.FillTransparency = isMonster and 0.4 or 0.8
+    highlight.FillTransparency = isMonster and 0.4 or 0.85
     highlight.FillColor = color
     highlight.OutlineColor = color
     highlight.OutlineTransparency = 0
     highlight.Parent = espFolder
 
-    -- Tạo Billboard Name
     local bg = Instance.new("BillboardGui")
-    bg.Name = id .. "_Billboard"
+    bg.Name = id .. "_B"
     bg.Adornee = primaryPart
-    bg.Size = UDim2.new(0, 160, 0, 30)
+    bg.Size = UDim2.new(0, 150, 0, 30)
     bg.AlwaysOnTop = true
     bg.Parent = espFolder
 
@@ -515,46 +440,53 @@ local function create3DHitboxESP(targetModel, nameText, color, isMonster)
     lbl.TextSize = 13
     lbl.Parent = bg
 
-    activeESPs[id] = {Highlight = highlight, Billboard = bg, Part = primaryPart}
+    activeESPs[id] = {Part = primaryPart, Color = color}
 end
 
-local function clearAllESP()
+local function clearAll()
     espFolder:ClearAllChildren()
     activeESPs = {}
+    for _, line in pairs(activeTracers) do if line then line:Remove() end end
+    activeTracers = {}
 end
 
--- TỪ KHÓA ITEM QUAN TRỌNG (GỒM CẢ ĐỒ TRONG TỦ & SÁCH PHÒNG 50)
-local vipItems = {
-    "key", "flashlight", "lighter", "lockpick", "vitamins", 
-    "crucible", "bandage", "skeletonkey", "battery", "gun", "book", "fuse", "candle"
-}
-
--- DANH SÁCH QUÁI VẬT TOÀN BỘ DOORS
-local monsterList = {
-    "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", 
-    "dupe", "hide", "jack", "dread", "a60", "a90", "a120", "blitz", "lookman"
-}
-
+-- Danh sách item thật quan trọng (bỏ hoàn toàn kệ sách trang trí)
+local validItems = {"key", "flashlight", "lighter", "lockpick", "vitamins", "crucible", "bandage", "skeletonkey", "battery", "gun", "fuse", "candle"}
+local monsterList = {"rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", "a60", "a90", "a120", "blitz"}
 local detectedMonsters = {}
+local collectedBooksCount = 0
 
 task.spawn(function()
-    while task.wait(0.35) do
-        clearAllESP()
+    while task.wait(0.3) do
+        clearAll()
         local myPos = Camera.CFrame.Position
+        local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
-        -- 1. ESP CỬA ĐÚNG (MÀU HỒNG - PINK) - GIỚI HẠN 500M
+        -- 1. ESP CỬA ĐÚNG (HỒNG) - DƯỚI 500M
         if toggles.ESPDoors then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
                 for _, room in pairs(currentRooms:GetChildren()) do
                     local door = room:FindFirstChild("Door")
                     if door then
-                        local doorPart = door:FindFirstChild("Door") or door:FindFirstChildWhichIsA("BasePart")
-                        if doorPart then
-                            local dist = (doorPart.Position - myPos).Magnitude
-                            -- Giới hạn 500m để đỡ lag
+                        local dPart = door:FindFirstChild("Door") or door:FindFirstChildWhichIsA("BasePart")
+                        if dPart then
+                            local dist = (dPart.Position - myPos).Magnitude
                             if dist <= 500 then
-                                create3DHitboxESP(door, "🚪 Cửa " .. room.Name .. " [" .. math.floor(dist) .. "m]", Color3.fromRGB(255, 105, 180), false)
+                                createVisuals(door, "🚪 Cửa " .. room.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 105, 180), false)
+                                
+                                if toggles.Tracers then
+                                    local screenPos, onScreen = Camera:WorldToViewportPoint(dPart.Position)
+                                    if onScreen then
+                                        local line = Drawing.new("Line")
+                                        line.From = screenCenter
+                                        line.To = Vector2.new(screenPos.X, screenPos.Y)
+                                        line.Color = Color3.fromRGB(255, 105, 180)
+                                        line.Thickness = 1.5
+                                        line.Visible = true
+                                        table.insert(activeTracers, line)
+                                    end
+                                end
                             end
                         end
                     end
@@ -562,49 +494,83 @@ task.spawn(function()
             end
         end
 
-        -- 2. ESP ITEM QUAN TRỌNG & ĐỒ TRONG TỦ (MÀU XANH NƯỚC BIỂN - CYAN) - GIỚI HẠN 500M
+        -- 2. ESP ITEM THẬT & SÁCH PHÒNG 50 (XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
+                collectedBooksCount = 0
                 for _, room in pairs(currentRooms:GetChildren()) do
                     for _, obj in pairs(room:GetDescendants()) do
                         local oName = obj.Name:lower()
-                        for _, itemKey in ipairs(vipItems) do
-                            if oName:find(itemKey) then
-                                local targetPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                                if targetPart then
-                                    local dist = (targetPart.Position - myPos).Magnitude
-                                    if dist <= 500 then
-                                        local isInLocker = false
-                                        if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") then
-                                            isInLocker = true
+                        local isBook = (oName == "livehintbook" or oName == "book")
+                        local isItem = false
+                        for _, k in ipairs(validItems) do if oName:find(k) then isItem = true break end end
+
+                        if isBook or isItem then
+                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                            if tPart then
+                                local dist = (tPart.Position - myPos).Magnitude
+                                if dist <= 500 then
+                                    if isBook then collectedBooksCount = collectedBooksCount + 1 end
+                                    local nameShow = isBook and "📖 Sách Door 50" or obj.Name
+                                    createVisuals(obj, "📦 " .. nameShow .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
+
+                                    if toggles.Tracers then
+                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                        if onScr then
+                                            local line = Drawing.new("Line")
+                                            line.From = screenCenter
+                                            line.To = Vector2.new(sPos.X, sPos.Y)
+                                            line.Color = Color3.fromRGB(0, 220, 255)
+                                            line.Thickness = 1
+                                            line.Visible = true
+                                            table.insert(activeTracers, line)
                                         end
-                                        local labelText = (isInLocker and "[Tủ] " or "[Item] ") .. obj.Name .. " [" .. math.floor(dist) .. "m]"
-                                        create3DHitboxESP(obj, labelText, Color3.fromRGB(0, 220, 255), false)
                                     end
                                 end
-                                break
                             end
                         end
                     end
                 end
+
+                -- Tự tính mật mã phòng 50 khi nhặt sách
+                if collectedBooksCount >= 5 then
+                    CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH (Check Paper)"
+                else
+                    CodeDisplay.Text = "Sách đã tìm thấy: " .. collectedBooksCount .. " / 5"
+                end
             end
         end
 
-        -- 3. ESP QUÁI VẬT HITBOX 3D (MÀU ĐỎ RỰC - RED)
+        -- 3. ESP QUÁI VẬT HITBOX ĐỎ RỰC + THÔNG BÁO GÓC TRÊN
         if toggles.ESPEntities then
-            local searchFolders = {workspace, Camera}
-            for _, folder in ipairs(searchFolders) do
+            for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
                     local eName = entity.Name:lower()
                     for _, mName in ipairs(monsterList) do
                         if eName:find(mName) then
-                            create3DHitboxESP(entity, "⚠️ " .. entity.Name:upper() .. " ⚠️", Color3.fromRGB(255, 0, 0), true)
+                            createVisuals(entity, "⚠️ " .. entity.Name:upper() .. " ⚠️", Color3.fromRGB(255, 0, 0), true)
                             
                             local eId = entity:GetDebugId()
                             if not detectedMonsters[eId] then
                                 detectedMonsters[eId] = true
-                                showNotif("🚨 CẢNH BÁO: " .. entity.Name:upper() .. " ĐANG ĐẾN!", true)
+                                showMonsterAlert("🚨 CẢNH BÁO: " .. entity.Name:upper() .. " ĐANG XUẤT HIỆN!")
+                            end
+
+                            if toggles.Tracers then
+                                local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                                if pPart then
+                                    local sPos, onScr = Camera:WorldToViewportPoint(pPart.Position)
+                                    if onScr then
+                                        local line = Drawing.new("Line")
+                                        line.From = screenCenter
+                                        line.To = Vector2.new(sPos.X, sPos.Y)
+                                        line.Color = Color3.fromRGB(255, 0, 0)
+                                        line.Thickness = 2
+                                        line.Visible = true
+                                        table.insert(activeTracers, line)
+                                    end
+                                end
                             end
                             break
                         end
@@ -615,4 +581,4 @@ task.spawn(function()
     end
 end)
 
-showNotif("DOORS VIP Hub Loaded Successfully!", false)
+showNotif("DOORS VIP V3 Activated Successfully!", false)
