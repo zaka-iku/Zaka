@@ -1,28 +1,31 @@
--- Delta Executor: Exact DOORS Native Center Crosshair + Virtual Touch Camera Engine
+-- Delta Executor: Ultimate OTG Smart-Lock Engine (Fixed Mouse Lock)
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
+
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local UserSettings = UserSettings():GetService("UserGameSettings")
 
 -- Clean GUI cũ
 if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsNativeGUI") then
     LocalPlayer.PlayerGui.OTGDoorsNativeGUI:Destroy()
 end
 
--- 1. SCREENGUI CHÍNH (IgnoreGuiInset = true để chuẩn tâm màn hình gốc)
+-- 1. SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OTGDoorsNativeGUI"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true -- Căn chuẩn tâm gốc Roblox/DOORS không bị lệch bởi dải thông báo trên
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS (EXACT NATIVE CROSSHAIR)
+-- 2. TÂM NGẮM NATIVE CROSSHAIR
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 4, 0, 4)
-NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5) -- Neo đúng trung tâm 50% - 50%
+NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
 NativeCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 NativeCenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NativeCenterDot.BackgroundTransparency = 0
@@ -42,8 +45,8 @@ dotStroke.Parent = NativeCenterDot
 -- 3. HÀM POPUP THÔNG BÁO
 local function showNotif(text)
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 240, 0, 35)
-    notif.Position = UDim2.new(0.5, -120, 0.08, 0)
+    notif.Size = UDim2.new(0, 250, 0, 35)
+    notif.Position = UDim2.new(0.5, -125, 0.08, 0)
     notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     notif.BackgroundTransparency = 0.2
     notif.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -63,7 +66,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. BẢNG KEY VISUALIZER (TRONG SUỐT 100% + VIỀN CHỮ TRẮNG + VIỀN NGOÀI CẦU VỒNG RGB)
+-- 4. BẢNG KEY VISUALIZER (CẬP NHẬT RGB)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -84,8 +87,8 @@ RunService.RenderStepped:Connect(function(delta)
     hue = (hue + delta * 0.8) % 1
     local rainbowColor = Color3.fromHSV(hue, 1, 1)
     
-    for _, stroke in pairs(rainbowStrokes) do
-        if stroke then
+    for stroke, _ in pairs(rainbowStrokes) do
+        if stroke and stroke.Parent then
             stroke.Color = rainbowColor
         end
     end
@@ -120,15 +123,15 @@ local function showPressedKey(keyName)
     outerRainbowStroke.Parent = keyLbl
 
     activeVisKeys[keyName] = keyLbl
-    table.insert(rainbowStrokes, outerRainbowStroke)
+    rainbowStrokes[outerRainbowStroke] = true
 end
 
 local function hidePressedKey(keyName)
     if activeVisKeys[keyName] then
         local target = activeVisKeys[keyName]
-        for i, stroke in ipairs(rainbowStrokes) do
+        for stroke, _ in pairs(rainbowStrokes) do
             if stroke.Parent == target then
-                table.remove(rainbowStrokes, i)
+                rainbowStrokes[stroke] = nil
                 break
             end
         end
@@ -137,16 +140,16 @@ local function hidePressedKey(keyName)
     end
 end
 
--- 5. MENU TOGGLE
+-- 5. MENU TOGGLE (NÚT BẤM & PHÍM "P")
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 80, 0, 35)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.05, 0)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 ToggleBtn.BackgroundTransparency = 0.3
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Text = "MENU"
+ToggleBtn.Text = "MENU (P)"
 ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.TextSize = 15
+ToggleBtn.TextSize = 14
 ToggleBtn.Parent = ScreenGui
 
 local tCorner = Instance.new("UICorner")
@@ -251,11 +254,28 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- BỘ CHUYỂN ĐỔI LOCK ENGINES (CÓ CHẾ ĐỘ MÔ PHỎNG TOUCH SWIPE)
+-- BỘ CHUYỂN ĐỔI LOCK ENGINE SỬ DỤNG USERGAMESETTINGS OVERRIDE
 -- ==========================================
-local currentLockEngine = 2 -- Mặc định dùng Engine 2 (CFrame Delta)
-local lastMousePos = Vector2.new(0, 0)
-local sensitivity = 0.35
+local currentLockEngine = 2
+local isMenuOpen = false
+
+local function toggleMenu()
+    MainContainer.Visible = not MainContainer.Visible
+    isMenuOpen = MainContainer.Visible
+    if MainContainer.Visible then
+        showNotif("Menu Opened")
+    else
+        showNotif("Menu Hidden")
+    end
+end
+
+ToggleBtn.MouseButton1Click:Connect(toggleMenu)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if input.KeyCode == Enum.KeyCode.P and not gpe then
+        toggleMenu()
+    end
+end)
 
 local function createLockOptionBtn(text, engineId, posY)
     local btn = Instance.new("TextButton")
@@ -277,7 +297,6 @@ local function createLockOptionBtn(text, engineId, posY)
         if currentLockEngine == engineId then
             currentLockEngine = 0
             btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
             showNotif("Engine Disabled")
         else
             currentLockEngine = engineId
@@ -287,27 +306,25 @@ local function createLockOptionBtn(text, engineId, posY)
                 end
             end
             btn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-            lastMousePos = UserInputService:GetMouseLocation()
             showNotif("Activated: " .. text)
         end
     end)
 end
 
-createLockOptionBtn("Engine 1: LockCenter Native", 1, 35)
-createLockOptionBtn("Engine 2: CFrame Angle Fix (FPS)", 2, 80)
-createLockOptionBtn("Engine 3: Virtual Touch Swipe", 3, 125)
-createLockOptionBtn("Engine 4: Hard Position Freeze", 4, 170)
+createLockOptionBtn("Engine 1: Force ShiftLock Native", 1, 35)
+createLockOptionBtn("Engine 2: Real PC LockCenter (Best)", 2, 80)
+createLockOptionBtn("Engine 3: MouseLock Combined", 3, 125)
+createLockOptionBtn("Engine 4: Hard Center Freeze", 4, 170)
 
 local isRightMouseDown = false
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         isRightMouseDown = true
-        lastMousePos = UserInputService:GetMouseLocation()
         showPressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         showPressedKey("[L-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.Keyboard then
+    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
         showPressedKey(input.KeyCode.Name)
     end
 end)
@@ -318,59 +335,45 @@ UserInputService.InputEnded:Connect(function(input, gpe)
         hidePressedKey("[R-Mouse]")
     elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
         hidePressedKey("[L-Mouse]")
-    elseif input.UserInputType == Enum.UserInputType.Keyboard then
+    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
         hidePressedKey(input.KeyCode.Name)
     end
 end)
 
--- VÒNG LẶP KHÓA MẠNH MẼ KHÔNG LỆCH TÂM
+-- VÒNG LẶP ÉP CHUỘT THẬT HOẠT ĐỘNG CHUẨN PC
 RunService.RenderStepped:Connect(function()
-    if isRightMouseDown or currentLockEngine > 0 then
+    local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
+    
+    -- Mở chuột khi vào Menu
+    if isRobloxMenuOpen or isMenuOpen then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        UserInputService.MouseIconEnabled = true
+        return
+    end
+
+    if currentLockEngine > 0 or isRightMouseDown then
+        -- Ép Roblox hiểu đang dùng Mode MouseLock chuẩn
+        UserSettings.RotationType = Enum.RotationType.CameraRelative
+        UserInputService.MouseIconEnabled = false
+
         if currentLockEngine == 1 then
+            -- Bật ShiftLock chuẩn gốc của Roblox
+            UserSettings.ControlMode = Enum.ControlMode.MouseLock
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         elseif currentLockEngine == 2 or isRightMouseDown then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            local currentPos = UserInputService:GetMouseLocation()
-            local delta = currentPos - lastMousePos
-            lastMousePos = currentPos
-
-            if delta.Magnitude > 0 then
-                local xAngle = math.rad(-delta.X * sensitivity)
-                local yAngle = math.rad(-delta.Y * sensitivity)
-                local curCFrame = Camera.CFrame
-                Camera.CFrame = CFrame.new(curCFrame.Position) 
-                    * CFrame.Angles(0, xAngle, 0) 
-                    * curCFrame:ToWorldSpace(CFrame.Angles(yAngle, 0, 0)).Rotation
-            end
+            -- Lock Center chuẩn PC: Nhân vật xoay theo góc nhìn 360 độ
+            UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         elseif currentLockEngine == 3 then
-            -- Giả lập vuốt ngón tay nửa phải màn hình
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-            local currentPos = UserInputService:GetMouseLocation()
-            local delta = currentPos - lastMousePos
-            lastMousePos = currentPos
-            
-            if delta.Magnitude > 0 then
-                VirtualInputManager:SendPanGestureEvent(
-                    Vector2.new(Camera.ViewportSize.X * 0.75, Camera.ViewportSize.Y * 0.5),
-                    delta * sensitivity,
-                    0,
-                    Enum.UserInputState.Change,
-                    game
-                )
-            end
         elseif currentLockEngine == 4 then
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         end
-    end
-end)
-
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainContainer.Visible = not MainContainer.Visible
-    if MainContainer.Visible then
-        showNotif("Menu Opened")
     else
-        showNotif("Menu Hidden")
+        -- Trả về bình thường
+        UserSettings.RotationType = Enum.RotationType.MovementRelative
+        UserInputService.MouseIconEnabled = true
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
     end
 end)
 
-showNotif("DOORS Native Center Fixed")
+showNotif("PC Lock Center Activated!")
