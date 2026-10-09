@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V5 - FULL PLAYERS ESP & 1000+ ITEMS DATABASE
+-- DOORS OTG ULTIMATE VIP V6 - CLEAN ITEMS & UNLOCKED IN-LOCKER ESP + TRUE SPEED
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ GUI KHÔNG BỊ XÓA
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV5") then
-        TargetParent.OTGDoorsVIPV5:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV6") then
+        TargetParent.OTGDoorsVIPV6:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV5") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV6") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV5") then
-        TargetParent.OTGDoorsVIPV5:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV6") then
+        TargetParent.OTGDoorsVIPV6:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV5"
+ScreenGui.Name = "OTGDoorsVIPV6"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -172,7 +172,7 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 35)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V5 ENGINE"
+P2Title.Text = "DOORS VIP V6 ENGINE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -245,18 +245,18 @@ end
 -- 6. CÔNG TẮC & TÙY CHỈNH
 local toggles = {
     Lock = true,
-    ESPPlayers = true,    -- ESP Người chơi (Xanh lá)
-    ESPDoors = true,      -- Cửa đúng (Hồng)
-    ESPItems = true,      -- 1000+ Vật phẩm, Súng, Thánh Giá, Tủ (Xanh biển)
-    ESPEntities = true,   -- Quái (Hitbox Đỏ)
-    Tracers = true,       -- Tia trắng dẫn hướng mượt
+    ESPPlayers = true,
+    ESPDoors = true,
+    ESPItems = true,
+    ESPEntities = true,
+    Tracers = true,
     FullBright = false,
     SpeedHack = false,
     FOVHack = false
 }
 
-local walkSpeedValue = 20
-local fovValue = 90
+local walkSpeedValue = 22
+local fovValue = 95
 
 local function createToggleBtn(title, posY, keyName)
     local btn = Instance.new("TextButton")
@@ -284,7 +284,7 @@ end
 createToggleBtn("1. Smart PC Lock 360°", 95, "Lock")
 createToggleBtn("2. ESP Players (Người Chơi)", 140, "ESPPlayers")
 createToggleBtn("3. ESP Correct Door (Hồng)", 185, "ESPDoors")
-createToggleBtn("4. ESP 1000+ Items & Crucifix (Xanh)", 230, "ESPItems")
+createToggleBtn("4. ESP Usable Items & In-Locker", 230, "ESPItems")
 createToggleBtn("5. ESP Monsters Hitbox (Đỏ)", 275, "ESPEntities")
 createToggleBtn("6. Smooth Tracers (Tia Trắng)", 320, "Tracers")
 createToggleBtn("7. FullBright (Sáng Đêm)", 365, "FullBright")
@@ -310,7 +310,7 @@ SpeedMinus.Font = Enum.Font.SourceSansBold
 SpeedMinus.TextSize = 12
 SpeedMinus.Parent = Part2
 SpeedMinus.MouseButton1Click:Connect(function()
-    walkSpeedValue = math.clamp(walkSpeedValue - 2, 16, 45)
+    walkSpeedValue = math.clamp(walkSpeedValue - 2, 16, 50)
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
@@ -324,11 +324,11 @@ SpeedPlus.Font = Enum.Font.SourceSansBold
 SpeedPlus.TextSize = 12
 SpeedPlus.Parent = Part2
 SpeedPlus.MouseButton1Click:Connect(function()
-    walkSpeedValue = math.clamp(walkSpeedValue + 2, 16, 45)
+    walkSpeedValue = math.clamp(walkSpeedValue + 2, 16, 50)
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("8. SpeedHack Bypass", 470, "SpeedHack")
+createToggleBtn("8. SpeedHack Powerful", 470, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
@@ -350,7 +350,7 @@ FOVMinus.Font = Enum.Font.SourceSansBold
 FOVMinus.TextSize = 12
 FOVMinus.Parent = Part2
 FOVMinus.MouseButton1Click:Connect(function()
-    fovValue = math.clamp(fovValue - 5, 70, 120)
+    fovValue = math.clamp(fovValue - 5, 70, 130)
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
@@ -364,7 +364,7 @@ FOVPlus.Font = Enum.Font.SourceSansBold
 FOVPlus.TextSize = 12
 FOVPlus.Parent = Part2
 FOVPlus.MouseButton1Click:Connect(function()
-    fovValue = math.clamp(fovValue + 5, 70, 120)
+    fovValue = math.clamp(fovValue + 5, 70, 130)
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
@@ -427,17 +427,17 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 8. SPEEDHACK KHÔNG BỊ TELE VỀ VỊ TRÍ CŨ & FULLBRIGHT & FOV
+-- 8. SPEEDHACK POWERFUL (CHỐNG TELE NGƯỢC) & FULLBRIGHT & FOV
 RunService.Stepped:Connect(function()
-    if toggles.SpeedHack and LocalPlayer.Character then
+    if toggles.SpeedHack and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = walkSpeedValue
-        end
-    elseif LocalPlayer.Character then
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= 16 then
-            hum.WalkSpeed = 16
+        if hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity = Vector3.new(
+                hum.MoveDirection.X * walkSpeedValue,
+                hrp.AssemblyLinearVelocity.Y,
+                hum.MoveDirection.Z * walkSpeedValue
+            )
         end
     end
 
@@ -453,9 +453,9 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 9. HỆ THỐNG ESP 3D HITBOX, TIA TRẮNG MƯỢT & 1000+ VẬT PHẨM (GUN, CRUCIFIX, ITEMS)
+-- 9. HỆ THỐNG ESP CLEAN & USABLE ITEMS (TÌM XUYÊN THẤU VẬT PHẨM TRONG TỦ)
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V5_ESP"
+espFolder.Name = "VIP_V6_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -505,13 +505,12 @@ local function clearAll()
     activeTracers = {}
 end
 
--- Bộ từ khóa quét toàn diện 1000+ vật phẩm DOORS (Súng, Thánh Giá, Bình xịt, Đèn, Chìa khóa, Thức ăn, v.v.)
-local massiveItemKeywords = {
+-- Danh sách item thực chiến hữu dụng (Súng, Thánh giá, Chìa khóa, Đèn pin, v.v. - Loại bỏ hoàn toàn giấy rác, cây cối, kệ sách)
+local usableItems = {
     "key", "flashlight", "lighter", "lockpick", "vitamins", "crucible", "crucifix", 
     "bandage", "skeletonkey", "battery", "gold", "fuse", "lever", "breaker", "gun", 
-    "shotgun", "tablet", "shears", "herb", "medkit", "multibuy", "smoothie", "lump", 
-    "glitch", "scanner", "book", "livehintbook", "paper", "note", "bottle", "holy", 
-    "cross", "flashlight", "candlestick", "candle", "pendant", "shield", "starlight"
+    "shotgun", "tablet", "shears", "herb", "medkit", "smoothie", "lump", "scanner", 
+    "livehintbook", "book", "bottle", "holy", "cross", "candlestick", "candle"
 }
 local monsterList = {"rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", "a60", "a90", "a120", "blitz"}
 local detectedMonsters = {}
@@ -568,7 +567,7 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP 1000+ VẬT PHẨM, SÚNG, THÁNH GIÁ, TỦ (XANH BIỂN)
+        -- 3. ESP VẬT PHẨM SỬ DỤNG ĐƯỢC + QUÉT XUYÊN TỦ (CHƯA MỞ VẪN THẤY)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -577,10 +576,10 @@ task.spawn(function()
                     for _, obj in pairs(room:GetDescendants()) do
                         local oName = obj.Name:lower()
                         local isBook = (oName == "livehintbook" or oName == "book")
-                        local isItem = false
-                        for _, k in ipairs(massiveItemKeywords) do if oName:find(k) then isItem = true break end end
+                        local isUsable = false
+                        for _, k in ipairs(usableItems) do if oName:find(k) then isUsable = true break end end
 
-                        if isBook or isItem then
+                        if isBook or isUsable then
                             local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                             if tPart then
                                 local dist = (tPart.Position - myPos).Magnitude
@@ -615,7 +614,7 @@ task.spawn(function()
                 end
 
                 if collectedBooksCount >= 5 then
-                    CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH (Check Bức Thư)"
+                    CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH!"
                 else
                     CodeDisplay.Text = "Sách đã tìm: " .. collectedBooksCount .. " / 5"
                 end
@@ -661,4 +660,4 @@ task.spawn(function()
     end
 end)
 
-showNotif("DOORS VIP V5 Full Players & Items Activated!", false)
+showNotif("DOORS VIP V6 Clean Items Activated!", false)
