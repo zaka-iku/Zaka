@@ -1,4 +1,4 @@
--- Delta Executor: Exact DOORS Native Center Crosshair + Ultimate PC Lock Engine
+-- Delta Executor: Exact DOORS Native Center Crosshair + CoreGui Protected Menu
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -9,18 +9,28 @@ local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Clean GUI cũ
-if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsNativeGUI") then
-    LocalPlayer.PlayerGui.OTGDoorsNativeGUI:Destroy()
+-- 1. TỰ ĐỘNG CHỌN NƠI LƯU GUI BẢO VỆ KHÔNG BỊ XÓA (CoreGui hoặc PlayerGui)
+local CoreGui = game:GetService("CoreGui")
+local TargetParent = CoreGui
+pcall(function()
+    if TargetParent:FindFirstChild("OTGDoorsNativeGUI") then
+        TargetParent.OTGDoorsNativeGUI:Destroy()
+    end
+end)
+if not TargetParent:FindFirstChild("OTGDoorsNativeGUI") then
+    TargetParent = LocalPlayer:WaitForChild("PlayerGui")
+    if TargetParent:FindFirstChild("OTGDoorsNativeGUI") then
+        TargetParent.OTGDoorsNativeGUI:Destroy()
+    end
 end
 
--- 1. SCREENGUI CHÍNH
+-- SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OTGDoorsNativeGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 999
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.DisplayOrder = 999999
+ScreenGui.Parent = TargetParent
 
 -- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS
 local NativeCenterDot = Instance.new("Frame")
@@ -66,7 +76,7 @@ local function showNotif(text)
     end)
 end
 
--- 4. BẢNG KEY VISUALIZER (TỰ ĐỘNG CHẠY HỆ THỐNG RAINBOW STROKE)
+-- 4. BẢNG KEY VISUALIZER (CẬP NHẬT RGB)
 local VisFrame = Instance.new("Frame")
 VisFrame.Size = UDim2.new(0, 450, 0, 60)
 VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
@@ -140,34 +150,40 @@ local function hidePressedKey(keyName)
     end
 end
 
--- 5. NÚT TOGGLE MENU (CHẠY BẰNG CẢM ỨNG CẢ TAY & PHÍM P)
+-- 5. NÚT TOGGLE MENU MÀU NỔI BẬT NỐT TRÊN GÓC MÀN HÌNH
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 90, 0, 35)
-ToggleBtn.Position = UDim2.new(0.02, 0, 0.05, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ToggleBtn.BackgroundTransparency = 0.3
+ToggleBtn.Size = UDim2.new(0, 100, 0, 40)
+ToggleBtn.Position = UDim2.new(0.02, 0, 0.1, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Text = "MENU (P)"
 ToggleBtn.Font = Enum.Font.SourceSansBold
-ToggleBtn.TextSize = 14
+ToggleBtn.TextSize = 15
 ToggleBtn.Parent = ScreenGui
 
 local tCorner = Instance.new("UICorner")
-tCorner.CornerRadius = UDim.new(0, 6)
+tCorner.CornerRadius = UDim.new(0, 8)
 tCorner.Parent = ToggleBtn
 
--- 6. MENU CONTAINER GIAO DIỆN CŨ
+-- 6. MENU CONTAINER CHÍNH
 local MainContainer = Instance.new("Frame")
 MainContainer.Size = UDim2.new(0, 780, 0, 260)
 MainContainer.Position = UDim2.new(0.5, -390, 0.5, -130)
-MainContainer.BackgroundTransparency = 1
+MainContainer.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainContainer.BackgroundTransparency = 0.1
 MainContainer.Visible = true
 MainContainer.Parent = ScreenGui
 
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = MainContainer
+
 local Part1 = Instance.new("ScrollingFrame")
-Part1.Size = UDim2.new(0, 510, 1, 0)
-Part1.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Part1.BackgroundTransparency = 0.3
+Part1.Size = UDim2.new(0, 510, 1, -20)
+Part1.Position = UDim2.new(0, 10, 0, 10)
+Part1.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Part1.BackgroundTransparency = 0.2
 Part1.CanvasSize = UDim2.new(0, 680, 0, 230)
 Part1.ScrollBarThickness = 4
 Part1.Parent = MainContainer
@@ -177,10 +193,10 @@ p1Corner.CornerRadius = UDim.new(0, 8)
 p1Corner.Parent = Part1
 
 local Part2 = Instance.new("Frame")
-Part2.Size = UDim2.new(0, 255, 1, 0)
-Part2.Position = UDim2.new(0, 525, 0, 0)
-Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Part2.BackgroundTransparency = 0.3
+Part2.Size = UDim2.new(0, 240, 1, -20)
+Part2.Position = UDim2.new(0, 530, 0, 10)
+Part2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Part2.BackgroundTransparency = 0.2
 Part2.Parent = MainContainer
 
 local p2Corner = Instance.new("UICorner")
@@ -188,9 +204,9 @@ p2Corner.CornerRadius = UDim.new(0, 8)
 p2Corner.Parent = Part2
 
 local P2Title = Instance.new("TextLabel")
-P2Title.Size = UDim2.new(1, 0, 0, 35)
+P2Title.Size = UDim2.new(1, 0, 0, 40)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "SMART PC LOCK SYSTEM"
+P2Title.Text = "SMART PC LOCK ENGINE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -254,22 +270,19 @@ for i, l in ipairs(letters) do
 end
 
 -- ==========================================
--- 1 NÚT DUY NHẤT: KHÓA CHUỘT THÔNG MINH NHƯ PC
+-- NÚT BẬT TẮT KHÓA CHUỘT DẠNG CÔNG TẮC CỰC NHẠY
 -- ==========================================
 local isPCLockActive = true
 local isMenuOpen = true
 local lastMousePos = UserInputService:GetMouseLocation()
 local sensitivity = 0.003
-
 local pitch = 0
 local yaw = 0
 
--- Nút công tắc duy nhất bên Part2
 local LockBtn = Instance.new("TextButton")
-LockBtn.Size = UDim2.new(0, 225, 0, 55)
+LockBtn.Size = UDim2.new(0, 210, 0, 55)
 LockBtn.Position = UDim2.new(0, 15, 0, 90)
 LockBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-LockBtn.BackgroundTransparency = 0.2
 LockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LockBtn.Text = "TRUE PC LOCK: ON"
 LockBtn.Font = Enum.Font.SourceSansBold
@@ -290,10 +303,10 @@ local function toggleMenu()
     end
 end
 
--- Bấm nút MENU bằng tay trên màn hình
+-- Bấm nút MENU màu xanh trên góc màn hình
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 
--- Hoặc bấm phím P trên bàn phím OTG
+-- Bấm phím P trên bàn phím
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then
         toggleMenu()
@@ -318,7 +331,6 @@ LockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIC BẮT PHÍM BÀN PHÍM VÀ CHUỘT
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         showPressedKey("[R-Mouse]")
@@ -339,11 +351,10 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
--- VÒNG LẶP XỬ LÝ KHÓA CHUỘT THÔNG MINH KHÔNG BỊ TRÔI CON TRỎ
+-- VÒNG LẶP XỬ LÝ
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
 
-    -- Tự động mở chuột khi mở Menu Roblox (Esc) hoặc Mở Bảng Script
     if isRobloxMenuOpen or isMenuOpen then
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
@@ -354,7 +365,6 @@ RunService.RenderStepped:Connect(function()
     end
 
     if isPCLockActive then
-        -- Ẩn chuột hoàn toàn và khóa vị trí trung tâm
         UserInputService.MouseIconEnabled = false
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
         Camera.CameraType = Enum.CameraType.Scriptable
@@ -372,7 +382,6 @@ RunService.RenderStepped:Connect(function()
                 * CFrame.Angles(pitch, 0, 0)
         end
     else
-        -- Khi tắt: Trả chuột về bình thường
         UserInputService.MouseIconEnabled = true
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         if Camera.CameraType == Enum.CameraType.Scriptable then
@@ -381,4 +390,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-showNotif("DOORS OTG PC-Engine Ready!")
+showNotif("DOORS OTG Loaded Successfully!")
