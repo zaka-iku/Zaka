@@ -1,4 +1,4 @@
--- Delta Executor: Ultimate OTG Touch-Blocker & True Lock Center Engine
+-- Delta Executor: Exact DOORS Native Center Crosshair + Ultimate PC Lock Engine
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
@@ -14,26 +14,15 @@ if LocalPlayer.PlayerGui:FindFirstChild("OTGDoorsNativeGUI") then
     LocalPlayer.PlayerGui.OTGDoorsNativeGUI:Destroy()
 end
 
--- 1. SCREENGUI CHÍNH (DisplayOrder cao nhất để đè mọi GUI game)
+-- 1. SCREENGUI CHÍNH
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OTGDoorsNativeGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 99999999
+ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 2. LỚP MÀNG CHẶN CHUỘT ẢO BẤM NHẦM VÀO MÀN HÌNH (TOUCH BLOCKER)
-local TouchBlocker = Instance.new("TextButton")
-TouchBlocker.Name = "TouchBlocker"
-TouchBlocker.Size = UDim2.new(1, 0, 1, 0)
-TouchBlocker.Position = UDim2.new(0, 0, 0, 0)
-TouchBlocker.BackgroundTransparency = 1
-TouchBlocker.Text = ""
-TouchBlocker.Active = true
-TouchBlocker.Visible = false
-TouchBlocker.Parent = ScreenGui
-
--- 3. TÂM NGẮM NATIVE CROSSHAIR
+-- 2. TÂM NGẮM CHUẨN TÂM GỐC DOORS
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 4, 0, 4)
 NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -41,7 +30,6 @@ NativeCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 NativeCenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NativeCenterDot.BackgroundTransparency = 0
 NativeCenterDot.Visible = true
-NativeCenterDot.ZIndex = 10
 NativeCenterDot.Parent = ScreenGui
 
 local dotCorner = Instance.new("UICorner")
@@ -54,7 +42,7 @@ dotStroke.Transparency = 0.4
 dotStroke.Thickness = 1
 dotStroke.Parent = NativeCenterDot
 
--- 4. HÀM POPUP THÔNG BÁO
+-- 3. HÀM POPUP THÔNG BÁO
 local function showNotif(text)
     local notif = Instance.new("TextLabel")
     notif.Size = UDim2.new(0, 250, 0, 35)
@@ -65,7 +53,6 @@ local function showNotif(text)
     notif.Text = text
     notif.Font = Enum.Font.SourceSansBold
     notif.TextSize = 15
-    notif.ZIndex = 100
     notif.Parent = ScreenGui
 
     local corner = Instance.new("UICorner")
@@ -79,7 +66,81 @@ local function showNotif(text)
     end)
 end
 
--- 5. MENU TOGGLE (PHÍM P & NÚT)
+-- 4. BẢNG KEY VISUALIZER (TỰ ĐỘNG CHẠY HỆ THỐNG RAINBOW STROKE)
+local VisFrame = Instance.new("Frame")
+VisFrame.Size = UDim2.new(0, 450, 0, 60)
+VisFrame.Position = UDim2.new(0.02, 0, 0.82, 0)
+VisFrame.BackgroundTransparency = 1
+VisFrame.Parent = ScreenGui
+
+local VisLayout = Instance.new("UIListLayout")
+VisLayout.FillDirection = Enum.FillDirection.Horizontal
+VisLayout.SortOrder = Enum.SortOrder.LayoutOrder
+VisLayout.Padding = UDim.new(0, 10)
+VisLayout.Parent = VisFrame
+
+local activeVisKeys = {}
+local rainbowStrokes = {}
+
+local hue = 0
+RunService.RenderStepped:Connect(function(delta)
+    hue = (hue + delta * 0.8) % 1
+    local rainbowColor = Color3.fromHSV(hue, 1, 1)
+    
+    for stroke, _ in pairs(rainbowStrokes) do
+        if stroke and stroke.Parent then
+            stroke.Color = rainbowColor
+        end
+    end
+end)
+
+local function showPressedKey(keyName)
+    if activeVisKeys[keyName] then return end
+    
+    local keyLbl = Instance.new("TextLabel")
+    keyLbl.Size = UDim2.new(0, 50, 0, 50)
+    keyLbl.BackgroundTransparency = 1
+    keyLbl.Text = keyName
+    keyLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    keyLbl.Font = Enum.Font.SourceSansBold
+    keyLbl.TextSize = 16
+    keyLbl.Parent = VisFrame
+
+    local kCorner = Instance.new("UICorner")
+    kCorner.CornerRadius = UDim.new(0, 8)
+    kCorner.Parent = keyLbl
+
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Color = Color3.fromRGB(255, 255, 255)
+    textStroke.Transparency = 0.2
+    textStroke.Thickness = 1.2
+    textStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+    textStroke.Parent = keyLbl
+
+    local outerRainbowStroke = Instance.new("UIStroke")
+    outerRainbowStroke.Thickness = 3.5
+    outerRainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    outerRainbowStroke.Parent = keyLbl
+
+    activeVisKeys[keyName] = keyLbl
+    rainbowStrokes[outerRainbowStroke] = true
+end
+
+local function hidePressedKey(keyName)
+    if activeVisKeys[keyName] then
+        local target = activeVisKeys[keyName]
+        for stroke, _ in pairs(rainbowStrokes) do
+            if stroke.Parent == target then
+                rainbowStrokes[stroke] = nil
+                break
+            end
+        end
+        target:Destroy()
+        activeVisKeys[keyName] = nil
+    end
+end
+
+-- 5. NÚT TOGGLE MENU (CHẠY BẰNG CẢM ỨNG CẢ TAY & PHÍM P)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 90, 0, 35)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.05, 0)
@@ -89,59 +150,135 @@ ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Text = "MENU (P)"
 ToggleBtn.Font = Enum.Font.SourceSansBold
 ToggleBtn.TextSize = 14
-ToggleBtn.ZIndex = 100
 ToggleBtn.Parent = ScreenGui
 
 local tCorner = Instance.new("UICorner")
 tCorner.CornerRadius = UDim.new(0, 6)
 tCorner.Parent = ToggleBtn
 
--- 6. BẢNG MENU VÀ NÚT CHÍNH
+-- 6. MENU CONTAINER GIAO DIỆN CŨ
 local MainContainer = Instance.new("Frame")
-MainContainer.Size = UDim2.new(0, 300, 0, 180)
-MainContainer.Position = UDim2.new(0.5, -150, 0.5, -90)
-MainContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainContainer.BackgroundTransparency = 0.2
+MainContainer.Size = UDim2.new(0, 780, 0, 260)
+MainContainer.Position = UDim2.new(0.5, -390, 0.5, -130)
+MainContainer.BackgroundTransparency = 1
 MainContainer.Visible = true
-MainContainer.ZIndex = 100
 MainContainer.Parent = ScreenGui
 
-local mCorner = Instance.new("UICorner")
-mCorner.CornerRadius = UDim.new(0, 10)
-mCorner.Parent = MainContainer
+local Part1 = Instance.new("ScrollingFrame")
+Part1.Size = UDim2.new(0, 510, 1, 0)
+Part1.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Part1.BackgroundTransparency = 0.3
+Part1.CanvasSize = UDim2.new(0, 680, 0, 230)
+Part1.ScrollBarThickness = 4
+Part1.Parent = MainContainer
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "ULTIMATE OTG LOCKER"
-Title.TextColor3 = Color3.fromRGB(255, 215, 0)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 16
-Title.ZIndex = 101
-Title.Parent = MainContainer
+local p1Corner = Instance.new("UICorner")
+p1Corner.CornerRadius = UDim.new(0, 8)
+p1Corner.Parent = Part1
 
-local LockToggleBtn = Instance.new("TextButton")
-LockToggleBtn.Size = UDim2.new(0, 260, 0, 50)
-LockToggleBtn.Position = UDim2.new(0.5, -130, 0.45, 0)
-LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-LockToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockToggleBtn.Text = "TRUE LOCK: OFF"
-LockToggleBtn.Font = Enum.Font.SourceSansBold
-LockToggleBtn.TextSize = 16
-LockToggleBtn.ZIndex = 101
-LockToggleBtn.Parent = MainContainer
+local Part2 = Instance.new("Frame")
+Part2.Size = UDim2.new(0, 255, 1, 0)
+Part2.Position = UDim2.new(0, 525, 0, 0)
+Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Part2.BackgroundTransparency = 0.3
+Part2.Parent = MainContainer
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = LockToggleBtn
+local p2Corner = Instance.new("UICorner")
+p2Corner.CornerRadius = UDim.new(0, 8)
+p2Corner.Parent = Part2
 
--- LOGIC KHÓA CHUỘT BẰNG MA-TRẬN LẬP TRÌNH
-local isLocked = false
+local P2Title = Instance.new("TextLabel")
+P2Title.Size = UDim2.new(1, 0, 0, 35)
+P2Title.BackgroundTransparency = 1
+P2Title.Text = "SMART PC LOCK SYSTEM"
+P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+P2Title.Font = Enum.Font.SourceSansBold
+P2Title.TextSize = 14
+P2Title.Parent = Part2
+
+local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
+    local btn = Instance.new("TextButton")
+    btn.Text = text
+    btn.Position = UDim2.new(0, posX, 0, posY)
+    btn.Size = UDim2.new(0, sizeX, 0, sizeY)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BackgroundTransparency = 0.3
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = Part1
+
+    local kCorner = Instance.new("UICorner")
+    kCorner.CornerRadius = UDim.new(0, 5)
+    kCorner.Parent = btn
+
+    btn.MouseButton1Down:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+        showPressedKey(text)
+        if keyCode then
+            VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+        elseif mouseEnum then
+            VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, true, game, 0)
+        end
+    end)
+
+    btn.MouseButton1Up:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        hidePressedKey(text)
+        if keyCode then
+            VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+        elseif mouseEnum then
+            VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, false, game, 0)
+        end
+    end)
+end
+
+createKey("[L-Mouse]", 5, 5, 75, 30, nil, "L")
+createKey("[R-Mouse]", 85, 5, 75, 30, nil, "R")
+createKey("Esc", 165, 5, 35, 30, Enum.KeyCode.Escape)
+createKey("Tab", 5, 40, 45, 30, Enum.KeyCode.Tab)
+createKey("W", 105, 40, 35, 30, Enum.KeyCode.W)
+createKey("E", 145, 40, 45, 30, Enum.KeyCode.E)
+createKey("A", 65, 75, 35, 30, Enum.KeyCode.A)
+createKey("S", 105, 75, 35, 30, Enum.KeyCode.S)
+createKey("D", 145, 75, 35, 30, Enum.KeyCode.D)
+createKey("Shift", 5, 110, 55, 30, Enum.KeyCode.LeftShift)
+createKey("C", 65, 110, 45, 30, Enum.KeyCode.C)
+createKey("Space", 115, 110, 75, 30, Enum.KeyCode.Space)
+
+local letters = {"Q","R","T","Y","U","I","O","P","F","G","H","J","K","L","Z","X","V","B","N","M"}
+for i, l in ipairs(letters) do
+    local row = math.floor((i-1)/5)
+    local col = (i-1)%5
+    createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
+end
+
+-- ==========================================
+-- 1 NÚT DUY NHẤT: KHÓA CHUỘT THÔNG MINH NHƯ PC
+-- ==========================================
+local isPCLockActive = true
 local isMenuOpen = true
 local lastMousePos = UserInputService:GetMouseLocation()
 local sensitivity = 0.003
+
 local pitch = 0
 local yaw = 0
+
+-- Nút công tắc duy nhất bên Part2
+local LockBtn = Instance.new("TextButton")
+LockBtn.Size = UDim2.new(0, 225, 0, 55)
+LockBtn.Position = UDim2.new(0, 15, 0, 90)
+LockBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+LockBtn.BackgroundTransparency = 0.2
+LockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockBtn.Text = "TRUE PC LOCK: ON"
+LockBtn.Font = Enum.Font.SourceSansBold
+LockBtn.TextSize = 14
+LockBtn.Parent = Part2
+
+local lCorner = Instance.new("UICorner")
+lCorner.CornerRadius = UDim.new(0, 8)
+lCorner.Parent = LockBtn
 
 local function toggleMenu()
     MainContainer.Visible = not MainContainer.Visible
@@ -153,39 +290,95 @@ local function toggleMenu()
     end
 end
 
+-- Bấm nút MENU bằng tay trên màn hình
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 
+-- Hoặc bấm phím P trên bàn phím OTG
 UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then
         toggleMenu()
     end
 end)
 
-LockToggleBtn.MouseButton1Click:Connect(function()
-    isLocked = not isLocked
-    if isLocked then
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-        LockToggleBtn.Text = "TRUE LOCK: ON"
-        showNotif("Khóa tâm OTG Chuẩn PC: ĐÃ BẬT")
+LockBtn.MouseButton1Click:Connect(function()
+    isPCLockActive = not isPCLockActive
+    if isPCLockActive then
+        LockBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+        LockBtn.Text = "TRUE PC LOCK: ON"
+        showNotif("Khóa Chuột PC: ĐÃ BẬT")
         
         local rx, ry, _ = Camera.CFrame:ToOrientation()
         pitch = rx
         yaw = ry
         lastMousePos = UserInputService:GetMouseLocation()
     else
-        LockToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        LockToggleBtn.Text = "TRUE LOCK: OFF"
-        showNotif("Khóa tâm: ĐÃ TẮT")
+        LockBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+        LockBtn.Text = "TRUE PC LOCK: OFF"
+        showNotif("Khóa Chuột PC: ĐÃ TẮT")
     end
 end)
 
--- VÒNG LẶP CHÍNH (CORRECTING CAMERA & BLOCKING TOUCH)
+-- LOGIC BẮT PHÍM BÀN PHÍM VÀ CHUỘT
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        showPressedKey("[R-Mouse]")
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        showPressedKey("[L-Mouse]")
+    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
+        showPressedKey(input.KeyCode.Name)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        hidePressedKey("[R-Mouse]")
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        hidePressedKey("[L-Mouse]")
+    elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.P then
+        hidePressedKey(input.KeyCode.Name)
+    end
+end)
+
+-- VÒNG LẶP XỬ LÝ KHÓA CHUỘT THÔNG MINH KHÔNG BỊ TRÔI CON TRỎ
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
 
-    -- Mở lại chuột khi mở Roblox Menu (Esc) hoặc Mở Menu Hack
+    -- Tự động mở chuột khi mở Menu Roblox (Esc) hoặc Mở Bảng Script
     if isRobloxMenuOpen or isMenuOpen then
-        TouchBlocker.Visible = false
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
-        if Camera.CameraType == Enum.CameraType
+        if Camera.CameraType == Enum.CameraType.Scriptable then
+            Camera.CameraType = Enum.CameraType.Custom
+        end
+        return
+    end
+
+    if isPCLockActive then
+        -- Ẩn chuột hoàn toàn và khóa vị trí trung tâm
+        UserInputService.MouseIconEnabled = false
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+        Camera.CameraType = Enum.CameraType.Scriptable
+
+        local currentPos = UserInputService:GetMouseLocation()
+        local delta = currentPos - lastMousePos
+        lastMousePos = currentPos
+
+        if delta.Magnitude > 0 then
+            yaw = (yaw - (delta.X * sensitivity)) % (math.pi * 2)
+            pitch = math.clamp(pitch - (delta.Y * sensitivity), math.rad(-80), math.rad(80))
+
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position) 
+                * CFrame.Angles(0, yaw, 0) 
+                * CFrame.Angles(pitch, 0, 0)
+        end
+    else
+        -- Khi tắt: Trả chuột về bình thường
+        UserInputService.MouseIconEnabled = true
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        if Camera.CameraType == Enum.CameraType.Scriptable then
+            Camera.CameraType = Enum.CameraType.Custom
+        end
+    end
+end)
+
+showNotif("DOORS OTG PC-Engine Ready!")
