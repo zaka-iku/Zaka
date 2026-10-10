@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V10 - SUPREME GODMODE & SEPARATED BOOK/ITEM ESP
+-- DOORS OTG ULTIMATE VIP V11 - FIXED MENU & SUPREME ENGINE
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -15,22 +15,22 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ GUI KHÔNG BỊ XÓA
+-- 1. BẢO VỆ & DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV10") then
-        TargetParent.OTGDoorsVIPV10:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV11") then
+        TargetParent.OTGDoorsVIPV11:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV10") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV11") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV10") then
-        TargetParent.OTGDoorsVIPV10:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV11") then
+        TargetParent.OTGDoorsVIPV11:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV10"
+ScreenGui.Name = "OTGDoorsVIPV11"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -54,7 +54,7 @@ dotStroke.Color = Color3.fromRGB(0, 0, 0)
 dotStroke.Thickness = 1.2
 dotStroke.Parent = NativeCenterDot
 
--- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT (NỀN ĐEN, CHỮ TRẮNG, VIỀN CẦU VỒNG)
+-- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT (CHỮ TRẮNG, NỀN ĐEN, VIỀN CẦU VỒNG)
 local NotifContainer = Instance.new("Frame")
 NotifContainer.Size = UDim2.new(0, 320, 0, 200)
 NotifContainer.Position = UDim2.new(0.5, -160, 0.05, 0)
@@ -123,12 +123,12 @@ local tCorner = Instance.new("UICorner")
 tCorner.CornerRadius = UDim.new(0, 8)
 tCorner.Parent = ToggleBtn
 
--- 5. GIAO DIỆN MENU TRONG SUỐT (GLASSMORPHISM)
+-- 5. GIAO DIỆN MENU CHÍNH
 local MainContainer = Instance.new("Frame")
-MainContainer.Size = UDim2.new(0, 780, 0, 310)
-MainContainer.Position = UDim2.new(0.5, -390, 0.5, -155)
-MainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MainContainer.BackgroundTransparency = 0.35
+MainContainer.Size = UDim2.new(0, 780, 0, 320)
+MainContainer.Position = UDim2.new(0.5, -390, 0.5, -160)
+MainContainer.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainContainer.BackgroundTransparency = 0.25
 MainContainer.Visible = true
 MainContainer.ZIndex = 30
 MainContainer.Parent = ScreenGui
@@ -139,54 +139,79 @@ mainCorner.Parent = MainContainer
 
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(0, 180, 255)
-mainStroke.Thickness = 1.8
-mainStroke.Transparency = 0.3
+mainStroke.Thickness = 2
 mainStroke.Parent = MainContainer
 
+-- NÚT ĐÓNG MENU [X]
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.TextSize = 16
+CloseBtn.ZIndex = 35
+CloseBtn.Parent = MainContainer
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainContainer.Visible = false
+end)
+
+-- BẢNG PHÍM LỜI BÊN TRÁI (PART 1)
 local Part1 = Instance.new("ScrollingFrame")
-Part1.Size = UDim2.new(0, 470, 1, -20)
+Part1.Size = UDim2.new(0, 460, 1, -20)
 Part1.Position = UDim2.new(0, 10, 0, 10)
-Part1.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Part1.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Part1.BackgroundTransparency = 0.5
 Part1.CanvasSize = UDim2.new(0, 680, 0, 230)
 Part1.ScrollBarThickness = 4
+Part1.ZIndex = 31
 Part1.Parent = MainContainer
 
 local p1Corner = Instance.new("UICorner")
 p1Corner.CornerRadius = UDim.new(0, 8)
 p1Corner.Parent = Part1
 
+-- BẢNG CHỨC NĂNG BÊN PHẢI (PART 2)
 local Part2 = Instance.new("ScrollingFrame")
 Part2.Size = UDim2.new(0, 280, 1, -20)
-Part2.Position = UDim2.new(0, 490, 0, 10)
-Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Part2.Position = UDim2.new(0, 480, 0, 10)
+Part2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 780)
-Part2.ScrollBarThickness = 4
-Part2.Parent = Part2 and Part2 or MainContainer
+Part2.CanvasSize = UDim2.new(0, 0, 0, 850)
+Part2.ScrollBarThickness = 5
+Part2.ZIndex = 31
+Part2.Parent = MainContainer
 
 local p2Corner = Instance.new("UICorner")
 p2Corner.CornerRadius = UDim.new(0, 8)
 p2Corner.Parent = Part2
 
 local P2Title = Instance.new("TextLabel")
-P2Title.Size = UDim2.new(1, 0, 0, 35)
+P2Title.Size = UDim2.new(1, -40, 0, 30)
+P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V10 SUPREME"
+P2Title.Text = "DOORS VIP V11 ENGINE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
+P2Title.ZIndex = 32
 P2Title.Parent = Part2
 
 local CodeDisplay = Instance.new("TextLabel")
-CodeDisplay.Size = UDim2.new(0, 250, 0, 45)
+CodeDisplay.Size = UDim2.new(0, 250, 0, 40)
 CodeDisplay.Position = UDim2.new(0, 15, 0, 40)
-CodeDisplay.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-CodeDisplay.BackgroundTransparency = 0.2
+CodeDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 CodeDisplay.TextColor3 = Color3.fromRGB(0, 255, 150)
 CodeDisplay.Text = "Mật mã Door 50: [ Đang tìm sách... ]"
 CodeDisplay.Font = Enum.Font.SourceSansBold
 CodeDisplay.TextSize = 12
+CodeDisplay.ZIndex = 32
 CodeDisplay.Parent = Part2
 
 local codeCorner = Instance.new("UICorner")
@@ -198,11 +223,11 @@ local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     btn.Text = text
     btn.Position = UDim2.new(0, posX, 0, posY)
     btn.Size = UDim2.new(0, sizeX, 0, sizeY)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.BackgroundTransparency = 0.3
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 12
+    btn.ZIndex = 32
     btn.Parent = Part1
 
     local kCorner = Instance.new("UICorner")
@@ -216,7 +241,7 @@ local function createKey(text, posX, posY, sizeX, sizeY, keyCode, mouseEnum)
     end)
 
     btn.MouseButton1Up:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
         if keyCode then VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
         elseif mouseEnum then VirtualInputManager:SendMouseButtonEvent(0, 0, mouseEnum == "L" and 0 or 1, false, game, 0) end
     end)
@@ -242,37 +267,37 @@ for i, l in ipairs(letters) do
     createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
 end
 
--- 6. CÔNG TẮC & TÙY CHỈNH
+-- 6. CÔNG TẮC CHỨC NĂNG (TOGGLES)
 local toggles = {
     Lock = true,
-    AutoAimbot = true,    -- Tự động Bẻ Hướng Đạn Xuyên Tường Tiêu Diệt Quái
-    SupremeGod = true,    -- Bất tử tối cao (Chặn toàn bộ dame, hiệu ứng, lửa, mắt)
-    FakeHitbox = true,    -- Tele Hitbox ra ngoài map / vào tủ khi có quái
-    MaxInventory = true,  -- Mở giới hạn 99/99 items vĩnh viễn
+    AutoAimbot = true,    -- Bẻ hướng đạn diệt quái xuyên tường
+    SupremeGod = true,    -- Bất tử tối cao
+    FakeHitbox = true,    -- Lách Hitbox tránh quái
+    MaxInventory = true,  -- Mở giới hạn 99/99 items
     ESPPlayers = true,
     ESPDoors = true,
-    ESPBooks = true,      -- ESP Riêng Sách Mật Mã Room 50 (Vàng)
-    ESPItems = true,      -- ESP Riêng Items (Xanh Biển)
-    ESPEntities = true,
+    ESPBooks = true,      -- ESP Riêng Sách Phòng 50 (Vàng)
+    ESPItems = true,      -- ESP Riêng Item thật (Xanh)
+    ESPEntities = true,   -- ESP Quái (Đỏ)
     Tracers = true,
     FullBright = false,
     SpeedHack = false,
     FOVHack = true
 }
 
-local walkSpeedValue = 20
+local walkSpeedValue = 22
 local fovValue = 110
 
 local function createToggleBtn(title, posY, keyName)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 250, 0, 38)
+    btn.Size = UDim2.new(0, 250, 0, 36)
     btn.Position = UDim2.new(0, 15, 0, posY)
     btn.BackgroundColor3 = toggles[keyName] and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 40, 40)
-    btn.BackgroundTransparency = 0.2
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Text = title .. ": " .. (toggles[keyName] and "ON" or "OFF")
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 13
+    btn.ZIndex = 32
     btn.Parent = Part2
 
     local corner = Instance.new("UICorner")
@@ -286,38 +311,40 @@ local function createToggleBtn(title, posY, keyName)
     end)
 end
 
-createToggleBtn("1. Smart PC Lock 360°", 95, "Lock")
-createToggleBtn("2. Auto-Aimbot Bullet Homing MAX", 140, "AutoAimbot")
-createToggleBtn("3. Supreme GodMode (Bất Tử Tối Cao)", 185, "SupremeGod")
-createToggleBtn("4. Fake Hitbox Anti-Monster", 230, "FakeHitbox")
-createToggleBtn("5. Max Inventory 99/99 Items", 275, "MaxInventory")
-createToggleBtn("6. ESP Players (Người Chơi)", 320, "ESPPlayers")
-createToggleBtn("7. ESP Correct Door (Hồng)", 365, "ESPDoors")
-createToggleBtn("8. ESP Sách Mật Mã Room 50 (Vàng)", 410, "ESPBooks")
-createToggleBtn("9. ESP Items (Xanh Biển - 100%)", 455, "ESPItems")
-createToggleBtn("10. ESP Monsters Hitbox (Đỏ)", 500, "ESPEntities")
-createToggleBtn("11. Smooth Tracers (Tia Trắng)", 545, "Tracers")
-createToggleBtn("12. FullBright (Sáng Đêm)", 590, "FullBright")
+createToggleBtn("1. Smart PC Lock 360°", 90, "Lock")
+createToggleBtn("2. Auto-Aimbot Bullet Homing MAX", 132, "AutoAimbot")
+createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
+createToggleBtn("4. Fake Hitbox Anti-Monster", 216, "FakeHitbox")
+createToggleBtn("5. Max Inventory 99/99 Items", 258, "MaxInventory")
+createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
+createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
+createToggleBtn("8. ESP Sách Mật Mã Room 50 (Vàng)", 384, "ESPBooks")
+createToggleBtn("9. ESP Items Chuẩn Xuyên Tủ (Xanh)", 426, "ESPItems")
+createToggleBtn("10. ESP Monsters Hitbox (Đỏ)", 468, "ESPEntities")
+createToggleBtn("11. Smooth Tracers (Tia Trắng)", 510, "Tracers")
+createToggleBtn("12. FullBright (Sáng Đêm)", 552, "FullBright")
 
--- Tốc độ & FOV Điều Chỉnh Số Trực Tiếp
+-- ĐIỀU CHỈNH TỐC ĐỘ & FOV
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 250, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 15, 0, 635)
+SpeedTitle.Position = UDim2.new(0, 15, 0, 595)
 SpeedTitle.BackgroundTransparency = 1
 SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedTitle.Font = Enum.Font.SourceSansBold
 SpeedTitle.TextSize = 12
+SpeedTitle.ZIndex = 32
 SpeedTitle.Parent = Part2
 
 local SpeedMinus = Instance.new("TextButton")
-SpeedMinus.Size = UDim2.new(0, 120, 0, 30)
-SpeedMinus.Position = UDim2.new(0, 15, 0, 657)
+SpeedMinus.Size = UDim2.new(0, 120, 0, 28)
+SpeedMinus.Position = UDim2.new(0, 15, 0, 618)
 SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedMinus.Text = "Giảm (-)"
 SpeedMinus.Font = Enum.Font.SourceSansBold
 SpeedMinus.TextSize = 12
+SpeedMinus.ZIndex = 32
 SpeedMinus.Parent = Part2
 SpeedMinus.MouseButton1Click:Connect(function()
     walkSpeedValue = math.clamp(walkSpeedValue - 2, 16, 45)
@@ -325,39 +352,42 @@ SpeedMinus.MouseButton1Click:Connect(function()
 end)
 
 local SpeedPlus = Instance.new("TextButton")
-SpeedPlus.Size = UDim2.new(0, 120, 0, 30)
-SpeedPlus.Position = UDim2.new(0, 145, 0, 657)
+SpeedPlus.Size = UDim2.new(0, 120, 0, 28)
+SpeedPlus.Position = UDim2.new(0, 145, 0, 618)
 SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedPlus.Text = "Tăng (+)"
 SpeedPlus.Font = Enum.Font.SourceSansBold
 SpeedPlus.TextSize = 12
+SpeedPlus.ZIndex = 32
 SpeedPlus.Parent = Part2
 SpeedPlus.MouseButton1Click:Connect(function()
     walkSpeedValue = math.clamp(walkSpeedValue + 2, 16, 45)
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("13. SpeedHack Anti-TeleBack", 700, "SpeedHack")
+createToggleBtn("13. SpeedHack Anti-TeleBack", 652, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
-FOVTitle.Position = UDim2.new(0, 15, 0, 745)
+FOVTitle.Position = UDim2.new(0, 15, 0, 695)
 FOVTitle.BackgroundTransparency = 1
 FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 FOVTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVTitle.Font = Enum.Font.SourceSansBold
 FOVTitle.TextSize = 12
+FOVTitle.ZIndex = 32
 FOVTitle.Parent = Part2
 
 local FOVMinus = Instance.new("TextButton")
-FOVMinus.Size = UDim2.new(0, 120, 0, 30)
-FOVMinus.Position = UDim2.new(0, 15, 0, 767)
+FOVMinus.Size = UDim2.new(0, 120, 0, 28)
+FOVMinus.Position = UDim2.new(0, 15, 0, 718)
 FOVMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVMinus.Text = "FOV Giảm (-)"
 FOVMinus.Font = Enum.Font.SourceSansBold
 FOVMinus.TextSize = 12
+FOVMinus.ZIndex = 32
 FOVMinus.Parent = Part2
 FOVMinus.MouseButton1Click:Connect(function()
     fovValue = math.clamp(fovValue - 5, 70, 140)
@@ -365,25 +395,24 @@ FOVMinus.MouseButton1Click:Connect(function()
 end)
 
 local FOVPlus = Instance.new("TextButton")
-FOVPlus.Size = UDim2.new(0, 120, 0, 30)
-FOVPlus.Position = UDim2.new(0, 145, 0, 767)
+FOVPlus.Size = UDim2.new(0, 120, 0, 28)
+FOVPlus.Position = UDim2.new(0, 145, 0, 718)
 FOVPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVPlus.Text = "FOV Tăng (+)"
 FOVPlus.Font = Enum.Font.SourceSansBold
 FOVPlus.TextSize = 12
+FOVPlus.ZIndex = 32
 FOVPlus.Parent = Part2
 FOVPlus.MouseButton1Click:Connect(function()
     fovValue = math.clamp(fovValue + 5, 70, 140)
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
-createToggleBtn("14. Mở rộng Góc nhìn FOV MAX", 810, "FOVHack")
+createToggleBtn("14. Mở rộng Góc nhìn FOV MAX", 752, "FOVHack")
 
-local isMenuOpen = true
 local function toggleMenu()
     MainContainer.Visible = not MainContainer.Visible
-    isMenuOpen = MainContainer.Visible
 end
 
 ToggleBtn.MouseButton1Click:Connect(toggleMenu)
@@ -391,14 +420,14 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then toggleMenu() end
 end)
 
--- 7. KHÓA CHUỘT 360 ĐỘ NÂNG CẤP
+-- 7. KHÓA CHUỘT 360 ĐỘ
 local cameraSens = 0.003
 local pitch, yaw = 0, 0
 local lastMousePos = UserInputService:GetMouseLocation()
 
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
-    if isRobloxMenuOpen or isMenuOpen then
+    if isRobloxMenuOpen or MainContainer.Visible then
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
         UserSettings.RotationType = Enum.RotationType.MovementRelative
@@ -437,13 +466,11 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 8. SPEEDHACK, SUPREME GODMODE, MAX INVENTORY & FAKE HITBOX
+-- 8. VÒNG LẶP CORE (SPEED, GODMODE, MAX INVENTORY & FAKE HITBOX)
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.MoveDirection.Magnitude > 0 then
-            hum.WalkSpeed = walkSpeedValue
-        end
+        if hum and hum.MoveDirection.Magnitude > 0 then hum.WalkSpeed = walkSpeedValue end
     elseif LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum and hum.WalkSpeed ~= 16 then hum.WalkSpeed = 16 end
@@ -456,11 +483,9 @@ RunService.Stepped:Connect(function()
         Lighting.FogEnd = 100000
     end
 
-    if toggles.FOVHack then
-        Camera.FieldOfView = fovValue
-    end
+    if toggles.FOVHack then Camera.FieldOfView = fovValue end
 
-    -- Supreme GodMode (Khóa chặt máu vĩnh viễn, vô hiệu hóa hiệu ứng độc/lửa/mắt)
+    -- SUPREME GODMODE
     if toggles.SupremeGod and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -477,7 +502,7 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- Max Inventory 99/99
+    -- MAX INVENTORY 99/99
     if toggles.MaxInventory then
         pcall(function()
             for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -491,7 +516,7 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- Fake Hitbox Anti-Monster (Tele Hitbox ra xa hoặc vào tủ khi quái tới)
+    -- FAKE HITBOX ANTI-MONSTER
     if toggles.FakeHitbox and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local monsterNear = false
@@ -500,7 +525,7 @@ RunService.Stepped:Connect(function()
                 local eName = entity.Name:lower()
                 if eName:find("rush") or eName:find("ambush") or eName:find("figure") or eName:find("seek") then
                     local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                    if pPart and (pPart.Position - hrp.Position).Magnitude < 40 then
+                    if pPart and (pPart.Position - hrp.Position).Magnitude < 45 then
                         monsterNear = true
                         break
                     end
@@ -508,12 +533,12 @@ RunService.Stepped:Connect(function()
             end
         end
         if monsterNear then
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -300, 0) -- Đánh lừa AI quái bằng cách chìm hitbox xuống dưới map
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -300, 0)
         end
     end
 end)
 
--- 9. AUTO AIMBOT BULLET HOMING MAX (BẺ HƯỚNG ĐẠN TÌM QUÁI XUYÊN TƯỜNG)
+-- 9. AUTO AIMBOT BULLET HOMING
 local monsterList = {"rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", "a60", "a90", "a120", "blitz"}
 
 UserInputService.InputBegan:Connect(function(input, gpe)
@@ -553,9 +578,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP TÁCH BIỆT (ESP SÁCH VÀNG & ESP ITEM XANH BIỂN)
+-- 10. HỆ THỐNG ESP SEPARATED (CẮT BỎ KỆ SÁCH RÁC)
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V10_ESP"
+espFolder.Name = "VIP_V11_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -644,7 +669,6 @@ task.spawn(function()
                             local dist = (dPart.Position - myPos).Magnitude
                             if dist <= 500 then
                                 createVisuals(door, "🚪 Cửa " .. room.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 105, 180), false)
-                                
                                 if toggles.Tracers then
                                     local screenPos, onScreen = Camera:WorldToViewportPoint(dPart.Position)
                                     if onScreen then
@@ -664,7 +688,7 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP TÁCH BIỆT: ESP SÁCH MẬT MÃ ROOM 50 (VÀNG)
+        -- 3. ESP SÁCH MẬT MÃ ROOM 50 (CHỈ SÁCH MẬT MÃ - VÀNG)
         if toggles.ESPBooks then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -679,7 +703,6 @@ task.spawn(function()
                                 if dist <= 500 then
                                     collectedBooksCount = collectedBooksCount + 1
                                     createVisuals(obj, "📖 Sách Mật Mã [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 215, 0), false)
-
                                     if toggles.Tracers then
                                         local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
                                         if onScr then
@@ -697,15 +720,12 @@ task.spawn(function()
                         end
                     end
                 end
-                if collectedBooksCount >= 5 then
-                    CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH!"
-                else
-                    CodeDisplay.Text = "Sách đã tìm: " .. collectedBooksCount .. " / 5"
-                end
+                if collectedBooksCount >= 5 then CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH!"
+                else CodeDisplay.Text = "Sách đã tìm: " .. collectedBooksCount .. " / 5" end
             end
         end
 
-        -- 4. ESP TÁCH BIỆT: ESP ITEMS (XANH BIỂN - QUÉT SÂU TRONG TỦ CHƯA MỞ)
+        -- 4. ESP ITEMS CHUẨN (QUÉT TRONG TỦ CHƯA MỞ - XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -726,7 +746,6 @@ task.spawn(function()
                                     if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") or obj:FindFirstAncestor("Locker") then
                                         isInLocker = true
                                     end
-
                                     local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
                                     createVisuals(obj, prefixTag .. obj.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
 
@@ -758,7 +777,6 @@ task.spawn(function()
                     for _, mName in ipairs(monsterList) do
                         if eName:find(mName) then
                             createVisuals(entity, "⚠️ " .. entity.Name:upper() .. " ⚠️", Color3.fromRGB(255, 0, 0), true)
-                            
                             local eId = entity:GetDebugId()
                             if not detectedMonsters[eId] then
                                 detectedMonsters[eId] = true
@@ -789,4 +807,4 @@ task.spawn(function()
     end
 end)
 
-showNotif("DOORS VIP V10 Supreme GodMode Activated!", false)
+showMonsterAlert("DOORS VIP V11 Ultra Repaired Loaded!")
