@@ -1,6 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE HUB V50 - SUPREME FULL EXTENDED EDITION
--- Compatible with Delta Executor & Mobile Keymappers (Mordon/Panda)
+-- DOORS OTG ULTIMATE VIP V60 - ABSOLUTE HITBOX CLONE & NATIVE 360 EDITION
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -10,33 +9,32 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ & DỌN DẸP GIAO DIỆN CŨ
+-- 1. DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV50") then
-        TargetParent.OTGDoorsVIPV50:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV60") then
+        TargetParent.OTGDoorsVIPV60:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV50") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV60") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV50") then
-        TargetParent.OTGDoorsVIPV50:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV60") then
+        TargetParent.OTGDoorsVIPV60:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV50"
+ScreenGui.Name = "OTGDoorsVIPV60"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
 ScreenGui.Parent = TargetParent
 
--- 2. CROSSHAIR CENTER DOT
+-- 2. CROSSHAIR TÂM NGẮM NATIVE
 local NativeCenterDot = Instance.new("Frame")
 NativeCenterDot.Size = UDim2.new(0, 6, 0, 6)
 NativeCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -44,19 +42,16 @@ NativeCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
 NativeCenterDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NativeCenterDot.ZIndex = 10
 NativeCenterDot.Parent = ScreenGui
-
-local dotCorner = Instance.new("UICorner")
-dotCorner.CornerRadius = UDim.new(1, 0)
-dotCorner.Parent = NativeCenterDot
+Instance.new("UICorner", NativeCenterDot).CornerRadius = UDim.new(1, 0)
 
 local dotStroke = Instance.new("UIStroke")
 dotStroke.Color = Color3.fromRGB(0, 0, 0)
 dotStroke.Thickness = 1.5
 dotStroke.Parent = NativeCenterDot
 
--- 3. HỆ THỐNG THÔNG BÁO CẢNH BÁO
+-- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT
 local NotifContainer = Instance.new("Frame")
-NotifContainer.Size = UDim2.new(0, 350, 0, 250)
+NotifContainer.Size = UDim2.new(0, 350, 0, 220)
 NotifContainer.Position = UDim2.new(0.5, -175, 0.03, 0)
 NotifContainer.BackgroundTransparency = 1
 NotifContainer.Parent = ScreenGui
@@ -67,46 +62,32 @@ NotifLayout.Padding = UDim.new(0, 6)
 NotifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 NotifLayout.Parent = NotifContainer
 
-local rainbowStrokes = {}
-local hue = 0
-RunService.RenderStepped:Connect(function(delta)
-    hue = (hue + delta * 0.8) % 1
-    local rainbowColor = Color3.fromHSV(hue, 1, 1)
-    for stroke, _ in pairs(rainbowStrokes) do
-        if stroke and stroke.Parent then stroke.Color = rainbowColor end
-    end
-end)
-
-local function showMonsterAlert(text, alertColor)
+local function showMonsterAlert(text, color)
     local notif = Instance.new("TextLabel")
     notif.Size = UDim2.new(0, 330, 0, 42)
     notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    notif.BackgroundTransparency = 0.1
-    notif.TextColor3 = alertColor or Color3.fromRGB(255, 255, 255)
+    notif.BackgroundTransparency = 0.15
+    notif.TextColor3 = color or Color3.fromRGB(255, 255, 255)
     notif.Text = text
     notif.Font = Enum.Font.SourceSansBold
     notif.TextSize = 14
     notif.ZIndex = 25
     notif.Parent = NotifContainer
+    Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 8)
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = notif
-
-    local rainbowStroke = Instance.new("UIStroke")
-    rainbowStroke.Thickness = 2.5
-    rainbowStroke.Parent = notif
-    rainbowStrokes[rainbowStroke] = true
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or Color3.fromRGB(255, 0, 0)
+    stroke.Thickness = 2
+    stroke.Parent = notif
 
     task.delay(3.5, function()
-        rainbowStrokes[rainbowStroke] = nil
         local tween = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
         tween:Play()
         tween.Completed:Connect(function() notif:Destroy() end)
     end)
 end
 
--- 4. NÚT MỞ MENU (TOGGLE P)
+-- 4. TOGGLE MENU BUTTON (P)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 110, 0, 40)
 ToggleBtn.Position = UDim2.new(0.02, 0, 0.08, 0)
@@ -120,7 +101,7 @@ ToggleBtn.ZIndex = 30
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
 
--- 5. GIAO DIỆN MENU CONTAINER CHÍNH
+-- 5. MAIN GUI CONTAINER
 local MainContainer = Instance.new("Frame")
 MainContainer.Size = UDim2.new(0, 820, 0, 380)
 MainContainer.Position = UDim2.new(0.5, -410, 0.5, -190)
@@ -129,8 +110,8 @@ MainContainer.BackgroundTransparency = 0.15
 MainContainer.Visible = true
 MainContainer.ZIndex = 30
 MainContainer.Parent = ScreenGui
-
 Instance.new("UICorner", MainContainer).CornerRadius = UDim.new(0, 12)
+
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(0, 180, 255)
 mainStroke.Thickness = 2
@@ -152,7 +133,6 @@ CloseBtn.MouseButton1Click:Connect(function()
     MainContainer.Visible = false
 end)
 
--- PHẦN BẢNG PHÍM ẢO DI ĐỘNG (PART 1)
 local Part1 = Instance.new("ScrollingFrame")
 Part1.Size = UDim2.new(0, 480, 1, -20)
 Part1.Position = UDim2.new(0, 10, 0, 10)
@@ -164,13 +144,12 @@ Part1.ZIndex = 31
 Part1.Parent = MainContainer
 Instance.new("UICorner", Part1).CornerRadius = UDim.new(0, 8)
 
--- PHẦN CÀI ĐẶT TÍNH NĂNG (PART 2)
 local Part2 = Instance.new("ScrollingFrame")
 Part2.Size = UDim2.new(0, 300, 1, -20)
 Part2.Position = UDim2.new(0, 500, 0, 10)
 Part2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 1250)
+Part2.CanvasSize = UDim2.new(0, 0, 0, 1200)
 Part2.ScrollBarThickness = 5
 Part2.ZIndex = 31
 Part2.Parent = MainContainer
@@ -180,7 +159,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS SUPREME HUB V50"
+P2Title.Text = "DOORS VIP V60 CLONE HUB"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -192,7 +171,7 @@ CodeDisplay.Size = UDim2.new(0, 270, 0, 42)
 CodeDisplay.Position = UDim2.new(0, 15, 0, 40)
 CodeDisplay.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 CodeDisplay.TextColor3 = Color3.fromRGB(0, 255, 150)
-CodeDisplay.Text = "Mật mã Door 50: [ Đang phân tích... ]"
+CodeDisplay.Text = "Mật mã Door 50: [ Đang quét sách... ]"
 CodeDisplay.Font = Enum.Font.SourceSansBold
 CodeDisplay.TextSize = 12
 CodeDisplay.ZIndex = 32
@@ -245,12 +224,12 @@ for i, l in ipairs(letters) do
     createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
 end
 
--- 6. TOGGLES CHỨC NĂNG
+-- 6. TOGGLES & CONFIG
 local toggles = {
-    SpaceBendingAimbot = true,
-    TrueGodMode = true,
-    SmartSafeDodge = true,
-    AntiTelebackSpeed = false,
+    HitboxClone = true,          -- PHÁN THÂN HITBOX (BẤT TỬ THẬT KHÔNG MÁU ẢO)
+    SafeDodge = true,            -- DỊCH CHUYỂN NÉ QUÁI
+    SpaceAimbot = true,          -- AIMBOT 360 BẺ CONG KHÔNG GIAN
+    SmoothSpeed = false,         -- CHẠY MƯỢT KHÔNG TELE-BACK
     FPSBoost = true,
     ESPPlayers = true,
     ESPDoors = true,
@@ -258,13 +237,10 @@ local toggles = {
     ESPBooks = true,
     ESPItems = true,
     ESPMonsters = true,
-    FullBright = false,
-    AutoAvoidLookers = true,
-    AutoScreechCounter = true
+    FullBright = false
 }
 
 local walkSpeedValue = 24
-local fovValue = 120
 
 local function createToggleBtn(title, posY, keyName)
     local btn = Instance.new("TextButton")
@@ -286,21 +262,19 @@ local function createToggleBtn(title, posY, keyName)
     end)
 end
 
-createToggleBtn("1. Space-Bending Bullet Aimbot 360°", 90, "SpaceBendingAimbot")
-createToggleBtn("2. Real Absolute GodMode (No Fake HP)", 132, "TrueGodMode")
-createToggleBtn("3. Smart Safe Zone Dodge (-2000Y)", 174, "SmartSafeDodge")
-createToggleBtn("4. Anti-Teleback Smooth Velocity Speed", 216, "AntiTelebackSpeed")
-createToggleBtn("5. Auto Avoid Eyes / Lookman Camera", 258, "AutoAvoidLookers")
-createToggleBtn("6. Auto Screech Fast Counter", 300, "AutoScreechCounter")
-createToggleBtn("7. 🧹 FPS Boost & Clean Visuals", 342, "FPSBoost")
-createToggleBtn("8. FullBright (Sáng Đêm Hoàn Toàn)", 384, "FullBright")
-createToggleBtn("9. ESP Players (Người Chơi)", 426, "ESPPlayers")
-createToggleBtn("10. ESP Correct Door (Hồng)", 468, "ESPDoors")
-createToggleBtn("11. ESP Levers / Switch (Cam)", 510, "ESPLevers")
+createToggleBtn("1. Hitbox Clone Teleport (No Fake HP)", 90, "HitboxClone")
+createToggleBtn("2. Safe Zone Dodge (-2000Y Auto)", 132, "SafeDodge")
+createToggleBtn("3. Space-Bending Bullet Aimbot 360°", 174, "SpaceAimbot")
+createToggleBtn("4. Anti-Teleback Smooth Velocity Speed", 216, "SmoothSpeed")
+createToggleBtn("5. 🧹 FPS Boost & Clean Visuals", 258, "FPSBoost")
+createToggleBtn("6. FullBright (Sáng Đêm Hoàn Toàn)", 300, "FullBright")
+createToggleBtn("7. ESP Players (Người Chơi)", 342, "ESPPlayers")
+createToggleBtn("8. ESP Correct Door (Hồng)", 384, "ESPDoors")
+createToggleBtn("9. ESP Levers / Switch (Cam)", 426, "ESPLevers")
 
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 270, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 15, 0, 555)
+SpeedTitle.Position = UDim2.new(0, 15, 0, 470)
 SpeedTitle.BackgroundTransparency = 1
 SpeedTitle.Text = "Tốc độ di chuyển: " .. walkSpeedValue
 SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -311,7 +285,7 @@ SpeedTitle.Parent = Part2
 
 local SpeedMinus = Instance.new("TextButton")
 SpeedMinus.Size = UDim2.new(0, 130, 0, 28)
-SpeedMinus.Position = UDim2.new(0, 15, 0, 578)
+SpeedMinus.Position = UDim2.new(0, 15, 0, 493)
 SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedMinus.Text = "Giảm (-)"
@@ -326,7 +300,7 @@ end)
 
 local SpeedPlus = Instance.new("TextButton")
 SpeedPlus.Size = UDim2.new(0, 130, 0, 28)
-SpeedPlus.Position = UDim2.new(0, 155, 0, 578)
+SpeedPlus.Position = UDim2.new(0, 155, 0, 493)
 SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedPlus.Text = "Tăng (+)"
@@ -339,52 +313,70 @@ SpeedPlus.MouseButton1Click:Connect(function()
     SpeedTitle.Text = "Tốc độ di chuyển: " .. walkSpeedValue
 end)
 
-createToggleBtn("12. ESP Sách Mật Mã Room 50 Only", 612, "ESPBooks")
-createToggleBtn("13. ESP Items All Maps (Xanh)", 654, "ESPItems")
-createToggleBtn("14. ESP Monsters All Modes (Đỏ)", 696, "ESPMonsters")
+createToggleBtn("10. ESP Sách Mật Mã Room 50 Only", 530, "ESPBooks")
+createToggleBtn("11. ESP Items Full Map (Xanh)", 572, "ESPItems")
+createToggleBtn("12. ESP Monsters All Modes (Đỏ)", 614, "ESPMonsters")
 
-local function toggleMenu()
+ToggleBtn.MouseButton1Click:Connect(function()
     MainContainer.Visible = not MainContainer.Visible
-end
-
-ToggleBtn.MouseButton1Click:Connect(toggleMenu)
+end)
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if input.KeyCode == Enum.KeyCode.P and not gpe then toggleMenu() end
+    if input.KeyCode == Enum.KeyCode.P and not gpe then MainContainer.Visible = not MainContainer.Visible end
 end)
 
--- 7. DANH SÁCH PHÂN LOẠI QUÁI VẬT
-local mustDodgeMonsters = {
-    "rush", "ambush", "a60", "a120", "blitz", "dread", "depth", "silence", "halt"
-}
-
-local dodgeTimer = 0
-local savedCFrame = nil
-
--- 8. THUẬT TOÁN BẤT TỬ THẬT & BẢO VỆ NHÂN VẬT (REAL GODMODE)
+-- 7. CƠ CHẾ PHÁN THÂN HITBOX (TELEPORT CLONE TO LOCKERS/GROUND/SKY)
 task.spawn(function()
-    while task.wait(0.1) do
-        if toggles.TrueGodMode and LocalPlayer.Character then
-            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                if hum.Health < hum.MaxHealth then
-                    hum.Health = hum.MaxHealth
-                end
-                pcall(function()
-                    for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            part.CanTouch = false
+    while task.wait(0.15) do
+        if toggles.HitboxClone and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                local hrp = LocalPlayer.Character.HumanoidRootPart
+                local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                local targetClonePos = nil
+
+                -- Tìm tủ đồ gần nhất để ẩn Hitbox vào tủ
+                if currentRooms then
+                    for _, room in pairs(currentRooms:GetChildren()) do
+                        for _, obj in pairs(room:GetDescendants()) do
+                            if obj.Name:lower():find("wardrobe") or obj.Name:lower():find("locker") then
+                                local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                                if part and (part.Position - hrp.Position).Magnitude <= 100 then
+                                    targetClonePos = part.CFrame
+                                    break
+                                end
+                            end
                         end
+                        if targetClonePos then break end
                     end
-                end)
-            end
+                end
+
+                -- Nếu không có tủ, nhảy ngẫu nhiên xuống lòng đất (-500Y) hoặc trên trời (+50Y)
+                if not targetClonePos then
+                    local randChoice = math.random(1, 2)
+                    if randChoice == 1 then
+                        targetClonePos = hrp.CFrame * CFrame.new(0, -500, 0)
+                    else
+                        targetClonePos = hrp.CFrame * CFrame.new(0, 50, 0)
+                    end
+                end
+
+                -- Vô hiệu hóa TouchInterest để tránh nhận sát thương từ Server
+                for _, part in pairs(LocalPlayer.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanTouch = false
+                    end
+                end
+            end)
         end
     end
 end)
 
--- 9. ENGINE DI CHUYỂN CHỐNG GIẬT TELE-BACK & XỬ LÝ SAFE ZONE
+-- 8. ANTI-TELEBACK & SAFE ZONE ENGINE
+local fastDodgeMonsters = {"rush", "ambush", "a60", "a120", "blitz", "dread", "depth", "silence", "halt"}
+local dodgeTimer = 0
+local savedCFrame = nil
+
 RunService.Stepped:Connect(function()
-    -- Smooth Velocity Anti-Teleback Movement
-    if toggles.AntiTelebackSpeed and LocalPlayer.Character then
+    if toggles.SmoothSpeed and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if hum and hrp and hum.MoveDirection.Magnitude > 0 then
@@ -411,35 +403,22 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- Smart Safe Zone Dodge Logic
-    if toggles.SmartSafeDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    if toggles.SafeDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
 
         for _, folder in ipairs({workspace, Camera}) do
             for _, entity in pairs(folder:GetChildren()) do
                 local eName = entity.Name:lower()
-
-                -- Kiểm tra quái bắt buộc né
-                for _, mName in ipairs(mustDodgeMonsters) do
+                for _, mName in ipairs(fastDodgeMonsters) do
                     if eName:find(mName) then
-                        local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                        if pPart and (pPart.Position - hrp.Position).Magnitude <= 140 then
+                        local part = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                        if part and (part.Position - hrp.Position).Magnitude <= 140 then
                             shouldDodge = true
                             break
                         end
                     end
                 end
-
-                -- Đặc xuyện né Figure nếu áp sát quá 15m
-                if eName:find("figure") then
-                    local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                    if pPart and (pPart.Position - hrp.Position).Magnitude <= 15 then
-                        shouldDodge = true
-                        break
-                    end
-                end
-
                 if shouldDodge then break end
             end
             if shouldDodge then break end
@@ -460,41 +439,14 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 10. AUTO AVOID EYES / LOOKMAN & SCREECH COUNTER
-RunService.RenderStepped:Connect(function()
-    if toggles.AutoAvoidLookers then
-        for _, folder in ipairs({workspace, Camera}) do
-            for _, entity in pairs(folder:GetChildren()) do
-                local name = entity.Name:lower()
-                if name:find("eyes") or name:find("lookman") then
-                    local part = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                    if part and (part.Position - Camera.CFrame.Position).Magnitude <= 80 then
-                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + Vector3.new(0, -1, 0))
-                    end
-                end
-            end
-        end
-    end
-
-    if toggles.AutoScreechCounter then
-        local screech = Camera:FindFirstChild("Screech") or workspace:FindFirstChild("Screech")
-        if screech then
-            local part = screech:IsA("BasePart") and screech or screech:FindFirstChildWhichIsA("BasePart")
-            if part then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, part.Position)
-            end
-        end
-    end
-end)
-
--- 11. SPACE-BENDING BULLET AIMBOT
+-- 9. SPACE-BENDING BULLET AIMBOT
 local allMonsterKeywords = {
     "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
     "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
 }
 
 RunService.RenderStepped:Connect(function()
-    if not toggles.SpaceBendingAimbot then return end
+    if not toggles.SpaceAimbot then return end
     
     local targetMonster = nil
     local shortestDist = math.huge
@@ -529,9 +481,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 12. HỆ THỐNG ESP TOÀN DIỆN MỌI CHẾ ĐỘ
+-- 10. FULL ITEM & ENTITY ESP SYSTEM
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V50_ESP"
+espFolder.Name = "VIP_V60_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -587,8 +539,9 @@ local function isShelfOrJunk(name)
 end
 
 local trueUsableItems = {
-    "fuse", "battery", "key", "flashlight", "lockpick", 
-    "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit", "herb", "smoothie"
+    "fuse", "battery", "key", "flashlight", "lockpick", "vitamins", 
+    "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", 
+    "medkit", "herb", "smoothie", "candle", "lighter", "chest"
 }
 
 local detectedMonsters = {}
@@ -728,4 +681,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS SUPREME HUB V50 FULL EXTENDED LOADED!", Color3.fromRGB(0, 255, 120))
+showMonsterAlert("DOORS VIP V60 Absolute Clone Loaded!", Color3.fromRGB(0, 255, 120))
