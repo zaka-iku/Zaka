@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V16 - EARLY PREDICTION & UNLIMITED SERVER INVENTORY BYPASS
+-- DOORS OTG ULTIMATE VIP V17 - LEVER ESP & ABSOLUTE SAFE ZONE DODGE ENGINE
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ & DỌN DẸP GUI
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV16") then
-        TargetParent.OTGDoorsVIPV16:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV17") then
+        TargetParent.OTGDoorsVIPV17:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV16") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV17") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV16") then
-        TargetParent.OTGDoorsVIPV16:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV17") then
+        TargetParent.OTGDoorsVIPV17:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV16"
+ScreenGui.Name = "OTGDoorsVIPV17"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -180,7 +180,7 @@ Part2.Size = UDim2.new(0, 280, 1, -20)
 Part2.Position = UDim2.new(0, 480, 0, 10)
 Part2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 850)
+Part2.CanvasSize = UDim2.new(0, 0, 0, 880)
 Part2.ScrollBarThickness = 5
 Part2.ZIndex = 31
 Part2.Parent = MainContainer
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V16 ULTIMATE"
+P2Title.Text = "DOORS VIP V17 ULTIMATE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -269,10 +269,11 @@ local toggles = {
     Lock = true,
     AutoAimbot = true,
     SupremeGod = true,
-    EarlyFastDodge = true, -- Né sớm siêu tốc (tầm 100m) + Trì hoãn 5s
-    ServerBypass99 = true, -- Bypass Server nhặt 99/99 Items vô hạn
+    EarlyFastDodge = true,
+    ServerBypass99 = true,
     ESPPlayers = true,
     ESPDoors = true,
+    ESPLevers = true,     -- ESP Cần gạt mở cửa sắt (Màu Cam)
     ESPBooks = true,
     ESPItems = true,
     ESPEntities = true,
@@ -315,15 +316,16 @@ createToggleBtn("4. Early Fast Dodge (100m + 5s)", 216, "EarlyFastDodge")
 createToggleBtn("5. Server Bypass 99/99 Items", 258, "ServerBypass99")
 createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
-createToggleBtn("8. ESP Sách Mật Mã Room 50 Only", 384, "ESPBooks")
-createToggleBtn("9. ESP Items Clean (Xanh)", 426, "ESPItems")
-createToggleBtn("10. ESP Monsters All Modes (Đỏ)", 468, "ESPEntities")
-createToggleBtn("11. Smooth Tracers (Tia Trắng)", 510, "Tracers")
-createToggleBtn("12. FullBright (Sáng Đêm)", 552, "FullBright")
+createToggleBtn("8. ESP Levers / Cần Gạt (Cam)", 384, "ESPLevers")
+createToggleBtn("9. ESP Sách Mật Mã Room 50 Only", 426, "ESPBooks")
+createToggleBtn("10. ESP Items Clean (Xanh)", 468, "ESPItems")
+createToggleBtn("11. ESP Monsters All Modes (Đỏ)", 510, "ESPEntities")
+createToggleBtn("12. Smooth Tracers (Tia Trắng)", 552, "Tracers")
+createToggleBtn("13. FullBright (Sáng Đêm)", 594, "FullBright")
 
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 250, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 15, 0, 595)
+SpeedTitle.Position = UDim2.new(0, 15, 0, 638)
 SpeedTitle.BackgroundTransparency = 1
 SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -334,7 +336,7 @@ SpeedTitle.Parent = Part2
 
 local SpeedMinus = Instance.new("TextButton")
 SpeedMinus.Size = UDim2.new(0, 120, 0, 28)
-SpeedMinus.Position = UDim2.new(0, 15, 0, 618)
+SpeedMinus.Position = UDim2.new(0, 15, 0, 661)
 SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedMinus.Text = "Giảm (-)"
@@ -349,7 +351,7 @@ end)
 
 local SpeedPlus = Instance.new("TextButton")
 SpeedPlus.Size = UDim2.new(0, 120, 0, 28)
-SpeedPlus.Position = UDim2.new(0, 145, 0, 618)
+SpeedPlus.Position = UDim2.new(0, 145, 0, 661)
 SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedPlus.Text = "Tăng (+)"
@@ -362,11 +364,11 @@ SpeedPlus.MouseButton1Click:Connect(function()
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("13. SpeedHack Anti-TeleBack", 652, "SpeedHack")
+createToggleBtn("14. SpeedHack Anti-TeleBack", 695, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
-FOVTitle.Position = UDim2.new(0, 15, 0, 695)
+FOVTitle.Position = UDim2.new(0, 15, 0, 738)
 FOVTitle.BackgroundTransparency = 1
 FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 FOVTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -377,7 +379,7 @@ FOVTitle.Parent = Part2
 
 local FOVMinus = Instance.new("TextButton")
 FOVMinus.Size = UDim2.new(0, 120, 0, 28)
-FOVMinus.Position = UDim2.new(0, 15, 0, 718)
+FOVMinus.Position = UDim2.new(0, 15, 0, 761)
 FOVMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVMinus.Text = "FOV Giảm (-)"
@@ -392,7 +394,7 @@ end)
 
 local FOVPlus = Instance.new("TextButton")
 FOVPlus.Size = UDim2.new(0, 120, 0, 28)
-FOVPlus.Position = UDim2.new(0, 145, 0, 718)
+FOVPlus.Position = UDim2.new(0, 145, 0, 761)
 FOVPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVPlus.Text = "FOV Tăng (+)"
@@ -405,7 +407,7 @@ FOVPlus.MouseButton1Click:Connect(function()
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
-createToggleBtn("14. Mở rộng Góc nhìn FOV MAX", 752, "FOVHack")
+createToggleBtn("15. Mở rộng Góc nhìn FOV MAX", 795, "FOVHack")
 
 local function toggleMenu()
     MainContainer.Visible = not MainContainer.Visible
@@ -468,7 +470,7 @@ local fastDodgeMonsters = {
 
 local dodgeTimer = 0
 
--- 8. CORE ENGINE: EARLY FAST DODGE (100M) + SERVER BYPASS 99/99 + GODMODE
+-- 8. CORE ENGINE: ABSOLUTE SAFE ZONE + GODMODE + BYPASS 99/99
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -487,7 +489,7 @@ RunService.Stepped:Connect(function()
 
     if toggles.FOVHack then Camera.FieldOfView = fovValue end
 
-    -- SUPREME GODMODE
+    -- SUPREME GODMODE & GHOST SHIELD
     if toggles.SupremeGod and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -504,7 +506,7 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- SERVER BYPASS 99/99 ITEMS (VÔ HIỆU HÓA HÀM KIỂM TRA UNIQUE ITEM TỪ SERVER)
+    -- SERVER BYPASS 99/99 ITEMS
     if toggles.ServerBypass99 then
         pcall(function()
             for _, prompt in pairs(workspace:GetDescendants()) do
@@ -521,7 +523,7 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- EARLY FAST DODGE (PHÁT HIỆN QUÁI TỪ 100M + GIỮ DƯỚI ĐẤT 5S CHỐNG AMBUSH QUAY ĐẦU)
+    -- EARLY FAST DODGE + SAFE ZONE OFFSET (CHỐNG SÁT THƯƠNG DIỆN RỘNG KHI CHUI XUỐNG ĐẤT)
     if toggles.EarlyFastDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
@@ -541,9 +543,8 @@ RunService.Stepped:Connect(function()
                                 break
                             end
                         else
-                            -- Mở rộng tầm quét lên 100m để tụt xuống đất từ sớm trước khi quái lao tới
                             for _, mName in ipairs(fastDodgeMonsters) do
-                                if eName:find(mName) and dist <= 100 then
+                                if eName:find(mName) and dist <= 120 then -- Tăng bán kính quét lên 120m phản ứng siêu sớm
                                     shouldDodge = true
                                     break
                                 end
@@ -556,10 +557,13 @@ RunService.Stepped:Connect(function()
         end
 
         if shouldDodge then
-            dodgeTimer = tick() + 5 -- Duy trì dưới đất 5 giây an toàn
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -500, 0)
+            dodgeTimer = tick() + 5
+            -- Dời hitbox ra vùng an toàn ngoài tầm sát thương lan (xuống -600 và lệch sang 150 đơn vị)
+            hrp.CFrame = hrp.CFrame + Vector3.new(150, -600, 150)
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         elseif tick() < dodgeTimer then
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -500, 0)
+            hrp.CFrame = hrp.CFrame + Vector3.new(150, -600, 150)
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         end
     end
 end)
@@ -607,9 +611,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V16
+-- 10. HỆ THỐNG ESP VIP V17 (CÓ ESP CẦN GẠT MÀU CAM)
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V16_ESP"
+espFolder.Name = "VIP_V17_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -725,7 +729,40 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP SÁCH MẬT MÃ ROOM 50 ONLY (VÀNG)
+        -- 3. ESP CẦN GẠT / CÔNG TẮC MỞ CỬA SẮT (MÀU CAM)
+        if toggles.ESPLevers then
+            local currentRooms = workspace:FindFirstChild("CurrentRooms")
+            if currentRooms then
+                for _, room in pairs(currentRooms:GetChildren()) do
+                    for _, obj in pairs(room:GetDescendants()) do
+                        local oName = obj.Name:lower()
+                        if oName:find("lever") or oName:find("switch") or oName:find("breaker") then
+                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                            if tPart then
+                                local dist = (tPart.Position - myPos).Magnitude
+                                if dist <= 500 then
+                                    createVisuals(obj, "🔌 Cần Gạt [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 140, 0), false)
+                                    if toggles.Tracers then
+                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                        if onScr then
+                                            local line = Drawing.new("Line")
+                                            line.From = screenCenter
+                                            line.To = Vector2.new(sPos.X, sPos.Y)
+                                            line.Color = Color3.fromRGB(255, 140, 0)
+                                            line.Thickness = 1.2
+                                            line.Visible = true
+                                            table.insert(activeTracers, line)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 4. ESP SÁCH MẬT MÃ ROOM 50 ONLY (VÀNG)
         if toggles.ESPBooks then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -764,7 +801,7 @@ task.spawn(function()
             end
         end
 
-        -- 4. ESP ITEMS CHUẨN XUYÊN TỦ 100% (XANH BIỂN)
+        -- 5. ESP ITEMS CHUẨN XUYÊN TỦ 100% (XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -810,7 +847,7 @@ task.spawn(function()
             end
         end
 
-        -- 5. ESP QUÁI VẬT TẤT CẢ MODES & TIA TRẮNG
+        -- 6. ESP QUÁI VẬT TẤT CẢ MODES & TIA TRẮNG
         if toggles.ESPEntities then
             for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
@@ -848,4 +885,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V16 Ultimate Edition Loaded!")
+showMonsterAlert("DOORS VIP V17 Lever ESP & Safe Zone Loaded!")
