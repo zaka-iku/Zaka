@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V17 - LEVER ESP & ABSOLUTE SAFE ZONE DODGE ENGINE
+-- DOORS OTG ULTIMATE VIP V18 - ULTRA SMOOTH ENGINE & FIX ALL BUGS
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -15,22 +15,22 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ & DỌN DẸP GUI
+-- 1. BẢO VỆ & DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV17") then
-        TargetParent.OTGDoorsVIPV17:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV18") then
+        TargetParent.OTGDoorsVIPV18:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV17") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV18") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV17") then
-        TargetParent.OTGDoorsVIPV17:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV18") then
+        TargetParent.OTGDoorsVIPV18:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV17"
+ScreenGui.Name = "OTGDoorsVIPV18"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -54,7 +54,7 @@ dotStroke.Color = Color3.fromRGB(0, 0, 0)
 dotStroke.Thickness = 1.2
 dotStroke.Parent = NativeCenterDot
 
--- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT
+-- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT (TỐI ƯU SIÊU MƯỢT)
 local NotifContainer = Instance.new("Frame")
 NotifContainer.Size = UDim2.new(0, 320, 0, 200)
 NotifContainer.Position = UDim2.new(0.5, -160, 0.05, 0)
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V17 ULTIMATE"
+P2Title.Text = "DOORS VIP V18 ULTRA SMOOTH"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -270,10 +270,10 @@ local toggles = {
     AutoAimbot = true,
     SupremeGod = true,
     EarlyFastDodge = true,
-    ServerBypass99 = true,
+    ServerBypass99 = true, -- Stack 99/99 Vô Hạn Items
     ESPPlayers = true,
     ESPDoors = true,
-    ESPLevers = true,     -- ESP Cần gạt mở cửa sắt (Màu Cam)
+    ESPLevers = true,
     ESPBooks = true,
     ESPItems = true,
     ESPEntities = true,
@@ -283,7 +283,7 @@ local toggles = {
     FOVHack = true
 }
 
-local walkSpeedValue = 22
+local walkSpeedValue = 24
 local fovValue = 110
 
 local function createToggleBtn(title, posY, keyName)
@@ -312,8 +312,8 @@ end
 createToggleBtn("1. Smart PC Lock 360°", 90, "Lock")
 createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
 createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
-createToggleBtn("4. Early Fast Dodge (100m + 5s)", 216, "EarlyFastDodge")
-createToggleBtn("5. Server Bypass 99/99 Items", 258, "ServerBypass99")
+createToggleBtn("4. Smart Dodge (A90 ON, Screech OFF)", 216, "EarlyFastDodge")
+createToggleBtn("5. Ultra Bypass 99/99 Stack Items", 258, "ServerBypass99")
 createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
 createToggleBtn("8. ESP Levers / Cần Gạt (Cam)", 384, "ESPLevers")
@@ -345,7 +345,7 @@ SpeedMinus.TextSize = 12
 SpeedMinus.ZIndex = 32
 SpeedMinus.Parent = Part2
 SpeedMinus.MouseButton1Click:Connect(function()
-    walkSpeedValue = math.clamp(walkSpeedValue - 2, 16, 45)
+    walkSpeedValue = math.clamp(walkSpeedValue - 2, 16, 50)
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
@@ -360,11 +360,11 @@ SpeedPlus.TextSize = 12
 SpeedPlus.ZIndex = 32
 SpeedPlus.Parent = Part2
 SpeedPlus.MouseButton1Click:Connect(function()
-    walkSpeedValue = math.clamp(walkSpeedValue + 2, 16, 45)
+    walkSpeedValue = math.clamp(walkSpeedValue + 2, 16, 50)
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("14. SpeedHack Anti-TeleBack", 695, "SpeedHack")
+createToggleBtn("14. SpeedHack Smooth Flight", 695, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
@@ -464,20 +464,22 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- DANH SÁCH QUÁI NÉ NHANH (GIỮ LẠI A90 - LOẠI BỎ SCREECH MỚI THEO YÊU CẦU)
 local fastDodgeMonsters = {
-    "rush", "ambush", "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "halt", "screech"
+    "rush", "ambush", "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "halt"
 }
 
 local dodgeTimer = 0
 
--- 8. CORE ENGINE: ABSOLUTE SAFE ZONE + GODMODE + BYPASS 99/99
+-- 8. CORE ENGINE: FAST SPEED + STACK 99/99 BYPASS + SAFE ZONE DODGE
 RunService.Stepped:Connect(function()
+    -- TỐC ĐỘ CHẠY SIÊU MƯỢT KHÔNG BỊ GIẬT LẠI (ANTI-TELEBACK)
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.MoveDirection.Magnitude > 0 then hum.WalkSpeed = walkSpeedValue end
-    elseif LocalPlayer.Character then
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= 16 then hum.WalkSpeed = 16 end
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (walkSpeedValue / 18))
+        end
     end
 
     if toggles.FullBright then
@@ -489,7 +491,7 @@ RunService.Stepped:Connect(function()
 
     if toggles.FOVHack then Camera.FieldOfView = fovValue end
 
-    -- SUPREME GODMODE & GHOST SHIELD
+    -- SUPREME GODMODE
     if toggles.SupremeGod and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -506,7 +508,7 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- SERVER BYPASS 99/99 ITEMS
+    -- ULTRA BYPASS 99/99 STACK ITEMS (NHẶT KHÔNG GIỚI HẠN MỌI MÓN ĐỒ)
     if toggles.ServerBypass99 then
         pcall(function()
             for _, prompt in pairs(workspace:GetDescendants()) do
@@ -518,12 +520,15 @@ RunService.Stepped:Connect(function()
                 end
             end
             for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
-                if v:IsA("Tool") then v.MaxStack = 99 end
+                if v:IsA("Tool") then
+                    v.MaxStack = 99
+                    if v:FindFirstChild("Unique") then v.Unique:Destroy() end
+                end
             end
         end)
     end
 
-    -- EARLY FAST DODGE + SAFE ZONE OFFSET (CHỐNG SÁT THƯƠNG DIỆN RỘNG KHI CHUI XUỐNG ĐẤT)
+    -- SMART DODGE ENGINE (CHỈ NÉ QUÁI NGUY HIỂM + A90 - BỎ SCREECH & EYES & SEEK)
     if toggles.EarlyFastDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
@@ -532,7 +537,8 @@ RunService.Stepped:Connect(function()
             for _, entity in pairs(folder:GetChildren()) do
                 local eName = entity.Name:lower()
 
-                if not eName:find("eyes") and not eName:find("seek") and not eName:find("lookman") then
+                -- KHÔNG NÉ EYES, SEEK HOẶC SCREECH
+                if not eName:find("eyes") and not eName:find("seek") and not eName:find("screech") and not eName:find("lookman") then
                     local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
                     if pPart then
                         local dist = (pPart.Position - hrp.Position).Magnitude
@@ -544,7 +550,7 @@ RunService.Stepped:Connect(function()
                             end
                         else
                             for _, mName in ipairs(fastDodgeMonsters) do
-                                if eName:find(mName) and dist <= 120 then -- Tăng bán kính quét lên 120m phản ứng siêu sớm
+                                if eName:find(mName) and dist <= 120 then
                                     shouldDodge = true
                                     break
                                 end
@@ -558,11 +564,10 @@ RunService.Stepped:Connect(function()
 
         if shouldDodge then
             dodgeTimer = tick() + 5
-            -- Dời hitbox ra vùng an toàn ngoài tầm sát thương lan (xuống -600 và lệch sang 150 đơn vị)
-            hrp.CFrame = hrp.CFrame + Vector3.new(150, -600, 150)
+            hrp.CFrame = hrp.CFrame + Vector3.new(200, -700, 200)
             hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         elseif tick() < dodgeTimer then
-            hrp.CFrame = hrp.CFrame + Vector3.new(150, -600, 150)
+            hrp.CFrame = hrp.CFrame + Vector3.new(200, -700, 200)
             hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         end
     end
@@ -611,9 +616,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V17 (CÓ ESP CẦN GẠT MÀU CAM)
+-- 10. HỆ THỐNG ESP ULTRA LIGHTWEIGHT (CHỐNG GIẬT LAG MENU 100%)
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V17_ESP"
+espFolder.Name = "VIP_V18_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -680,7 +685,7 @@ local detectedMonsters = {}
 local collectedBooksCount = 0
 
 task.spawn(function()
-    while task.wait(0.3) do
+    while task.wait(0.4) do
         clearAll()
         local myPos = Camera.CFrame.Position
         local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -710,18 +715,6 @@ task.spawn(function()
                             local dist = (dPart.Position - myPos).Magnitude
                             if dist <= 500 then
                                 createVisuals(door, "🚪 Cửa " .. room.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 105, 180), false)
-                                if toggles.Tracers then
-                                    local screenPos, onScreen = Camera:WorldToViewportPoint(dPart.Position)
-                                    if onScreen then
-                                        local line = Drawing.new("Line")
-                                        line.From = screenCenter
-                                        line.To = Vector2.new(screenPos.X, screenPos.Y)
-                                        line.Color = Color3.fromRGB(255, 105, 180)
-                                        line.Thickness = 1.5
-                                        line.Visible = true
-                                        table.insert(activeTracers, line)
-                                    end
-                                end
                             end
                         end
                     end
@@ -729,7 +722,7 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP CẦN GẠT / CÔNG TẮC MỞ CỬA SẮT (MÀU CAM)
+        -- 3. ESP CẦN GẠT / CÔNG TẮC (CAM)
         if toggles.ESPLevers then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -742,18 +735,6 @@ task.spawn(function()
                                 local dist = (tPart.Position - myPos).Magnitude
                                 if dist <= 500 then
                                     createVisuals(obj, "🔌 Cần Gạt [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 140, 0), false)
-                                    if toggles.Tracers then
-                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                        if onScr then
-                                            local line = Drawing.new("Line")
-                                            line.From = screenCenter
-                                            line.To = Vector2.new(sPos.X, sPos.Y)
-                                            line.Color = Color3.fromRGB(255, 140, 0)
-                                            line.Thickness = 1.2
-                                            line.Visible = true
-                                            table.insert(activeTracers, line)
-                                        end
-                                    end
                                 end
                             end
                         end
@@ -778,18 +759,6 @@ task.spawn(function()
                                     if dist <= 500 then
                                         collectedBooksCount = collectedBooksCount + 1
                                         createVisuals(obj, "📖 Sách Mật Mã [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 215, 0), false)
-                                        if toggles.Tracers then
-                                            local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                            if onScr then
-                                                local line = Drawing.new("Line")
-                                                line.From = screenCenter
-                                                line.To = Vector2.new(sPos.X, sPos.Y)
-                                                line.Color = Color3.fromRGB(255, 215, 0)
-                                                line.Thickness = 1.2
-                                                line.Visible = true
-                                                table.insert(activeTracers, line)
-                                            end
-                                        end
                                     end
                                 end
                             end
@@ -801,7 +770,7 @@ task.spawn(function()
             end
         end
 
-        -- 5. ESP ITEMS CHUẨN XUYÊN TỦ 100% (XANH BIỂN)
+        -- 5. ESP ITEMS CHUẨN XUYÊN TỦ (XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -825,19 +794,6 @@ task.spawn(function()
                                         end
                                         local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
                                         createVisuals(obj, prefixTag .. obj.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
-
-                                        if toggles.Tracers then
-                                            local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                            if onScr then
-                                                local line = Drawing.new("Line")
-                                                line.From = screenCenter
-                                                line.To = Vector2.new(sPos.X, sPos.Y)
-                                                line.Color = Color3.fromRGB(0, 220, 255)
-                                                line.Thickness = 1
-                                                line.Visible = true
-                                                table.insert(activeTracers, line)
-                                            end
-                                        end
                                     end
                                 end
                             end
@@ -860,22 +816,6 @@ task.spawn(function()
                                 detectedMonsters[eId] = true
                                 showMonsterAlert("🚨 CẢNH BÁO: " .. entity.Name:upper() .. " ĐANG TẤN CÔNG!")
                             end
-
-                            if toggles.Tracers then
-                                local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                                if pPart then
-                                    local sPos, onScr = Camera:WorldToViewportPoint(pPart.Position)
-                                    if onScr then
-                                        local line = Drawing.new("Line")
-                                        line.From = screenCenter
-                                        line.To = Vector2.new(sPos.X, sPos.Y)
-                                        line.Color = Color3.fromRGB(255, 0, 0)
-                                        line.Thickness = 2
-                                        line.Visible = true
-                                        table.insert(activeTracers, line)
-                                    end
-                                end
-                            end
                             break
                         end
                     end
@@ -885,4 +825,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V17 Lever ESP & Safe Zone Loaded!")
+showMonsterAlert("DOORS VIP V18 Ultra Smooth Loaded!")
