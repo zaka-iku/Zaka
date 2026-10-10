@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V25 - FINAL FULL FIX & MENU RESTORED
+-- DOORS OTG ULTIMATE VIP V26 - FULL ULTIMATE ENGINE & ABSOLUTE 360 CAM FIX
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -14,22 +14,22 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ & DỌN DẸP GUI CŨ
+-- 1. BẢO VỆ & DỌN DẸP GUI CŨ (ĐẢM BẢO HIỆN MENU 100%)
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV25") then
-        TargetParent.OTGDoorsVIPV25:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV26") then
+        TargetParent.OTGDoorsVIPV26:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV25") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV26") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV25") then
-        TargetParent.OTGDoorsVIPV25:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV26") then
+        TargetParent.OTGDoorsVIPV26:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV25"
+ScreenGui.Name = "OTGDoorsVIPV26"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -179,7 +179,7 @@ Part2.Size = UDim2.new(0, 280, 1, -20)
 Part2.Position = UDim2.new(0, 480, 0, 10)
 Part2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 850)
+Part2.CanvasSize = UDim2.new(0, 0, 0, 880)
 Part2.ScrollBarThickness = 5
 Part2.ZIndex = 31
 Part2.Parent = MainContainer
@@ -192,7 +192,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V25 FINAL"
+P2Title.Text = "DOORS VIP V26 ULTIMATE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -420,7 +420,7 @@ local fastDodgeMonsters = {
 local dodgeTimer = 0
 local savedCFrame = nil
 
--- 7. CORE ENGINE
+-- 7. CORE ENGINE (NATIVE CAMERA PASS HOOK CHO MORDON / MAPPERS & ANTI-TELEBACK)
 RunService.RenderStepped:Connect(function()
     if toggles.FOVHack then
         Camera.FieldOfView = fovValue
@@ -430,13 +430,9 @@ end)
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = walkSpeedValue
-        end
-    elseif LocalPlayer.Character then
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= 16 then
-            hum.WalkSpeed = 16
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (walkSpeedValue / 22))
         end
     end
 
@@ -447,6 +443,7 @@ RunService.Stepped:Connect(function()
         Lighting.FogEnd = 100000
     end
 
+    -- REAL GODMODE (CHẶN TUYỆT ĐỐI SÁT THƯƠNG MÁU ẢO)
     if toggles.RealGodMode and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -472,6 +469,7 @@ RunService.Stepped:Connect(function()
         end)
     end
 
+    -- SAFE ZONE DODGE (-2000Y) BỎ QUA SCREECH
     if toggles.SafeDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
@@ -563,7 +561,7 @@ end)
 
 -- 9. ESP SYSTEM
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V25_ESP"
+espFolder.Name = "VIP_V26_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -760,4 +758,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V25 Final Loaded Successfully!")
+showMonsterAlert("DOORS VIP V26 Ultimate Loaded!")
