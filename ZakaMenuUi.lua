@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V13 - INFINITY STACK BYPASS & SUPREME ENGINE
+-- DOORS OTG ULTIMATE VIP V14 - SMART MONSTER DODGE (EXCLUDE EYES/SEEK & FIGURE PROXIMITY)
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ & DỌN DẸP GUI
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV13") then
-        TargetParent.OTGDoorsVIPV13:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV14") then
+        TargetParent.OTGDoorsVIPV14:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV13") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV14") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV13") then
-        TargetParent.OTGDoorsVIPV13:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV14") then
+        TargetParent.OTGDoorsVIPV14:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV13"
+ScreenGui.Name = "OTGDoorsVIPV14"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V13 INFINITY"
+P2Title.Text = "DOORS VIP V14 SMART DODGE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -269,8 +269,8 @@ local toggles = {
     Lock = true,
     AutoAimbot = true,
     SupremeGod = true,
-    FakeHitboxAll = true,
-    MaxInventory = true, -- Unlimited Pick Up (Bypass ProximityPrompt Hold Limit)
+    SmartDodge = true,   -- Né quái thông minh (Trừ Eyes, Seek & Chỉ né Figure khi tới sát mặt)
+    MaxInventory = true,
     ESPPlayers = true,
     ESPDoors = true,
     ESPBooks = true,
@@ -311,7 +311,7 @@ end
 createToggleBtn("1. Smart PC Lock 360°", 90, "Lock")
 createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
 createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
-createToggleBtn("4. Out-of-Map Hitbox (All Monsters)", 216, "FakeHitboxAll")
+createToggleBtn("4. Smart Dodge (Loại Eyes/Seek)", 216, "SmartDodge")
 createToggleBtn("5. Bypass Max Hold (99/99 Items)", 258, "MaxInventory")
 createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
@@ -462,12 +462,12 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-local allMonsterKeywords = {
-    "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
-    "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
+-- QUÁI CHẠY LƯỚT CẦN NÉ NGAY
+local fastDodgeMonsters = {
+    "rush", "ambush", "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "halt", "screech"
 }
 
--- 8. CORE ENGINE: BYPASS MAX HOLD PROXIMITY PROMPT, GODMODE, FAKE HITBOX ALL MODES
+-- 8. CORE ENGINE: SMART DODGE (KHÔNG DÍNH EYES / SEEK - CHI NÉ FIGURE KHI ĐẾN GẦN)
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -503,7 +503,7 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- BYPASS PROXIMITYPROMPT HOLD LIMIT (CHO PHÉP NHẶT KHÔNG GIỚI HẠN THÁNH GIÁ & VẬT PHẨM)
+    -- BYPASS PROXIMITYPROMPT HOLD LIMIT (99/99 ITEMS)
     if toggles.MaxInventory then
         pcall(function()
             for _, prompt in pairs(workspace:GetDescendants()) do
@@ -520,31 +520,54 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- FAKE HITBOX OUT-OF-MAP FOR ALL MONSTERS/MODES
-    if toggles.FakeHitboxAll and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    -- SMART MONSTER DODGE ENGINE
+    if toggles.SmartDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        local monsterNear = false
+        local shouldDodge = false
+
         for _, folder in ipairs({workspace, Camera}) do
             for _, entity in pairs(folder:GetChildren()) do
                 local eName = entity.Name:lower()
-                for _, mKey in ipairs(allMonsterKeywords) do
-                    if eName:find(mKey) then
-                        local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                        if pPart and (pPart.Position - hrp.Position).Magnitude < 60 then
-                            monsterNear = true
-                            break
+
+                -- HOÀN TOÀN BỎ QUA EYES VÀ SEEK (KHÔNG NÉ DƯỚI ĐẤT)
+                if not eName:find("eyes") and not eName:find("seek") and not eName:find("lookman") then
+                    local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                    if pPart then
+                        local dist = (pPart.Position - hrp.Position).Magnitude
+
+                        -- RIÊNG FIGURE: Chỉ né khi cách mặt dưới 12 mét (Sắp tóm)
+                        if eName:find("figure") then
+                            if dist <= 12 then
+                                shouldDodge = true
+                                break
+                            end
+                        else
+                            -- Các quái chạy lướt khác (Rush, Ambush, A-60...): Né khi trong tầm 50m
+                            for _, mName in ipairs(fastDodgeMonsters) do
+                                if eName:find(mName) and dist <= 50 then
+                                    shouldDodge = true
+                                    break
+                                end
+                            end
                         end
                     end
                 end
             end
+            if shouldDodge then break end
         end
-        if monsterNear then
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -400, 0)
+
+        if shouldDodge then
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -350, 0) -- Giấu Hitbox xuống dưới Map
         end
     end
 end)
 
 -- 9. AUTO AIMBOT BULLET HOMING CROSS-MAP
+local allMonsterKeywords = {
+    "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
+    "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
+}
+
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not toggles.AutoAimbot then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -582,9 +605,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V13
+-- 10. HỆ THỐNG ESP VIP V14
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V13_ESP"
+espFolder.Name = "VIP_V14_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -823,4 +846,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V13 Infinity Stack Bypass Loaded!")
+showMonsterAlert("DOORS VIP V14 Smart Dodge Loaded!")
