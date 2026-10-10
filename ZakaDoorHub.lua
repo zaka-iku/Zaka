@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V24 - ABSOLUTE ANCHOR SAFE DODGE & AIMBOT FIX
+-- DOORS OTG ULTIMATE VIP V25 - FINAL FULL FIX & MENU RESTORED
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -14,22 +14,22 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ & DỌN DEEP GUI CŨ
+-- 1. BẢO VỆ & DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV24") then
-        TargetParent.OTGDoorsVIPV24:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV25") then
+        TargetParent.OTGDoorsVIPV25:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV24") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV25") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV24") then
-        TargetParent.OTGDoorsVIPV24:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV25") then
+        TargetParent.OTGDoorsVIPV25:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV24"
+ScreenGui.Name = "OTGDoorsVIPV25"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -192,7 +192,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V24 ABSOLUTE FIX"
+P2Title.Text = "DOORS VIP V25 FINAL"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -265,10 +265,10 @@ end
 
 -- 6. TOGGLES CHỨC NĂNG
 local toggles = {
-    AutoAimbot = true,   -- Aim đạn tự động bẻ hướng
-    RealGodMode = true,  -- Chặn sát thương server thật
-    SafeDodge = true,    -- Né quái Safe Zone (-2000 Y)
-    FPSBoost = true,     -- Giảm lag dọn rác
+    AutoAimbot = true,
+    RealGodMode = true,
+    SafeDodge = true,
+    FPSBoost = true,
     ESPPlayers = true,
     ESPDoors = true,
     ESPLevers = true,
@@ -420,16 +420,14 @@ local fastDodgeMonsters = {
 local dodgeTimer = 0
 local savedCFrame = nil
 
--- 7. CORE ENGINE: SPEED, REAL GODMODE, ABSOLUTE ANCHOR DODGE & FOV OVERRIDE
+-- 7. CORE ENGINE
 RunService.RenderStepped:Connect(function()
-    -- SỬA LỖI FOV MỞ RỘNG MẠNH
     if toggles.FOVHack then
         Camera.FieldOfView = fovValue
     end
 end)
 
 RunService.Stepped:Connect(function()
-    -- SPEEDHACK SMOOTH (CHỐNG BÚNG TELE-BACK 100%)
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -449,7 +447,6 @@ RunService.Stepped:Connect(function()
         Lighting.FogEnd = 100000
     end
 
-    -- REAL GODMODE
     if toggles.RealGodMode and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
@@ -464,7 +461,6 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- FPS BOOST
     if toggles.FPSBoost then
         pcall(function()
             Lighting.GlobalShadows = false
@@ -476,7 +472,6 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- SAFE ZONE ANCHOR DODGE (-2000Y ABSOLUTE OUT-OF-MAP SAFE ZONE)
     if toggles.SafeDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
@@ -524,7 +519,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 8. AUTO AIMBOT BULLET HOMING (GHIM ĐẠN TỰ ĐỘNG CỰC MẠNH)
+-- 8. AUTO AIMBOT BULLET HOMING
 local allMonsterKeywords = {
     "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
     "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
@@ -566,9 +561,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 9. HỆ THỐNG ESP VIP V24 LIGHTWEIGHT
+-- 9. ESP SYSTEM
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V24_ESP"
+espFolder.Name = "VIP_V25_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -636,7 +631,6 @@ task.spawn(function()
         clearAll()
         local myPos = Camera.CFrame.Position
 
-        -- 1. ESP PLAYERS
         if toggles.ESPPlayers then
             for _, p in pairs(Players:GetPlayers()) do
                 if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -649,7 +643,6 @@ task.spawn(function()
             end
         end
 
-        -- 2. ESP CỬA ĐÚNG
         if toggles.ESPDoors then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -668,7 +661,6 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP CẦN GẠT / CÔNG TẮC (CAM)
         if toggles.ESPLevers then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -689,7 +681,6 @@ task.spawn(function()
             end
         end
 
-        -- 4. ESP SÁCH MẬT MÃ ROOM 50 ONLY (VÀNG)
         if toggles.ESPBooks then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
@@ -716,10 +707,9 @@ task.spawn(function()
             end
         end
 
-        -- 5. ESP ITEMS CHUẨN XUYÊN TỦ (XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
-            if currentRooms me then
+            if currentRooms then
                 for _, room in pairs(currentRooms:GetChildren()) do
                     for _, obj in pairs(room:GetDescendants()) do
                         if not isShelfOrJunk(obj.Name) then
@@ -749,7 +739,6 @@ task.spawn(function()
             end
         end
 
-        -- 6. ESP QUÁI VẬT TẤT CẢ MODES
         if toggles.ESPEntities then
             for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
@@ -771,4 +760,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V24 Absolute Fix Loaded!")
+showMonsterAlert("DOORS VIP V25 Final Loaded Successfully!")
