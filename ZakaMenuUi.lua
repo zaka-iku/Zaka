@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V15 - 5S DELAY HITBOX RETURN & CLEAN ESP
+-- DOORS OTG ULTIMATE VIP V16 - EARLY PREDICTION & UNLIMITED SERVER INVENTORY BYPASS
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ & DỌN DẸP GUI
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV15") then
-        TargetParent.OTGDoorsVIPV15:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV16") then
+        TargetParent.OTGDoorsVIPV16:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV15") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV16") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV15") then
-        TargetParent.OTGDoorsVIPV15:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV16") then
+        TargetParent.OTGDoorsVIPV16:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV15"
+ScreenGui.Name = "OTGDoorsVIPV16"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V15 5S DELAY"
+P2Title.Text = "DOORS VIP V16 ULTIMATE"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -269,8 +269,8 @@ local toggles = {
     Lock = true,
     AutoAimbot = true,
     SupremeGod = true,
-    SmartDodgeDelay = true, -- Né thông minh + Trì hoãn 5s chống Ambush/Backdoor quay đầu
-    MaxInventory = true,
+    EarlyFastDodge = true, -- Né sớm siêu tốc (tầm 100m) + Trì hoãn 5s
+    ServerBypass99 = true, -- Bypass Server nhặt 99/99 Items vô hạn
     ESPPlayers = true,
     ESPDoors = true,
     ESPBooks = true,
@@ -311,8 +311,8 @@ end
 createToggleBtn("1. Smart PC Lock 360°", 90, "Lock")
 createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
 createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
-createToggleBtn("4. Smart Dodge + 5s Delay Return", 216, "SmartDodgeDelay")
-createToggleBtn("5. Bypass Max Hold (99/99 Items)", 258, "MaxInventory")
+createToggleBtn("4. Early Fast Dodge (100m + 5s)", 216, "EarlyFastDodge")
+createToggleBtn("5. Server Bypass 99/99 Items", 258, "ServerBypass99")
 createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
 createToggleBtn("8. ESP Sách Mật Mã Room 50 Only", 384, "ESPBooks")
@@ -466,10 +466,9 @@ local fastDodgeMonsters = {
     "rush", "ambush", "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "halt", "screech"
 }
 
--- Biến lưu thời gian trì hoãn 5s chống quái quay đầu (Ambush/Backdoor)
 local dodgeTimer = 0
 
--- 8. CORE ENGINE: 5S DELAY HITBOX RETURN + GODMODE + MAX INVENTORY
+-- 8. CORE ENGINE: EARLY FAST DODGE (100M) + SERVER BYPASS 99/99 + GODMODE
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -505,14 +504,14 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- BYPASS PROXIMITYPROMPT (99/99 ITEMS)
-    if toggles.MaxInventory then
+    -- SERVER BYPASS 99/99 ITEMS (VÔ HIỆU HÓA HÀM KIỂM TRA UNIQUE ITEM TỪ SERVER)
+    if toggles.ServerBypass99 then
         pcall(function()
             for _, prompt in pairs(workspace:GetDescendants()) do
                 if prompt:IsA("ProximityPrompt") then
                     prompt.HoldDuration = 0
                     prompt.RequiresLineOfSight = false
-                    prompt.MaxActivationDistance = 15
+                    prompt.MaxActivationDistance = 25
                     prompt.Enabled = true
                 end
             end
@@ -522,8 +521,8 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- SMART DODGE WITH 5 SECONDS DELAY RETURN
-    if toggles.SmartDodgeDelay and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    -- EARLY FAST DODGE (PHÁT HIỆN QUÁI TỪ 100M + GIỮ DƯỚI ĐẤT 5S CHỐNG AMBUSH QUAY ĐẦU)
+    if toggles.EarlyFastDodge and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local shouldDodge = false
 
@@ -531,20 +530,20 @@ RunService.Stepped:Connect(function()
             for _, entity in pairs(folder:GetChildren()) do
                 local eName = entity.Name:lower()
 
-                -- BỎ QUA HOÀN TOÀN EYES VÀ SEEK
                 if not eName:find("eyes") and not eName:find("seek") and not eName:find("lookman") then
                     local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
                     if pPart then
                         local dist = (pPart.Position - hrp.Position).Magnitude
 
                         if eName:find("figure") then
-                            if dist <= 12 then
+                            if dist <= 15 then
                                 shouldDodge = true
                                 break
                             end
                         else
+                            -- Mở rộng tầm quét lên 100m để tụt xuống đất từ sớm trước khi quái lao tới
                             for _, mName in ipairs(fastDodgeMonsters) do
-                                if eName:find(mName) and dist <= 60 then
+                                if eName:find(mName) and dist <= 100 then
                                     shouldDodge = true
                                     break
                                 end
@@ -557,11 +556,10 @@ RunService.Stepped:Connect(function()
         end
 
         if shouldDodge then
-            dodgeTimer = tick() + 5 -- Giữ Hitbox dưới đất liên tục 5 giây sau khi quái qua
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -350, 0)
+            dodgeTimer = tick() + 5 -- Duy trì dưới đất 5 giây an toàn
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -500, 0)
         elseif tick() < dodgeTimer then
-            -- Vẫn trong thời gian đếm ngược 5s, tiếp tục giấu hitbox dưới đất chống quái quay đầu
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -350, 0)
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -500, 0)
         end
     end
 end)
@@ -609,9 +607,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V15 (LOẠI BỎ HOÀN TOÀN LIGHTER KHỎI LỖI KỆ SÁCH)
+-- 10. HỆ THỐNG ESP VIP V16
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V15_ESP"
+espFolder.Name = "VIP_V16_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -669,7 +667,6 @@ local function isShelfOrJunk(name)
     return false
 end
 
--- Danh sách item thật chuẩn xác (Đã loại bỏ nhẹ lửa/lighter nếu dính lỗi mesh kệ)
 local trueUsableItems = {
     "fuse", "battery", "key", "flashlight", "lockpick", 
     "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit", "herb", "smoothie"
@@ -828,15 +825,18 @@ task.spawn(function()
                             end
 
                             if toggles.Tracers then
-                                local sPos, onScr = Camera:WorldToViewportPoint(pPart and pPart.Position or entity.Position)
-                                if onScr then
-                                    local line = Drawing.new("Line")
-                                    line.From = screenCenter
-                                    line.To = Vector2.new(sPos.X, sPos.Y)
-                                    line.Color = Color3.fromRGB(255, 0, 0)
-                                    line.Thickness = 2
-                                    line.Visible = true
-                                    table.insert(activeTracers, line)
+                                local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                                if pPart then
+                                    local sPos, onScr = Camera:WorldToViewportPoint(pPart.Position)
+                                    if onScr then
+                                        local line = Drawing.new("Line")
+                                        line.From = screenCenter
+                                        line.To = Vector2.new(sPos.X, sPos.Y)
+                                        line.Color = Color3.fromRGB(255, 0, 0)
+                                        line.Thickness = 2
+                                        line.Visible = true
+                                        table.insert(activeTracers, line)
+                                    end
                                 end
                             end
                             break
@@ -848,4 +848,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V15 5S Delay Hitbox Loaded!")
+showMonsterAlert("DOORS VIP V16 Ultimate Edition Loaded!")
