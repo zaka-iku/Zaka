@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V11 - FIXED MENU & SUPREME ENGINE
+-- DOORS OTG ULTIMATE VIP V13 - INFINITY STACK BYPASS & SUPREME ENGINE
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -15,22 +15,22 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- 1. BẢO VỆ & DỌN DẸP GUI CŨ
+-- 1. BẢO VỆ & DỌN DẸP GUI
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV11") then
-        TargetParent.OTGDoorsVIPV11:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV13") then
+        TargetParent.OTGDoorsVIPV13:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV11") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV13") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV11") then
-        TargetParent.OTGDoorsVIPV11:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV13") then
+        TargetParent.OTGDoorsVIPV13:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV11"
+ScreenGui.Name = "OTGDoorsVIPV13"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -54,7 +54,7 @@ dotStroke.Color = Color3.fromRGB(0, 0, 0)
 dotStroke.Thickness = 1.2
 dotStroke.Parent = NativeCenterDot
 
--- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT (CHỮ TRẮNG, NỀN ĐEN, VIỀN CẦU VỒNG)
+-- 3. HỆ THỐNG THÔNG BÁO QUÁI VẬT
 local NotifContainer = Instance.new("Frame")
 NotifContainer.Size = UDim2.new(0, 320, 0, 200)
 NotifContainer.Position = UDim2.new(0.5, -160, 0.05, 0)
@@ -142,7 +142,6 @@ mainStroke.Color = Color3.fromRGB(0, 180, 255)
 mainStroke.Thickness = 2
 mainStroke.Parent = MainContainer
 
--- NÚT ĐÓNG MENU [X]
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -35, 0, 5)
@@ -162,7 +161,6 @@ CloseBtn.MouseButton1Click:Connect(function()
     MainContainer.Visible = false
 end)
 
--- BẢNG PHÍM LỜI BÊN TRÁI (PART 1)
 local Part1 = Instance.new("ScrollingFrame")
 Part1.Size = UDim2.new(0, 460, 1, -20)
 Part1.Position = UDim2.new(0, 10, 0, 10)
@@ -177,7 +175,6 @@ local p1Corner = Instance.new("UICorner")
 p1Corner.CornerRadius = UDim.new(0, 8)
 p1Corner.Parent = Part1
 
--- BẢNG CHỨC NĂNG BÊN PHẢI (PART 2)
 local Part2 = Instance.new("ScrollingFrame")
 Part2.Size = UDim2.new(0, 280, 1, -20)
 Part2.Position = UDim2.new(0, 480, 0, 10)
@@ -196,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V11 ENGINE"
+P2Title.Text = "DOORS VIP V13 INFINITY"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -267,18 +264,18 @@ for i, l in ipairs(letters) do
     createKey(l, 200 + col*36, 5 + row*35, 33, 30, Enum.KeyCode[l])
 end
 
--- 6. CÔNG TẮC CHỨC NĂNG (TOGGLES)
+-- 6. TOGGLES CHỨC NĂNG
 local toggles = {
     Lock = true,
-    AutoAimbot = true,    -- Bẻ hướng đạn diệt quái xuyên tường
-    SupremeGod = true,    -- Bất tử tối cao
-    FakeHitbox = true,    -- Lách Hitbox tránh quái
-    MaxInventory = true,  -- Mở giới hạn 99/99 items
+    AutoAimbot = true,
+    SupremeGod = true,
+    FakeHitboxAll = true,
+    MaxInventory = true, -- Unlimited Pick Up (Bypass ProximityPrompt Hold Limit)
     ESPPlayers = true,
     ESPDoors = true,
-    ESPBooks = true,      -- ESP Riêng Sách Phòng 50 (Vàng)
-    ESPItems = true,      -- ESP Riêng Item thật (Xanh)
-    ESPEntities = true,   -- ESP Quái (Đỏ)
+    ESPBooks = true,
+    ESPItems = true,
+    ESPEntities = true,
     Tracers = true,
     FullBright = false,
     SpeedHack = false,
@@ -312,19 +309,18 @@ local function createToggleBtn(title, posY, keyName)
 end
 
 createToggleBtn("1. Smart PC Lock 360°", 90, "Lock")
-createToggleBtn("2. Auto-Aimbot Bullet Homing MAX", 132, "AutoAimbot")
+createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
 createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
-createToggleBtn("4. Fake Hitbox Anti-Monster", 216, "FakeHitbox")
-createToggleBtn("5. Max Inventory 99/99 Items", 258, "MaxInventory")
+createToggleBtn("4. Out-of-Map Hitbox (All Monsters)", 216, "FakeHitboxAll")
+createToggleBtn("5. Bypass Max Hold (99/99 Items)", 258, "MaxInventory")
 createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
-createToggleBtn("8. ESP Sách Mật Mã Room 50 (Vàng)", 384, "ESPBooks")
-createToggleBtn("9. ESP Items Chuẩn Xuyên Tủ (Xanh)", 426, "ESPItems")
-createToggleBtn("10. ESP Monsters Hitbox (Đỏ)", 468, "ESPEntities")
+createToggleBtn("8. ESP Sách Mật Mã Room 50 Only", 384, "ESPBooks")
+createToggleBtn("9. ESP Items Deep Locker (Xanh)", 426, "ESPItems")
+createToggleBtn("10. ESP Monsters All Modes (Đỏ)", 468, "ESPEntities")
 createToggleBtn("11. Smooth Tracers (Tia Trắng)", 510, "Tracers")
 createToggleBtn("12. FullBright (Sáng Đêm)", 552, "FullBright")
 
--- ĐIỀU CHỈNH TỐC ĐỘ & FOV
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 250, 0, 20)
 SpeedTitle.Position = UDim2.new(0, 15, 0, 595)
@@ -466,7 +462,12 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 8. VÒNG LẶP CORE (SPEED, GODMODE, MAX INVENTORY & FAKE HITBOX)
+local allMonsterKeywords = {
+    "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
+    "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
+}
+
+-- 8. CORE ENGINE: BYPASS MAX HOLD PROXIMITY PROMPT, GODMODE, FAKE HITBOX ALL MODES
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -502,45 +503,48 @@ RunService.Stepped:Connect(function()
         end
     end
 
-    -- MAX INVENTORY 99/99
+    -- BYPASS PROXIMITYPROMPT HOLD LIMIT (CHO PHÉP NHẶT KHÔNG GIỚI HẠN THÁNH GIÁ & VẬT PHẨM)
     if toggles.MaxInventory then
         pcall(function()
+            for _, prompt in pairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    prompt.HoldDuration = 0
+                    prompt.RequiresLineOfSight = false
+                    prompt.MaxActivationDistance = 15
+                    prompt.Enabled = true
+                end
+            end
             for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
                 if v:IsA("Tool") then v.MaxStack = 99 end
-            end
-            if LocalPlayer.Character then
-                for _, v in pairs(LocalPlayer.Character:GetChildren()) do
-                    if v:IsA("Tool") then v.MaxStack = 99 end
-                end
             end
         end)
     end
 
-    -- FAKE HITBOX ANTI-MONSTER
-    if toggles.FakeHitbox and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    -- FAKE HITBOX OUT-OF-MAP FOR ALL MONSTERS/MODES
+    if toggles.FakeHitboxAll and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local monsterNear = false
         for _, folder in ipairs({workspace, Camera}) do
             for _, entity in pairs(folder:GetChildren()) do
                 local eName = entity.Name:lower()
-                if eName:find("rush") or eName:find("ambush") or eName:find("figure") or eName:find("seek") then
-                    local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
-                    if pPart and (pPart.Position - hrp.Position).Magnitude < 45 then
-                        monsterNear = true
-                        break
+                for _, mKey in ipairs(allMonsterKeywords) do
+                    if eName:find(mKey) then
+                        local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                        if pPart and (pPart.Position - hrp.Position).Magnitude < 60 then
+                            monsterNear = true
+                            break
+                        end
                     end
                 end
             end
         end
         if monsterNear then
-            hrp.CFrame = hrp.CFrame + Vector3.new(0, -300, 0)
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -400, 0)
         end
     end
 end)
 
--- 9. AUTO AIMBOT BULLET HOMING
-local monsterList = {"rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", "a60", "a90", "a120", "blitz"}
-
+-- 9. AUTO AIMBOT BULLET HOMING CROSS-MAP
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not toggles.AutoAimbot then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -550,7 +554,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
             for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
                     local eName = entity.Name:lower()
-                    for _, mName in ipairs(monsterList) do
+                    for _, mName in ipairs(allMonsterKeywords) do
                         if eName:find(mName) then
                             local part = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
                             if part then
@@ -578,9 +582,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP SEPARATED (CẮT BỎ KỆ SÁCH RÁC)
+-- 10. HỆ THỐNG ESP VIP V13
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V11_ESP"
+espFolder.Name = "VIP_V13_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -630,9 +634,17 @@ local function clearAll()
     activeTracers = {}
 end
 
-local validItemsList = {
+local function isShelfOrJunk(name)
+    local n = name:lower()
+    if n:find("bookshelf") or n:find("shelf") or n:find("rack") or n:find("furniture") or n:find("stand") or n:find("board") or n:find("paper") or n:find("painting") then
+        return true
+    end
+    return false
+end
+
+local trueUsableItems = {
     "fuse", "battery", "key", "flashlight", "lighter", "lockpick", 
-    "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit"
+    "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit", "herb", "smoothie"
 }
 
 local detectedMonsters = {}
@@ -688,31 +700,33 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP SÁCH MẬT MÃ ROOM 50 (CHỈ SÁCH MẬT MÃ - VÀNG)
+        -- 3. ESP SÁCH MẬT MÃ ROOM 50 ONLY (VÀNG)
         if toggles.ESPBooks then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
                 collectedBooksCount = 0
                 for _, room in pairs(currentRooms:GetChildren()) do
                     for _, obj in pairs(room:GetDescendants()) do
-                        local oName = obj.Name:lower()
-                        if oName == "livehintbook" or oName == "book" then
-                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                            if tPart then
-                                local dist = (tPart.Position - myPos).Magnitude
-                                if dist <= 500 then
-                                    collectedBooksCount = collectedBooksCount + 1
-                                    createVisuals(obj, "📖 Sách Mật Mã [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 215, 0), false)
-                                    if toggles.Tracers then
-                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                        if onScr then
-                                            local line = Drawing.new("Line")
-                                            line.From = screenCenter
-                                            line.To = Vector2.new(sPos.X, sPos.Y)
-                                            line.Color = Color3.fromRGB(255, 215, 0)
-                                            line.Thickness = 1.2
-                                            line.Visible = true
-                                            table.insert(activeTracers, line)
+                        if not isShelfOrJunk(obj.Name) then
+                            local oName = obj.Name:lower()
+                            if oName == "livehintbook" then
+                                local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                                if tPart then
+                                    local dist = (tPart.Position - myPos).Magnitude
+                                    if dist <= 500 then
+                                        collectedBooksCount = collectedBooksCount + 1
+                                        createVisuals(obj, "📖 Sách Mật Mã [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 215, 0), false)
+                                        if toggles.Tracers then
+                                            local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                            if onScr then
+                                                local line = Drawing.new("Line")
+                                                line.From = screenCenter
+                                                line.To = Vector2.new(sPos.X, sPos.Y)
+                                                line.Color = Color3.fromRGB(255, 215, 0)
+                                                line.Thickness = 1.2
+                                                line.Visible = true
+                                                table.insert(activeTracers, line)
+                                            end
                                         end
                                     end
                                 end
@@ -725,40 +739,42 @@ task.spawn(function()
             end
         end
 
-        -- 4. ESP ITEMS CHUẨN (QUÉT TRONG TỦ CHƯA MỞ - XANH BIỂN)
+        -- 4. ESP ITEMS CHUẨN XUYÊN TỦ 100% (XANH BIỂN)
         if toggles.ESPItems then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
                 for _, room in pairs(currentRooms:GetChildren()) do
                     for _, obj in pairs(room:GetDescendants()) do
-                        local oName = obj.Name:lower()
-                        local isValid = false
-                        for _, k in ipairs(validItemsList) do
-                            if oName:find(k) then isValid = true break end
-                        end
+                        if not isShelfOrJunk(obj.Name) then
+                            local oName = obj.Name:lower()
+                            local isValid = false
+                            for _, k in ipairs(trueUsableItems) do
+                                if oName:find(k) then isValid = true break end
+                            end
 
-                        if isValid then
-                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                            if tPart then
-                                local dist = (tPart.Position - myPos).Magnitude
-                                if dist <= 500 then
-                                    local isInLocker = false
-                                    if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") or obj:FindFirstAncestor("Locker") then
-                                        isInLocker = true
-                                    end
-                                    local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
-                                    createVisuals(obj, prefixTag .. obj.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
+                            if isValid then
+                                local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                                if tPart then
+                                    local dist = (tPart.Position - myPos).Magnitude
+                                    if dist <= 500 then
+                                        local isInLocker = false
+                                        if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") or obj:FindFirstAncestor("Locker") or obj:FindFirstAncestor("Cabinet") or obj:FindFirstAncestor("Desk") then
+                                            isInLocker = true
+                                        end
+                                        local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
+                                        createVisuals(obj, prefixTag .. obj.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
 
-                                    if toggles.Tracers then
-                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                        if onScr then
-                                            local line = Drawing.new("Line")
-                                            line.From = screenCenter
-                                            line.To = Vector2.new(sPos.X, sPos.Y)
-                                            line.Color = Color3.fromRGB(0, 220, 255)
-                                            line.Thickness = 1
-                                            line.Visible = true
-                                            table.insert(activeTracers, line)
+                                        if toggles.Tracers then
+                                            local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                            if onScr then
+                                                local line = Drawing.new("Line")
+                                                line.From = screenCenter
+                                                line.To = Vector2.new(sPos.X, sPos.Y)
+                                                line.Color = Color3.fromRGB(0, 220, 255)
+                                                line.Thickness = 1
+                                                line.Visible = true
+                                                table.insert(activeTracers, line)
+                                            end
                                         end
                                     end
                                 end
@@ -769,12 +785,12 @@ task.spawn(function()
             end
         end
 
-        -- 5. ESP QUÁI VẬT & TIA TRẮNG
+        -- 5. ESP QUÁI VẬT TẤT CẢ MODES & TIA TRẮNG
         if toggles.ESPEntities then
             for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
                     local eName = entity.Name:lower()
-                    for _, mName in ipairs(monsterList) do
+                    for _, mName in ipairs(allMonsterKeywords) do
                         if eName:find(mName) then
                             createVisuals(entity, "⚠️ " .. entity.Name:upper() .. " ⚠️", Color3.fromRGB(255, 0, 0), true)
                             local eId = entity:GetDebugId()
@@ -807,4 +823,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V11 Ultra Repaired Loaded!")
+showMonsterAlert("DOORS VIP V13 Infinity Stack Bypass Loaded!")
