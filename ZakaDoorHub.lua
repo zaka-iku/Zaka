@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V9 - ULTIMATE POWER (BYPASS GODMODE + NO-SHELF ESP + 99 ITEMS)
+-- DOORS OTG ULTIMATE VIP V10 - SUPREME GODMODE & SEPARATED BOOK/ITEM ESP
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ GUI KHÔNG BỊ XÓA
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV9") then
-        TargetParent.OTGDoorsVIPV9:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV10") then
+        TargetParent.OTGDoorsVIPV10:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV9") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV10") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV9") then
-        TargetParent.OTGDoorsVIPV9:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV10") then
+        TargetParent.OTGDoorsVIPV10:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV9"
+ScreenGui.Name = "OTGDoorsVIPV10"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -161,9 +161,9 @@ Part2.Size = UDim2.new(0, 280, 1, -20)
 Part2.Position = UDim2.new(0, 490, 0, 10)
 Part2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Part2.BackgroundTransparency = 0.5
-Part2.CanvasSize = UDim2.new(0, 0, 0, 720)
+Part2.CanvasSize = UDim2.new(0, 0, 0, 780)
 Part2.ScrollBarThickness = 4
-Part2.Parent = MainContainer
+Part2.Parent = Part2 and Part2 or MainContainer
 
 local p2Corner = Instance.new("UICorner")
 p2Corner.CornerRadius = UDim.new(0, 8)
@@ -172,7 +172,7 @@ p2Corner.Parent = Part2
 local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, 0, 0, 35)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V9 ULTIMATE"
+P2Title.Text = "DOORS VIP V10 SUPREME"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -246,12 +246,13 @@ end
 local toggles = {
     Lock = true,
     AutoAimbot = true,    -- Tự động Bẻ Hướng Đạn Xuyên Tường Tiêu Diệt Quái
-    GodMode = true,       -- Bất tử chống chết tuyệt đối
-    FakeLocker = true,    -- Đánh lừa quái bằng Hitbox giả trong tủ
-    MaxInventory = true,  -- Mở giới hạn 99/99 items
+    SupremeGod = true,    -- Bất tử tối cao (Chặn toàn bộ dame, hiệu ứng, lửa, mắt)
+    FakeHitbox = true,    -- Tele Hitbox ra ngoài map / vào tủ khi có quái
+    MaxInventory = true,  -- Mở giới hạn 99/99 items vĩnh viễn
     ESPPlayers = true,
     ESPDoors = true,
-    ESPItems = true,
+    ESPBooks = true,      -- ESP Riêng Sách Mật Mã Room 50 (Vàng)
+    ESPItems = true,      -- ESP Riêng Items (Xanh Biển)
     ESPEntities = true,
     Tracers = true,
     FullBright = false,
@@ -286,21 +287,22 @@ local function createToggleBtn(title, posY, keyName)
 end
 
 createToggleBtn("1. Smart PC Lock 360°", 95, "Lock")
-createToggleBtn("2. Auto-Aimbot Bullet Homing", 140, "AutoAimbot")
-createToggleBtn("3. GodMode (Bất Tử Vĩnh Viễn)", 185, "GodMode")
-createToggleBtn("4. Fake Locker Hitbox (Lừa Quái)", 230, "FakeLocker")
+createToggleBtn("2. Auto-Aimbot Bullet Homing MAX", 140, "AutoAimbot")
+createToggleBtn("3. Supreme GodMode (Bất Tử Tối Cao)", 185, "SupremeGod")
+createToggleBtn("4. Fake Hitbox Anti-Monster", 230, "FakeHitbox")
 createToggleBtn("5. Max Inventory 99/99 Items", 275, "MaxInventory")
 createToggleBtn("6. ESP Players (Người Chơi)", 320, "ESPPlayers")
 createToggleBtn("7. ESP Correct Door (Hồng)", 365, "ESPDoors")
-createToggleBtn("8. ESP Clean Items (Không Kệ Sách)", 410, "ESPItems")
-createToggleBtn("9. ESP Monsters Hitbox (Đỏ)", 455, "ESPEntities")
-createToggleBtn("10. Smooth Tracers (Tia Trắng)", 500, "Tracers")
-createToggleBtn("11. FullBright (Sáng Đêm)", 545, "FullBright")
+createToggleBtn("8. ESP Sách Mật Mã Room 50 (Vàng)", 410, "ESPBooks")
+createToggleBtn("9. ESP Items (Xanh Biển - 100%)", 455, "ESPItems")
+createToggleBtn("10. ESP Monsters Hitbox (Đỏ)", 500, "ESPEntities")
+createToggleBtn("11. Smooth Tracers (Tia Trắng)", 545, "Tracers")
+createToggleBtn("12. FullBright (Sáng Đêm)", 590, "FullBright")
 
 -- Tốc độ & FOV Điều Chỉnh Số Trực Tiếp
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 250, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 15, 0, 590)
+SpeedTitle.Position = UDim2.new(0, 15, 0, 635)
 SpeedTitle.BackgroundTransparency = 1
 SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -310,7 +312,7 @@ SpeedTitle.Parent = Part2
 
 local SpeedMinus = Instance.new("TextButton")
 SpeedMinus.Size = UDim2.new(0, 120, 0, 30)
-SpeedMinus.Position = UDim2.new(0, 15, 0, 612)
+SpeedMinus.Position = UDim2.new(0, 15, 0, 657)
 SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedMinus.Text = "Giảm (-)"
@@ -324,7 +326,7 @@ end)
 
 local SpeedPlus = Instance.new("TextButton")
 SpeedPlus.Size = UDim2.new(0, 120, 0, 30)
-SpeedPlus.Position = UDim2.new(0, 145, 0, 612)
+SpeedPlus.Position = UDim2.new(0, 145, 0, 657)
 SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedPlus.Text = "Tăng (+)"
@@ -336,11 +338,11 @@ SpeedPlus.MouseButton1Click:Connect(function()
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("12. SpeedHack Anti-TeleBack", 655, "SpeedHack")
+createToggleBtn("13. SpeedHack Anti-TeleBack", 700, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
-FOVTitle.Position = UDim2.new(0, 15, 0, 700)
+FOVTitle.Position = UDim2.new(0, 15, 0, 745)
 FOVTitle.BackgroundTransparency = 1
 FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 FOVTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -350,7 +352,7 @@ FOVTitle.Parent = Part2
 
 local FOVMinus = Instance.new("TextButton")
 FOVMinus.Size = UDim2.new(0, 120, 0, 30)
-FOVMinus.Position = UDim2.new(0, 15, 0, 722)
+FOVMinus.Position = UDim2.new(0, 15, 0, 767)
 FOVMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVMinus.Text = "FOV Giảm (-)"
@@ -364,7 +366,7 @@ end)
 
 local FOVPlus = Instance.new("TextButton")
 FOVPlus.Size = UDim2.new(0, 120, 0, 30)
-FOVPlus.Position = UDim2.new(0, 145, 0, 722)
+FOVPlus.Position = UDim2.new(0, 145, 0, 767)
 FOVPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVPlus.Text = "FOV Tăng (+)"
@@ -376,7 +378,7 @@ FOVPlus.MouseButton1Click:Connect(function()
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
-createToggleBtn("13. Mở rộng Góc nhìn FOV MAX", 765, "FOVHack")
+createToggleBtn("14. Mở rộng Góc nhìn FOV MAX", 810, "FOVHack")
 
 local isMenuOpen = true
 local function toggleMenu()
@@ -435,9 +437,8 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 8. SPEEDHACK ANTI-TELEBACK, GODMODE VĨNH VIỄN, MAX INVENTORY & FAKE LOCKER
+-- 8. SPEEDHACK, SUPREME GODMODE, MAX INVENTORY & FAKE HITBOX
 RunService.Stepped:Connect(function()
-    -- SpeedHack chống tele ngược bằng cách khóa vận tốc Humanoid mượt mà
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum and hum.MoveDirection.Magnitude > 0 then
@@ -459,18 +460,24 @@ RunService.Stepped:Connect(function()
         Camera.FieldOfView = fovValue
     end
 
-    -- GodMode Bất Tử Tuyệt Đối (Chặn mọi sát thương)
-    if toggles.GodMode and LocalPlayer.Character then
+    -- Supreme GodMode (Khóa chặt máu vĩnh viễn, vô hiệu hóa hiệu ứng độc/lửa/mắt)
+    if toggles.SupremeGod and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.Health = hum.MaxHealth
             pcall(function()
-                LocalPlayer.Character.HumanoidRootPart.CanCollide = true
+                for _, v in pairs(LocalPlayer.Character:GetChildren()) do
+                    if v:IsA("Folder") or v:IsA("StringValue") then
+                        if v.Name:lower():find("blind") or v.Name:lower():find("damage") or v.Name:lower():find("burn") then
+                            v:Destroy()
+                        end
+                    end
+                end
             end)
         end
     end
 
-    -- Max Inventory 99/99 Items
+    -- Max Inventory 99/99
     if toggles.MaxInventory then
         pcall(function()
             for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -484,28 +491,29 @@ RunService.Stepped:Connect(function()
         end)
     end
 
-    -- Fake Locker Hitbox (Đánh lừa quái)
-    if toggles.FakeLocker and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    -- Fake Hitbox Anti-Monster (Tele Hitbox ra xa hoặc vào tủ khi quái tới)
+    if toggles.FakeHitbox and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        local currentRooms = workspace:FindFirstChild("CurrentRooms")
-        if currentRooms then
-            for _, room in pairs(currentRooms:GetChildren()) do
-                for _, obj in pairs(room:GetDescendants()) do
-                    if obj.Name == "Wardrobe" or obj.Name == "Locker" then
-                        local doorPart = obj:FindFirstChild("Door") or obj:FindFirstChildWhichIsA("BasePart")
-                        if doorPart and (hrp.Position - doorPart.Position).Magnitude < 12 then
-                            hrp.CanCollide = false
-                        else
-                            hrp.CanCollide = true
-                        end
+        local monsterNear = false
+        for _, folder in ipairs({workspace, Camera}) do
+            for _, entity in pairs(folder:GetChildren()) do
+                local eName = entity.Name:lower()
+                if eName:find("rush") or eName:find("ambush") or eName:find("figure") or eName:find("seek") then
+                    local pPart = entity:IsA("BasePart") and entity or entity:FindFirstChildWhichIsA("BasePart")
+                    if pPart and (pPart.Position - hrp.Position).Magnitude < 40 then
+                        monsterNear = true
+                        break
                     end
                 end
             end
         end
+        if monsterNear then
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, -300, 0) -- Đánh lừa AI quái bằng cách chìm hitbox xuống dưới map
+        end
     end
 end)
 
--- 9. AUTO AIMBOT & HOMING BULLETS (TIÊU DIỆT QUÁI XUYÊN TƯỜNG)
+-- 9. AUTO AIMBOT BULLET HOMING MAX (BẺ HƯỚNG ĐẠN TÌM QUÁI XUYÊN TƯỜNG)
 local monsterList = {"rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", "a60", "a90", "a120", "blitz"}
 
 UserInputService.InputBegan:Connect(function(input, gpe)
@@ -535,7 +543,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
             
             if targetMonster then
                 for _, obj in pairs(workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("bullet") or obj.Name:lower():find("projectile") or obj.Name:lower():find("shot")) then
+                    if obj:IsA("BasePart") and (obj.Name:lower():find("bullet") or obj.Name:lower():find("projectile") or obj.Name:lower():find("shot") or obj.Name:lower():find("ammo")) then
                         obj.CFrame = CFrame.new(targetMonster.Position)
                         obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                     end
@@ -545,9 +553,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP CLEAN CHUẨN XÁC (LOẠI BỎ HOÀN TOÀN KỆ SÁCH/GIÁ RÁC - QUÉT XUYÊN TỦ CHƯA MỞ)
+-- 10. HỆ THỐNG ESP TÁCH BIỆT (ESP SÁCH VÀNG & ESP ITEM XANH BIỂN)
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V9_ESP"
+espFolder.Name = "VIP_V10_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -597,20 +605,11 @@ local function clearAll()
     activeTracers = {}
 end
 
--- Bộ lọc cực kỳ khắt khe: Bỏ sạch kệ sách, giá sách, bàn ghế, bảng, giấy rác
--- Chỉ giữ lại Sách 50, Pin 100 và Item dùng được (Súng, Thánh giá, Chìa khóa, Đèn pin, v.v.)
-local function isJunkShelfOrPaper(name)
-    local n = name:lower()
-    if n:find("shelf") or n:find("bookshelf") or n:find("rack") or n:find("stand") or n:find("board") or n:find("paper") or n:find("note") or n:find("painting") or n:find("clock") then
-        return true
-    end
-    return false
-end
-
 local validItemsList = {
-    "livehintbook", "book", "fuse", "battery", "key", "flashlight", 
-    "lighter", "lockpick", "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit"
+    "fuse", "battery", "key", "flashlight", "lighter", "lockpick", 
+    "vitamins", "crucifix", "skeletonkey", "gun", "shotgun", "tablet", "shears", "medkit"
 }
+
 local detectedMonsters = {}
 local collectedBooksCount = 0
 
@@ -665,47 +664,32 @@ task.spawn(function()
             end
         end
 
-        -- 3. ESP SẠCH ITEM (Xuyên thấu tủ chưa mở, tuyệt đối không dính kệ sách)
-        if toggles.ESPItems then
+        -- 3. ESP TÁCH BIỆT: ESP SÁCH MẬT MÃ ROOM 50 (VÀNG)
+        if toggles.ESPBooks then
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
                 collectedBooksCount = 0
                 for _, room in pairs(currentRooms:GetChildren()) do
                     for _, obj in pairs(room:GetDescendants()) do
                         local oName = obj.Name:lower()
-                        if not isJunkShelfOrPaper(oName) then
-                            local isValidItem = false
-                            for _, k in ipairs(validItemsList) do
-                                if oName:find(k) then isValidItem = true break end
-                            end
+                        if oName == "livehintbook" or oName == "book" then
+                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                            if tPart then
+                                local dist = (tPart.Position - myPos).Magnitude
+                                if dist <= 500 then
+                                    collectedBooksCount = collectedBooksCount + 1
+                                    createVisuals(obj, "📖 Sách Mật Mã [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(255, 215, 0), false)
 
-                            if isValidItem then
-                                local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                                if tPart then
-                                    local dist = (tPart.Position - myPos).Magnitude
-                                    if dist <= 500 then
-                                        if oName:find("book") then collectedBooksCount = collectedBooksCount + 1 end
-                                        
-                                        local isInLocker = false
-                                        if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") or obj:FindFirstAncestor("Locker") then
-                                            isInLocker = true
-                                        end
-
-                                        local nameShow = (oName:find("book") and "📖 Sách Room 50" or (oName:find("fuse") or oName:find("battery") and "🔋 Cục Pin Room 100" or obj.Name))
-                                        local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
-                                        createVisuals(obj, prefixTag .. nameShow .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
-
-                                        if toggles.Tracers then
-                                            local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
-                                            if onScr then
-                                                local line = Drawing.new("Line")
-                                                line.From = screenCenter
-                                                line.To = Vector2.new(sPos.X, sPos.Y)
-                                                line.Color = Color3.fromRGB(0, 220, 255)
-                                                line.Thickness = 1
-                                                line.Visible = true
-                                                table.insert(activeTracers, line)
-                                            end
+                                    if toggles.Tracers then
+                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                        if onScr then
+                                            local line = Drawing.new("Line")
+                                            line.From = screenCenter
+                                            line.To = Vector2.new(sPos.X, sPos.Y)
+                                            line.Color = Color3.fromRGB(255, 215, 0)
+                                            line.Thickness = 1.2
+                                            line.Visible = true
+                                            table.insert(activeTracers, line)
                                         end
                                     end
                                 end
@@ -713,7 +697,6 @@ task.spawn(function()
                         end
                     end
                 end
-
                 if collectedBooksCount >= 5 then
                     CodeDisplay.Text = "Mật mã Door 50: ĐÃ ĐỦ SÁCH!"
                 else
@@ -722,7 +705,52 @@ task.spawn(function()
             end
         end
 
-        -- 4. ESP QUÁI VẬT & TIA TRẮNG
+        -- 4. ESP TÁCH BIỆT: ESP ITEMS (XANH BIỂN - QUÉT SÂU TRONG TỦ CHƯA MỞ)
+        if toggles.ESPItems then
+            local currentRooms = workspace:FindFirstChild("CurrentRooms")
+            if currentRooms then
+                for _, room in pairs(currentRooms:GetChildren()) do
+                    for _, obj in pairs(room:GetDescendants()) do
+                        local oName = obj.Name:lower()
+                        local isValid = false
+                        for _, k in ipairs(validItemsList) do
+                            if oName:find(k) then isValid = true break end
+                        end
+
+                        if isValid then
+                            local tPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                            if tPart then
+                                local dist = (tPart.Position - myPos).Magnitude
+                                if dist <= 500 then
+                                    local isInLocker = false
+                                    if obj:FindFirstAncestor("Wardrobe") or obj:FindFirstAncestor("Drawer") or obj:FindFirstAncestor("Chest") or obj:FindFirstAncestor("Locker") then
+                                        isInLocker = true
+                                    end
+
+                                    local prefixTag = isInLocker and "[Trong Tủ] " or "[Item] "
+                                    createVisuals(obj, prefixTag .. obj.Name .. " [" .. math.floor(dist) + 1 .. "m]", Color3.fromRGB(0, 220, 255), false)
+
+                                    if toggles.Tracers then
+                                        local sPos, onScr = Camera:WorldToViewportPoint(tPart.Position)
+                                        if onScr then
+                                            local line = Drawing.new("Line")
+                                            line.From = screenCenter
+                                            line.To = Vector2.new(sPos.X, sPos.Y)
+                                            line.Color = Color3.fromRGB(0, 220, 255)
+                                            line.Thickness = 1
+                                            line.Visible = true
+                                            table.insert(activeTracers, line)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 5. ESP QUÁI VẬT & TIA TRẮNG
         if toggles.ESPEntities then
             for _, folder in ipairs({workspace, Camera}) do
                 for _, entity in pairs(folder:GetChildren()) do
@@ -761,4 +789,4 @@ task.spawn(function()
     end
 end)
 
-showNotif("DOORS VIP V9 Ultimate Power Activated!", false)
+showNotif("DOORS VIP V10 Supreme GodMode Activated!", false)
