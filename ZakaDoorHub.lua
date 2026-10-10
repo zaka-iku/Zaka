@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V21 - TRUE PANDA/GG MOUSE CAMERA HOOK ENGINE
+-- DOORS OTG ULTIMATE VIP V22 - NATIVE CAMERA PASS & ULTRA PERFORMANCE
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ & DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV21") then
-        TargetParent.OTGDoorsVIPV21:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV22") then
+        TargetParent.OTGDoorsVIPV22:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV21") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV22") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV21") then
-        TargetParent.OTGDoorsVIPV21:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV22") then
+        TargetParent.OTGDoorsVIPV22:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV21"
+ScreenGui.Name = "OTGDoorsVIPV22"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V21 TRUE HOOK"
+P2Title.Text = "DOORS VIP V22 NATIVE CAM"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -266,7 +266,6 @@ end
 
 -- 6. TOGGLES CHỨC NĂNG
 local toggles = {
-    Lock = true,         -- PANDA/GG MOUSE TRUE 360 HOOK
     AutoAimbot = true,
     SupremeGod = true,
     EarlyFastDodge = true,
@@ -308,22 +307,21 @@ local function createToggleBtn(title, posY, keyName)
     end)
 end
 
-createToggleBtn("1. True 360° Mouse Hook (Panda/GG)", 90, "Lock")
-createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
-createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
-createToggleBtn("4. Safe Zone Fast Dodge (120m)", 216, "EarlyFastDodge")
-createToggleBtn("5. 🧹 FPS Boost & Clean Lag", 258, "FPSBoost")
-createToggleBtn("6. ESP Players (Người Chơi)", 300, "ESPPlayers")
-createToggleBtn("7. ESP Correct Door (Hồng)", 342, "ESPDoors")
-createToggleBtn("8. ESP Levers / Cần Gạt (Cam)", 384, "ESPLevers")
-createToggleBtn("9. ESP Sách Mật Mã Room 50 Only", 426, "ESPBooks")
-createToggleBtn("10. ESP Items Clean (Xanh)", 468, "ESPItems")
-createToggleBtn("11. ESP Monsters All Modes (Đỏ)", 510, "ESPEntities")
-createToggleBtn("12. FullBright (Sáng Đêm)", 552, "FullBright")
+createToggleBtn("1. Auto-Aimbot Cross-Map MAX", 90, "AutoAimbot")
+createToggleBtn("2. Supreme GodMode (Bất Tử)", 132, "SupremeGod")
+createToggleBtn("3. Safe Zone Fast Dodge (120m)", 174, "EarlyFastDodge")
+createToggleBtn("4. 🧹 FPS Boost & Clean Lag", 216, "FPSBoost")
+createToggleBtn("5. ESP Players (Người Chơi)", 258, "ESPPlayers")
+createToggleBtn("6. ESP Correct Door (Hồng)", 300, "ESPDoors")
+createToggleBtn("7. ESP Levers / Cần Gạt (Cam)", 342, "ESPLevers")
+createToggleBtn("8. ESP Sách Mật Mã Room 50 Only", 384, "ESPBooks")
+createToggleBtn("9. ESP Items Clean (Xanh)", 426, "ESPItems")
+createToggleBtn("10. ESP Monsters All Modes (Đỏ)", 468, "ESPEntities")
+createToggleBtn("11. FullBright (Sáng Đêm)", 510, "FullBright")
 
 local SpeedTitle = Instance.new("TextLabel")
 SpeedTitle.Size = UDim2.new(0, 250, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 15, 0, 595)
+SpeedTitle.Position = UDim2.new(0, 15, 0, 555)
 SpeedTitle.BackgroundTransparency = 1
 SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -334,7 +332,7 @@ SpeedTitle.Parent = Part2
 
 local SpeedMinus = Instance.new("TextButton")
 SpeedMinus.Size = UDim2.new(0, 120, 0, 28)
-SpeedMinus.Position = UDim2.new(0, 15, 0, 618)
+SpeedMinus.Position = UDim2.new(0, 15, 0, 578)
 SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedMinus.Text = "Giảm (-)"
@@ -349,7 +347,7 @@ end)
 
 local SpeedPlus = Instance.new("TextButton")
 SpeedPlus.Size = UDim2.new(0, 120, 0, 28)
-SpeedPlus.Position = UDim2.new(0, 145, 0, 618)
+SpeedPlus.Position = UDim2.new(0, 145, 0, 578)
 SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 SpeedPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedPlus.Text = "Tăng (+)"
@@ -362,11 +360,11 @@ SpeedPlus.MouseButton1Click:Connect(function()
     SpeedTitle.Text = "Tốc độ chạy: " .. walkSpeedValue
 end)
 
-createToggleBtn("13. SpeedHack Anti-Teleport", 652, "SpeedHack")
+createToggleBtn("12. SpeedHack Anti-Teleport", 612, "SpeedHack")
 
 local FOVTitle = Instance.new("TextLabel")
 FOVTitle.Size = UDim2.new(0, 250, 0, 20)
-FOVTitle.Position = UDim2.new(0, 15, 0, 695)
+FOVTitle.Position = UDim2.new(0, 15, 0, 655)
 FOVTitle.BackgroundTransparency = 1
 FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 FOVTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -377,7 +375,7 @@ FOVTitle.Parent = Part2
 
 local FOVMinus = Instance.new("TextButton")
 FOVMinus.Size = UDim2.new(0, 120, 0, 28)
-FOVMinus.Position = UDim2.new(0, 15, 0, 718)
+FOVMinus.Position = UDim2.new(0, 15, 0, 678)
 FOVMinus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVMinus.Text = "FOV Giảm (-)"
@@ -392,7 +390,7 @@ end)
 
 local FOVPlus = Instance.new("TextButton")
 FOVPlus.Size = UDim2.new(0, 120, 0, 28)
-FOVPlus.Position = UDim2.new(0, 145, 0, 718)
+FOVPlus.Position = UDim2.new(0, 145, 0, 678)
 FOVPlus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 FOVPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
 FOVPlus.Text = "FOV Tăng (+)"
@@ -405,7 +403,7 @@ FOVPlus.MouseButton1Click:Connect(function()
     FOVTitle.Text = "Góc nhìn FOV: " .. fovValue
 end)
 
-createToggleBtn("14. Góc nhìn FOV (Fix 1st & 3rd Person)", 752, "FOVHack")
+createToggleBtn("13. Góc nhìn FOV (Native Pass)", 712, "FOVHack")
 
 local function toggleMenu()
     MainContainer.Visible = not MainContainer.Visible
@@ -416,53 +414,13 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then toggleMenu() end
 end)
 
--- 7. THUẬT TOÁN HOOK CAMERA 360 ĐỘ CẤP ĐỘ PANDA/GG MOUSE (SCRIPTABLE OVERRIDE)
-local cameraSens = 0.003
-local camYaw, camPitch = 0, 0
-local lastMousePos = UserInputService:GetMouseLocation()
-
-RunService.RenderStepped:Connect(function()
-    local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
-    if isRobloxMenuOpen or MainContainer.Visible then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        UserInputService.MouseIconEnabled = true
-        Camera.CameraType = Enum.CameraType.Custom
-        return
-    end
-
-    if toggles.Lock then
-        UserInputService.MouseIconEnabled = false
-        Camera.CameraType = Enum.CameraType.Scriptable
-
-        local currentPos = UserInputService:GetMouseLocation()
-        local delta = currentPos - lastMousePos
-        lastMousePos = currentPos
-
-        if delta.Magnitude > 0 and delta.Magnitude < 200 then
-            camYaw = (camYaw - (delta.X * cameraSens)) % (math.pi * 2)
-            camPitch = math.clamp(camPitch - (delta.Y * cameraSens), math.rad(-85), math.rad(85))
-        end
-
-        local targetPos = Camera.Focus.Position
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
-            targetPos = LocalPlayer.Character.Head.Position
-        end
-
-        Camera.CFrame = CFrame.new(targetPos) * CFrame.Angles(0, camYaw, 0) * CFrame.Angles(camPitch, 0, 0) * CFrame.new(0, 0, 4)
-    else
-        Camera.CameraType = Enum.CameraType.Custom
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        UserInputService.MouseIconEnabled = true
-    end
-end)
-
 local fastDodgeMonsters = {
     "rush", "ambush", "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "halt"
 }
 
 local dodgeTimer = 0
 
--- 8. CORE ENGINE: SPEED, GODMODE, SAFE ZONE DODGE & FPS BOOST
+-- 7. CORE ENGINE: SPEED, GODMODE, SAFE ZONE DODGE & FPS BOOST
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -556,7 +514,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 9. AUTO AIMBOT BULLET HOMING
+-- 8. AUTO AIMBOT BULLET HOMING
 local allMonsterKeywords = {
     "rush", "ambush", "seek", "figure", "eyes", "halt", "screech", "dupe", "hide", "jack", 
     "a60", "a90", "a120", "blitz", "dread", "depth", "silence", "lookman", "entity", "monster"
@@ -599,9 +557,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V21 LIGHTWEIGHT
+-- 9. HỆ THỐNG ESP VIP V22 LIGHTWEIGHT
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V21_ESP"
+espFolder.Name = "VIP_V22_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -804,4 +762,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V21 True Mouse Hook Loaded!")
+showMonsterAlert("DOORS VIP V22 Native Camera Pass Loaded!")
