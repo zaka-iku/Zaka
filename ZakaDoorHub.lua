@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DOORS OTG ULTIMATE VIP V20 - 360 DEGREE CAMERA FIX & PERFORMANCE ENGINE
+-- DOORS OTG ULTIMATE VIP V21 - TRUE PANDA/GG MOUSE CAMERA HOOK ENGINE
 -- ==============================================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -18,19 +18,19 @@ local Camera = workspace.CurrentCamera
 -- 1. BẢO VỆ & DỌN DẸP GUI CŨ
 local TargetParent = CoreGui
 pcall(function()
-    if TargetParent:FindFirstChild("OTGDoorsVIPV20") then
-        TargetParent.OTGDoorsVIPV20:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV21") then
+        TargetParent.OTGDoorsVIPV21:Destroy()
     end
 end)
-if not TargetParent:FindFirstChild("OTGDoorsVIPV20") then
+if not TargetParent:FindFirstChild("OTGDoorsVIPV21") then
     TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-    if TargetParent:FindFirstChild("OTGDoorsVIPV20") then
-        TargetParent.OTGDoorsVIPV20:Destroy()
+    if TargetParent:FindFirstChild("OTGDoorsVIPV21") then
+        TargetParent.OTGDoorsVIPV21:Destroy()
     end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OTGDoorsVIPV20"
+ScreenGui.Name = "OTGDoorsVIPV21"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.DisplayOrder = 9999999
@@ -193,7 +193,7 @@ local P2Title = Instance.new("TextLabel")
 P2Title.Size = UDim2.new(1, -40, 0, 30)
 P2Title.Position = UDim2.new(0, 10, 0, 5)
 P2Title.BackgroundTransparency = 1
-P2Title.Text = "DOORS VIP V20 360° FIXED"
+P2Title.Text = "DOORS VIP V21 TRUE HOOK"
 P2Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 P2Title.Font = Enum.Font.SourceSansBold
 P2Title.TextSize = 14
@@ -266,7 +266,7 @@ end
 
 -- 6. TOGGLES CHỨC NĂNG
 local toggles = {
-    Lock = true,         -- Khóa chuột xoay 360 độ mượt mà
+    Lock = true,         -- PANDA/GG MOUSE TRUE 360 HOOK
     AutoAimbot = true,
     SupremeGod = true,
     EarlyFastDodge = true,
@@ -308,7 +308,7 @@ local function createToggleBtn(title, posY, keyName)
     end)
 end
 
-createToggleBtn("1. Smart PC Lock 360° (Fix Mouse)", 90, "Lock")
+createToggleBtn("1. True 360° Mouse Hook (Panda/GG)", 90, "Lock")
 createToggleBtn("2. Auto-Aimbot Cross-Map MAX", 132, "AutoAimbot")
 createToggleBtn("3. Supreme GodMode (Bất Tử)", 174, "SupremeGod")
 createToggleBtn("4. Safe Zone Fast Dodge (120m)", 216, "EarlyFastDodge")
@@ -416,7 +416,11 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.P and not gpe then toggleMenu() end
 end)
 
--- 7. SỬA DỨT ĐIỂM LỖI CHUỘT XOAY 360 ĐỘ (CHUẨN ROBLOX ENGINE)
+-- 7. THUẬT TOÁN HOOK CAMERA 360 ĐỘ CẤP ĐỘ PANDA/GG MOUSE (SCRIPTABLE OVERRIDE)
+local cameraSens = 0.003
+local camYaw, camPitch = 0, 0
+local lastMousePos = UserInputService:GetMouseLocation()
+
 RunService.RenderStepped:Connect(function()
     local isRobloxMenuOpen = GuiService:GetMenuIsOpen()
     if isRobloxMenuOpen or MainContainer.Visible then
@@ -427,13 +431,28 @@ RunService.RenderStepped:Connect(function()
     end
 
     if toggles.Lock then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
         UserInputService.MouseIconEnabled = false
-        UserSettings.RotationType = Enum.RotationType.CameraRelative
+        Camera.CameraType = Enum.CameraType.Scriptable
+
+        local currentPos = UserInputService:GetMouseLocation()
+        local delta = currentPos - lastMousePos
+        lastMousePos = currentPos
+
+        if delta.Magnitude > 0 and delta.Magnitude < 200 then
+            camYaw = (camYaw - (delta.X * cameraSens)) % (math.pi * 2)
+            camPitch = math.clamp(camPitch - (delta.Y * cameraSens), math.rad(-85), math.rad(85))
+        end
+
+        local targetPos = Camera.Focus.Position
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+            targetPos = LocalPlayer.Character.Head.Position
+        end
+
+        Camera.CFrame = CFrame.new(targetPos) * CFrame.Angles(0, camYaw, 0) * CFrame.Angles(camPitch, 0, 0) * CFrame.new(0, 0, 4)
     else
+        Camera.CameraType = Enum.CameraType.Custom
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         UserInputService.MouseIconEnabled = true
-        UserSettings.RotationType = Enum.RotationType.MovementRelative
     end
 end)
 
@@ -443,7 +462,7 @@ local fastDodgeMonsters = {
 
 local dodgeTimer = 0
 
--- 8. CORE ENGINE: SPEED ANTI-TELEPORT, GODMODE, SAFE ZONE DODGE & FPS BOOST
+-- 8. CORE ENGINE: SPEED, GODMODE, SAFE ZONE DODGE & FPS BOOST
 RunService.Stepped:Connect(function()
     if toggles.SpeedHack and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -580,9 +599,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 10. HỆ THỐNG ESP VIP V20 LIGHTWEIGHT
+-- 10. HỆ THỐNG ESP VIP V21 LIGHTWEIGHT
 local espFolder = Instance.new("Folder")
-espFolder.Name = "VIP_V20_ESP"
+espFolder.Name = "VIP_V21_ESP"
 espFolder.Parent = ScreenGui
 
 local activeESPs = {}
@@ -785,4 +804,4 @@ task.spawn(function()
     end
 end)
 
-showMonsterAlert("DOORS VIP V20 360° Mouse Fixed Loaded!")
+showMonsterAlert("DOORS VIP V21 True Mouse Hook Loaded!")
