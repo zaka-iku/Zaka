@@ -4,16 +4,16 @@ local player = Players.LocalPlayer
 
 local savedCFrame = nil
 local isSpeedEnabled = false
-local speedValue = 75 -- Tốc độ tối ưu hóa cao nhưng an toàn không bị server đá
+local speedValue = 110
 
 local getHui = gethui or function() return game:GetService("CoreGui") end
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UltimateEggGui"
+ScreenGui.Name = "InstantEggStealGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = getHui()
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Size = UDim2.new(0, 220, 0, 250)
 MainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.Active = true
@@ -27,55 +27,41 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Title.Text = "Steal An Egg - Fix AntiCheat"
+Title.Text = "Steal An Egg - Siêu Tốc"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 12
+Title.TextSize = 13
 Title.Parent = MainFrame
-
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 12)
-TitleCorner.Parent = Title
-
--- Nút Chạy Nhanh
-local SpeedBtn = Instance.new("TextButton")
-SpeedBtn.Size = UDim2.new(0.88, 0, 0, 38)
-SpeedBtn.Position = UDim2.new(0.06, 0, 0.18, 0)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-SpeedBtn.Text = "Chạy Nhanh: Tắt"
-SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedBtn.Font = Enum.Font.GothamMedium
-SpeedBtn.Parent = MainFrame
 
 -- Nút Lưu Vị Trí
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size = UDim2.new(0.88, 0, 0, 38)
-SaveBtn.Position = UDim2.new(0.06, 0, 0.38, 0)
+SaveBtn.Position = UDim2.new(0.06, 0, 0.22, 0)
 SaveBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-SaveBtn.Text = "Lưu Vị Trí"
+SaveBtn.Text = "1. Lưu Vị Trí Lấy Trứng"
 SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SaveBtn.Font = Enum.Font.GothamMedium
 SaveBtn.Parent = MainFrame
 
--- Nút Tele Tức Thì (Chống Rollback & Chống Die)
-local InstantTeleBtn = Instance.new("TextButton")
-InstantTeleBtn.Size = UDim2.new(0.88, 0, 0, 38)
-InstantTeleBtn.Position = UDim2.new(0.06, 0, 0.58, 0)
-InstantTeleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
-InstantTeleBtn.Text = "⚡ Tele Tức Thì (Chống Die)"
-InstantTeleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-InstantTeleBtn.Font = Enum.Font.GothamBold
-InstantTeleBtn.Parent = MainFrame
+-- Nút Tele Cực Tốc (Instant TP)
+local FastTeleBtn = Instance.new("TextButton")
+FastTeleBtn.Size = UDim2.new(0.88, 0, 0, 38)
+FastTeleBtn.Position = UDim2.new(0.06, 0, 0.42, 0)
+FastTeleBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+FastTeleBtn.Text = "⚡ 2. Tele Siêu Tốc (Lấy Trứng)"
+FastTeleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FastTeleBtn.Font = Enum.Font.GothamBold
+FastTeleBtn.Parent = MainFrame
 
--- Nút Tele Thường
-local NormalTeleBtn = Instance.new("TextButton")
-NormalTeleBtn.Size = UDim2.new(0.88, 0, 0, 38)
-NormalTeleBtn.Position = UDim2.new(0.06, 0, 0.78, 0)
-NormalTeleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-NormalTeleBtn.Text = "🎯 Tele Về Nơi Lưu"
-NormalTeleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-NormalTeleBtn.Font = Enum.Font.GothamMedium
-NormalTeleBtn.Parent = MainFrame
+-- Nút Tele Quay Về
+local BackTeleBtn = Instance.new("TextButton")
+BackTeleBtn.Size = UDim2.new(0.88, 0, 0, 38)
+BackTeleBtn.Position = UDim2.new(0.06, 0, 0.62, 0)
+BackTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+BackTeleBtn.Text = "🏠 3. Tele Về Chỗ Cũ"
+BackTeleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BackTeleBtn.Font = Enum.Font.GothamBold
+BackTeleBtn.Parent = MainFrame
 
 local function getCharacterParts()
     local char = player.Character
@@ -85,43 +71,25 @@ local function getCharacterParts()
     return char, hum, hrp
 end
 
--- Chạy nhanh mượt, không bị khựng hoặc bị quét
-RunService.Heartbeat:Connect(function()
-    if isSpeedEnabled then
-        local _, hum, hrp = getCharacterParts()
-        if hum and hrp and hum.MoveDirection.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (speedValue / 60))
-        end
-    end
-end)
-
-SpeedBtn.MouseButton1Click:Connect(function()
-    isSpeedEnabled = not isSpeedEnabled
-    if isSpeedEnabled then
-        SpeedBtn.Text = "Chạy Nhanh: BẬT"
-        SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 80)
-    else
-        SpeedBtn.Text = "Chạy Nhanh: Tắt"
-        SpeedBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-end)
+-- Biến lưu vị trí xuất phát trước khi tele (để bấm nút 3 bay về)
+local originCFrame = nil
 
 SaveBtn.MouseButton1Click:Connect(function()
     local _, _, hrp = getCharacterParts()
     if hrp then
-        -- Lưu vị trí nhô cao hơn mặt đất 2 đơn vị để tránh bị kẹt chân xuống sàn khi tele về
+        -- Lưu vị trí hiện tại (nâng cao 2 đơn vị tránh kẹt sàn)
         savedCFrame = hrp.CFrame + Vector3.new(0, 2, 0)
-        SaveBtn.Text = "Đã Lưu Vị Trí!"
-        SaveBtn.BackgroundColor3 = Color3.fromRGB(0, 110, 200)
+        SaveBtn.Text = "Đã Lưu Điểm Lấy Trứng!"
+        SaveBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 80)
         task.delay(1, function()
-            SaveBtn.Text = "Lưu Vị Trí"
+            SaveBtn.Text = "1. Lưu Vị Trí Lấy Trứng"
             SaveBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
         end)
     end
 end)
 
--- Hàm vô hiệu hóa va chạm (NoClip) tạm thời giúp chống kẹt tường chết
-local function temporaryNoClip(char, duration)
+-- Hàm tắt va chạm tạm thời chống chết
+local function bypassCollision(char)
     local conn
     conn = RunService.Stepped:Connect(function()
         if char then
@@ -132,24 +100,26 @@ local function temporaryNoClip(char, duration)
             end
         end
     end)
-    task.delay(duration, function()
+    task.delay(0.8, function()
         if conn then conn:Disconnect() end
     end)
 end
 
--- 1. TELEPORT TỨC THÌ (Khắc phục triệt để lỗi bị giật ngược về và chết)
-InstantTeleBtn.MouseButton1Click:Connect(function()
+-- ⚡ NÚT 2: TELE SIÊU TỐC ĐẾN CHỖ TRỨNG (Nhanh tức thì, chống kéo ngược)
+FastTeleBtn.MouseButton1Click:Connect(function()
     local char, hum, hrp = getCharacterParts()
     if savedCFrame and hrp and hum then
-        -- Tạm thời vô hiệu hóa va chạm nhân vật trong 1.5 giây
-        temporaryNoClip(char, 1.5)
+        -- Lưu lại chỗ bạn đang đứng trước khi tele để lát còn bấm nút quay về
+        originCFrame = hrp.CFrame
         
-        -- Reset toàn bộ quán tính và lực rơi hiện tại của nhân vật
+        bypassCollision(char)
+        
+        -- Triệt tiêu hoàn toàn quán tính cũ
         hrp.AssemblyLinearVelocity = Vector3.zero
         hrp.AssemblyAngularVelocity = Vector3.zero
         hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 
-        -- Khóa vị trí liên tục trong 5 khung hình (giúp server nhận diện đây là vị trí hợp lệ, chặn đứng việc kéo ngược)
+        -- Khóa chặt tọa độ đích liên tục trong 8 khung hình để lừa bộ kiểm tra của server
         local count = 0
         local connection
         connection = RunService.Heartbeat:Connect(function()
@@ -157,44 +127,58 @@ InstantTeleBtn.MouseButton1Click:Connect(function()
                 hrp.AssemblyLinearVelocity = Vector3.zero
                 hrp.CFrame = savedCFrame
                 count = count + 1
-                if count > 5 then
+                if count > 8 then
                     connection:Disconnect()
                 end
             end
         end)
 
-        InstantTeleBtn.Text = "Đã Tele Thành Công!"
-        InstantTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 70)
+        FastTeleBtn.Text = "Đã Cướp Trứng Thành Công!"
+        FastTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 70)
         task.delay(1, function()
-            InstantTeleBtn.Text = "⚡ Tele Tức Thì (Chống Die)"
-            InstantTeleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+            FastTeleBtn.Text = "⚡ 2. Tele Siêu Tốc (Lấy Trứng)"
+            FastTeleBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
         end)
     else
-        InstantTeleBtn.Text = "Chưa Lưu Vị Trí!"
+        FastTeleBtn.Text = "Chưa Lưu Điểm Lấy Trứng!"
         task.delay(1, function()
-            InstantTeleBtn.Text = "⚡ Tele Tức Thì (Chống Die)"
+            FastTeleBtn.Text = "⚡ 2. Tele Siêu Tốc (Lấy Trứng)"
         end)
     end
 end)
 
--- 2. TELEPORT THƯỜNG (Dự phòng)
-NormalTeleBtn.MouseButton1Click:Connect(function()
-    local char, _, hrp = getCharacterParts()
-    if savedCFrame and hrp then
-        temporaryNoClip(char, 1)
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.CFrame = savedCFrame
+-- 🏠 NÚT 3: TELE QUAY VỀ CHỖ CŨ (Sau khi lấy trứng xong bay về ngay)
+BackTeleBtn.MouseButton1Click:Connect(function()
+    local char, hum, hrp = getCharacterParts()
+    if originCFrame and hrp and hum then
+        bypassCollision(char)
         
-        NormalTeleBtn.Text = "Đã Đến Nơi!"
-        NormalTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 110, 200)
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
+        
+        local count = 0
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if hrp and originCFrame then
+                hrp.AssemblyLinearVelocity = Vector3.zero
+                hrp.CFrame = originCFrame
+                count = count + 1
+                if count > 8 then
+                    connection:Disconnect()
+                end
+            end
+        end)
+
+        BackTeleBtn.Text = "Đã Về An Toàn!"
+        BackTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 80)
         task.delay(1, function()
-            NormalTeleBtn.Text = "🎯 Tele Về Nơi Lưu"
-            NormalTeleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            BackTeleBtn.Text = "🏠 3. Tele Về Chỗ Cũ"
+            BackTeleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
         end)
     else
-        NormalTeleBtn.Text = "Chưa Lưu Vị Trí!"
+        BackTeleBtn.Text = "Chưa Có Vị Trí Cũ!"
         task.delay(1, function()
-            NormalTeleBtn.Text = "🎯 Tele Về Nơi Lưu"
+            BackTeleBtn.Text = "🏠 3. Tele Về Chỗ Cũ"
         end)
     end
 end)
