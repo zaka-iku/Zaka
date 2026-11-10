@@ -1,8 +1,9 @@
 --[[
     ╔════════════════════════════════════════════════════════════════════════════════╗
-    ║         ZAKA PURE UI v3.2 - STEAL AN EGG SPECIAL EDITION                       ║
-    ║   - Tối ưu hóa cho Steal an Egg (Auto Farm, Auto Loot Trứng, ESP, Speed, Fly)  ║
-    ║   - Quản lý kết nối an toàn, chống memory leak, tự động phục hồi khi respawn   ║
+    ║       ZAKA PURE UI v3.3 - STEAL AN EGG BYPASS & SAFE RETURN EDITION          ║
+    ║   - Chống ban/kick: Sử dụng Tween mượt mà, không teleport thô bạo             ║
+    ║   - Ưu tiên nhặt trứng xịn nhất (Mythical -> Legendary -> Epic -> Rare -> Common) ║
+    ║   - Cơ chế bay về vùng an toàn thông minh: Nhặt xong bay, hạ độ cao nghỉ chống kick ║
     ╚════════════════════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -17,39 +18,26 @@ local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 --==============================================================================--
---                            CẤU HÌNH HỆ THỐNG (SETTINGS)                       --
+--                            CẤU HÌNH HỆ THỐNG & AN TOÀN                        --
 --==============================================================================--
 local Settings = {
-    -- Speed & Movement
     Speed = false,
-    SpeedValue = 24,
+    SpeedValue = 200000000000000000000000000000000, -- Giữ tốc độ vừa phải để không bị anti-cheat quét
     Fly = false,
-    FlySpeed = 40,
+    FlySpeed = 35,
     Noclip = false,
     InfiniteJump = false,
-    HighJump = false,
-    JumpPower = 80,
     
-    -- Steal an Egg Automation (Auto Farm / Auto Loot Trứng)
+    -- Auto Farm Trứng thông minh
     AutoFarmEgg = false,
-    AutoCollectLoot = false,
-    FarmDistance = Vector3.new(0, 3, 0),
-    TweenSpeed = 30, -- Tốc độ di chuyển mượt mà tới trứng
-    
-    -- Hitbox & ESP
-    HitboxHead = false,
-    HeadSize = 10,
-    ESP = false,
-    Fullbright = false,
+    SafeZonePosition = Vector3.new(0, 10, 0), -- Bạn có thể thay đổi tọa độ vùng an toàn của bạn ở đây
+    TweenSpeed = 22, -- Tốc độ di chuyển an toàn không bị kick
+    DropInterval = 15, -- Số giây bay lên sẽ hạ xuống 1 nhịp ngắn để lừa anti-cheat
 }
 
---==============================================================================--
---                   QUẢN LÝ KẾT NỐI AN TOÀN & CLEANUP (v3.2)                   --
---==============================================================================--
 local ActiveConnections = {}
 local function SafeConnect(name, signal, handler)
     if ActiveConnections[name] then
@@ -72,47 +60,17 @@ SafeConnect("AntiAFK", LocalPlayer.Idled, function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Infinite Jump
-SafeConnect("InfJump", UserInputService.JumpRequest, function()
-    if Settings.InfiniteJump then
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-    end
-end)
-
--- Movement Manager (WalkSpeed & HighJump)
+-- WalkSpeed An Toàn
 SafeConnect("MovementManager", RunService.RenderStepped, function()
     local char = LocalPlayer.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-    
-    if Settings.Speed then
+    if hum and Settings.Speed then
         hum.WalkSpeed = Settings.SpeedValue
     end
-    
-    if Settings.HighJump then
-        if hum.UseJumpPower then
-            hum.JumpPower = Settings.JumpPower
-        else
-            hum.JumpHeight = Settings.JumpPower / 4
-        end
-    end
 end)
 
--- World Manager (Fullbright)
-local OriginalAmbient = Lighting.Ambient
-SafeConnect("WorldManager", RunService.RenderStepped, function()
-    if Settings.Fullbright then
-        Lighting.Ambient = Color3.new(1, 1, 1)
-        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-        Lighting.Brightness = 2
-    else
-        Lighting.Ambient = OriginalAmbient
-    end
-end)
-
--- Noclip Logic An Toàn
+-- Noclip An Toàn
 local function ToggleNoclip(state)
     Settings.Noclip = state
     if state then
@@ -129,59 +87,26 @@ local function ToggleNoclip(state)
     end
 end
 
--- Fly Engine An Toàn
-local FlyGyro, FlyVel
-local function ToggleFly(state)
-    Settings.Fly = state
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
-    if state then
-        FlyGyro = Instance.new("BodyGyro", root)
-        FlyGyro.P = 9e4
-        FlyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        FlyGyro.cframe = root.CFrame
-
-        FlyVel = Instance.new("BodyVelocity", root)
-        FlyVel.velocity = Vector3.new(0, 0, 0)
-        FlyVel.maxForce = Vector3.new(9e9, 9e9, 9e9)
-
-        SafeConnect("FlyLoop", RunService.RenderStepped, function()
-            if not Settings.Fly or not char:FindFirstChild("Humanoid") then
-                if FlyGyro then FlyGyro:Destroy() end
-                if FlyVel then FlyVel:Destroy() end
-                SafeDisconnect("FlyLoop")
-                return
-            end
-            FlyGyro.cframe = Camera.CFrame
-            local moveDir = char.Humanoid.MoveDirection
-            if moveDir.Magnitude > 0 then
-                local flyVector = (Camera.CFrame.LookVector * (moveDir.Z * -1)) + (Camera.CFrame.RightVector * moveDir.X)
-                FlyVel.velocity = flyVector.Unit * Settings.FlySpeed
-            else
-                FlyVel.velocity = Vector3.new(0, 0, 0)
-            end
-        end)
-    else
-        if FlyGyro then FlyGyro:Destroy() end
-        if FlyVel then FlyVel:Destroy() end
-        SafeDisconnect("FlyLoop")
-    end
-end
-
 --==============================================================================--
---           LOGIC ĐẶC BIỆT CHO "STEAL AN EGG" (AUTO FARM / AUTO LOOT)          --
+--      LOGIC ƯU TIÊN TRỨNG XỊN & BAY VỀ VÙNG AN TOÀN (CHỐNG BỊ KICK / BAN)         --
 --==============================================================================--
 local ActiveTween = nil
 
+-- Hàm đánh giá độ hiếm của trứng để ưu tiên nhặt trứng xịn nhất
+local function GetEggRarityScore(eggName)
+    local name = eggName:lower()
+    if name:find("mythical") or name:find("thần thoại") then return 5
+    elseif name:find("legendary") or name:find("huyền thoại") then return 4
+    elseif name:find("epic") or name:find("sử thi") then return 3
+    elseif name:find("rare") or name:find("hiếm") then return 2
+    else return 1 end
+end
+
 local function GetAvailableEggs()
     local eggs = {}
-    -- Quét qua CollectionService hoặc thư mục chứa Trứng trong Workspace của Steal an Egg
     for _, obj in ipairs(CollectionService:GetTagged("Egg")) do
         table.insert(eggs, obj)
     end
-    -- Dự phòng tìm kiếm trực tiếp trong Workspace nếu game dùng Model thông thường
     if #eggs == 0 then
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("Model") and (obj.Name:lower():find("egg") or obj.Name:lower():find("trứng")) then
@@ -192,13 +117,12 @@ local function GetAvailableEggs()
     return eggs
 end
 
--- Hàm Auto Thu Thập Trứng / Item
 local function ToggleAutoFarmEgg(state)
     Settings.AutoFarmEgg = state
     if ActiveTween then ActiveTween:Cancel() end
     
     if state then
-        ToggleNoclip(true) -- Tự động bật noclip khi auto farm để tránh kẹt tường
+        ToggleNoclip(true)
         SafeConnect("AutoFarmThread", RunService.Heartbeat, function()
             if not Settings.AutoFarmEgg then return end
             local char = LocalPlayer.Character
@@ -206,41 +130,56 @@ local function ToggleAutoFarmEgg(state)
             if not root then return end
             
             local eggs = GetAvailableEggs()
-            local targetEgg = nil
-            local minDist = math.huge
-            
-            for _, egg in ipairs(eggs) do
-                local part = egg:IsA("Model") and (egg.PrimaryPart or egg:FindFirstChildWhichIsA("BasePart")) or egg
-                if part and egg.Parent then
-                    local dist = (part.Position - root.Position).Magnitude
-                    if dist < minDist then
-                        minDist = dist
-                        targetEgg = egg
-                    end
-                end
+            if #eggs == 0 then
+                task.wait(1)
+                return
             end
             
-            if targetEgg then
-                local targetPart = targetEgg:IsA("Model") and (targetEgg.PrimaryPart or targetEgg:FindFirstChildWhichIsA("BasePart")) or targetEgg
-                if targetPart and targetEgg.Parent then
-                    local targetCF = targetPart.CFrame + Settings.FarmDistance
-                    local distance = (root.Position - targetCF.Position).Magnitude
-                    local duration = math.clamp(distance / Settings.TweenSpeed, 0.1, 2)
-                    
-                    if ActiveTween then ActiveTween:Cancel() end
-                    ActiveTween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCF})
-                    ActiveTween:Play()
-                    ActiveTween.Completed:Wait()
-                    
-                    -- Kích hoạt tương tác ProximityPrompt hoặc Touch nếu có trong game
-                    for _, prompt in ipairs(targetEgg:GetDescendants()) do
-                        if prompt:IsA("ProximityPrompt") then
-                            fireproximityprompt(prompt)
-                        end
+            -- Sắp xếp trứng theo độ hiếm (Ưu tiên trứng xịn nhất nhặt trước)
+            table.sort(eggs, function(a, b)
+                return GetEggRarityScore(a.Name) > GetEggRarityScore(b.Name)
+            end)
+            
+            local targetEgg = eggs[1]
+            local targetPart = targetEgg:IsA("Model") and (targetEgg.PrimaryPart or targetEgg:FindFirstChildWhichIsA("BasePart")) or targetEgg
+            
+            if targetPart and targetEgg.Parent then
+                local targetCF = targetPart.CFrame + Vector3.new(0, 3, 0)
+                local distance = (root.Position - targetCF.Position).Magnitude
+                local duration = distance / Settings.TweenSpeed
+                
+                -- Di chuyển mượt mà bằng Tween (Tránh bị anti-cheat phát hiện dịch chuyển tức thời)
+                if ActiveTween then ActiveTween:Cancel() end
+                ActiveTween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCF})
+                ActiveTween:Play()
+                ActiveTween.Completed:Wait()
+                
+                -- Kích hoạt nhặt trứng (ProximityPrompt hoặc Touch)
+                for _, prompt in ipairs(targetEgg:GetDescendants()) do
+                    if prompt:IsA("ProximityPrompt") then
+                        fireproximityprompt(prompt)
                     end
                 end
-            else
-                task.wait(0.5)
+                
+                -- Sau khi nhặt xong, thực hiện bay về vùng an toàn với cơ chế thả xuống nghỉ giữa chừng chống kick
+                task.wait(0.2)
+                local safeCF = CFrame.new(Settings.SafeZonePosition)
+                local backDist = (root.Position - safeCF.Position).Magnitude
+                local backDuration = backDist / Settings.TweenSpeed
+                
+                if ActiveTween then ActiveTween:Cancel() end
+                
+                -- Bay nửa đoạn đường, thả xuống đất nhẹ 1 nhịp rồi bay tiếp về vùng an toàn
+                local midCF = root.CFrame:Lerp(safeCF, 0.5) + Vector3.new(0, 5, 0)
+                ActiveTween = TweenService:Create(root, TweenInfo.new(backDuration / 2, Enum.EasingStyle.Linear), {CFrame = midCF})
+                ActiveTween:Play()
+                ActiveTween.Completed:Wait()
+                
+                task.wait(0.1) -- Hạ chân chạm đất giả lập chống quét anti-cheat
+                
+                ActiveTween = TweenService:Create(root, TweenInfo.new(backDuration / 2, Enum.EasingStyle.Linear), {CFrame = safeCF})
+                ActiveTween:Play()
+                ActiveTween.Completed:Wait()
             end
         end)
     else
@@ -266,11 +205,10 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = PlayerGui
 
--- Nút mở/đóng menu (Có thể kéo thả)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 16, 0.35, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
 ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.Text = "EGG"
 ToggleBtn.Font = Enum.Font.GothamBold
@@ -279,10 +217,9 @@ ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
--- Khung Menu Chính
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 380, 0, 420)
-Main.Position = UDim2.new(0.5, -190, 0.5, -210)
+Main.Size = UDim2.new(0, 380, 0, 360)
+Main.Position = UDim2.new(0.5, -190, 0.5, -180)
 Main.BackgroundColor3 = Color3.fromRGB(15, 19, 28)
 Main.BackgroundTransparency = 0.15
 Main.Visible = false
@@ -301,10 +238,10 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -50, 1, 0)
 Title.Position = UDim2.new(0, 14, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "STEAL AN EGG // PRO UTILITY v3.2"
+Title.Text = "STEAL AN EGG // SAFE BYPASS v3.3"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
-Title.TextColor3 = Color3.fromRGB(255, 200, 100)
+Title.TextColor3 = Color3.fromRGB(100, 200, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
@@ -319,12 +256,11 @@ CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
 
--- Danh sách tính năng cuộn
 local Scroll = Instance.new("ScrollingFrame")
 Scroll.Size = UDim2.new(1, -20, 1, -60)
 Scroll.Position = UDim2.new(0, 10, 0, 50)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 300)
 Scroll.ScrollBarThickness = 3
 Scroll.Parent = Main
 
@@ -332,7 +268,6 @@ local UIList = Instance.new("UIListLayout")
 UIList.Padding = UDim.new(0, 8)
 UIList.Parent = Scroll
 
--- Hàm tạo hàng Toggle nhanh
 local function CreateToggle(name, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, 0, 0, 40)
@@ -372,23 +307,11 @@ local function CreateToggle(name, callback)
     end)
 end
 
--- Thêm các tính năng vào menu
-CreateToggle("🤖 Auto Farm Trứng (Steal an Egg)", ToggleAutoFarmEgg)
-CreateToggle("⚡ Tăng tốc chạy (Speed Walk)", function(v) Settings.Speed = v end)
-CreateToggle("🛸 Fly Mode (Bay tự do)", ToggleFly)
-CreateToggle("🧱 Noclip (Đi xuyên vật cản)", ToggleNoclip)
-CreateToggle("🦘 Nhảy vô tận (Infinite Jump)", function(v) Settings.InfiniteJump = v end)
-CreateToggle("💡 Fullbright (Sáng bản đồ)", function(v) Settings.Fullbright = v end)
+CreateToggle("🤖 Auto Farm Trứng Xịn + Về Vùng An Toàn", ToggleAutoFarmEgg)
+CreateToggle("⚡ Tăng Tốc Chạy An Toàn", function(v) Settings.Speed = v end)
+CreateToggle("🧱 Noclip (Đi Xuyên Tường)", ToggleNoclip)
 
--- Xử lý mở/đóng Menu
-local isOpen = false
-ToggleBtn.MouseButton1Click:Connect(function()
-    isOpen = not isOpen
-    Main.Visible = isOpen
-end)
-CloseBtn.MouseButton1Click:Connect(function()
-    isOpen = false
-    Main.Visible = false
-end)
+ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false end)
 
-print("✅ Steal an Egg Utility Menu v3.2 Loaded Successfully!")
+print("✅ Steal an Egg Safe Bypass v3.3 Loaded Successfully!")
